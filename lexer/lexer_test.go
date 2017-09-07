@@ -77,6 +77,14 @@ func TestIsWhitespace(t *testing.T) {
 	expectBool(t, isWhitespace, 'a', false)
 }
 
+func TestIsOperator(t *testing.T) {
+	expectBool(t, isOperator, '+', true)
+	expectBool(t, isOperator, '-', true)
+	expectBool(t, isOperator, '*', true)
+	expectBool(t, isOperator, '/', true)
+	expectBool(t, isOperator, '#', false)
+}
+
 func TestIsLetter(t *testing.T) {
 	expectBool(t, isLetter, '`', false)
 	expectBool(t, isLetter, 'a', true)

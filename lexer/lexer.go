@@ -63,6 +63,21 @@ func isWhitespace(r rune) bool {
 	return (r <= ' ') && (r != '\000')
 }
 
+func isOperator(r rune) bool {
+	switch r {
+	case '+':
+		fallthrough
+	case '-':
+		fallthrough
+	case '*':
+		fallthrough
+	case '/':
+		return true
+	default:
+		return false
+	}
+}
+
 func isLetter(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
