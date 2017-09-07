@@ -88,6 +88,13 @@ func TestIsLetter(t *testing.T) {
 	expectBool(t, isLetter, '[', false)
 }
 
+func TestIsDigit(t *testing.T) {
+	expectBool(t, isDigit, '0', true)
+	expectBool(t, isDigit, '9', true)
+	expectBool(t, isDigit, '/', false)
+	expectBool(t, isDigit, ':', false)
+}
+
 func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "foo", Token{Ident, "foo", Loc{1, 1}})
 
