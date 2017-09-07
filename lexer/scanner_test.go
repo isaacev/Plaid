@@ -19,51 +19,41 @@ func TestCharBuffer(t *testing.T) {
 		Char{'c', Loc{1, 3}},
 	}}
 
-	var char Char
-	var eof bool
-
-	char, eof = buf.Peek()
-	expectChar(t, Char{'a', Loc{1, 1}}, false, char, eof)
-
-	char, eof = buf.Peek()
-	expectChar(t, Char{'a', Loc{1, 1}}, false, char, eof)
+	expectChar(t, Char{'a', Loc{1, 1}}, buf.Peek())
+	expectChar(t, Char{'a', Loc{1, 1}}, buf.Peek())
 	expectIndex(t, 0, buf.index)
 
-	char, eof = buf.Next()
-	expectChar(t, Char{'a', Loc{1, 1}}, false, char, eof)
+	expectChar(t, Char{'a', Loc{1, 1}}, buf.Next())
 	expectIndex(t, 1, buf.index)
 
-	char, eof = buf.Next()
-	expectChar(t, Char{'b', Loc{1, 2}}, false, char, eof)
+	expectChar(t, Char{'b', Loc{1, 2}}, buf.Next())
 	expectIndex(t, 2, buf.index)
 
-	char, eof = buf.Next()
-	expectChar(t, Char{'c', Loc{1, 3}}, true, char, eof)
+	expectChar(t, Char{'c', Loc{1, 3}}, buf.Next())
 	expectIndex(t, 2, buf.index)
 
-	char, eof = buf.Next()
-	expectChar(t, Char{'c', Loc{1, 3}}, true, char, eof)
+	expectChar(t, Char{'c', Loc{1, 3}}, buf.Next())
 	expectIndex(t, 2, buf.index)
 }
 
 func TestScan(t *testing.T) {
 	buf := Scan("abc\ndef")
 
-	expectNext(t, 'a', Loc{1, 1}, false, buf)
-	expectNext(t, 'b', Loc{1, 2}, false, buf)
-	expectNext(t, 'c', Loc{1, 3}, false, buf)
-	expectNext(t, '\n', Loc{1, 4}, false, buf)
-	expectNext(t, 'd', Loc{2, 1}, false, buf)
-	expectNext(t, 'e', Loc{2, 2}, false, buf)
-	expectNext(t, 'f', Loc{2, 3}, false, buf)
-	expectNext(t, EOF, Loc{2, 3}, true, buf)
-	expectNext(t, EOF, Loc{2, 3}, true, buf)
-	expectNext(t, EOF, Loc{2, 3}, true, buf)
+	expectNext(t, 'a', Loc{1, 1}, buf)
+	expectNext(t, 'b', Loc{1, 2}, buf)
+	expectNext(t, 'c', Loc{1, 3}, buf)
+	expectNext(t, '\n', Loc{1, 4}, buf)
+	expectNext(t, 'd', Loc{2, 1}, buf)
+	expectNext(t, 'e', Loc{2, 2}, buf)
+	expectNext(t, 'f', Loc{2, 3}, buf)
+	expectNext(t, '\000', Loc{2, 3}, buf)
+	expectNext(t, '\000', Loc{2, 3}, buf)
+	expectNext(t, '\000', Loc{2, 3}, buf)
+	expectEOF(t, true, buf)
 }
 
-func expectNext(t *testing.T, expChar rune, expLoc Loc, expEOF bool, buf *CharBuffer) {
-	got, gotEOF := buf.Next()
-	expectChar(t, Char{expChar, expLoc}, expEOF, got, gotEOF)
+func expectNext(t *testing.T, expChar rune, expLoc Loc, buf *CharBuffer) {
+	expectChar(t, Char{expChar, expLoc}, buf.Next())
 }
 
 func expectIndex(t *testing.T, exp int, got int) {
@@ -72,7 +62,7 @@ func expectIndex(t *testing.T, exp int, got int) {
 	}
 }
 
-func expectChar(t *testing.T, exp Char, expEOF bool, got Char, gotEOF bool) {
+func expectChar(t *testing.T, exp Char, got Char) {
 	if exp.char != got.char {
 		t.Errorf("Expected Char.char %c, got %c\n", exp.char, got.char)
 	}
@@ -80,8 +70,10 @@ func expectChar(t *testing.T, exp Char, expEOF bool, got Char, gotEOF bool) {
 	if exp.loc.String() != got.loc.String() {
 		t.Errorf("Expected Char.loc %s, got %s\n", exp.loc, got.loc)
 	}
+}
 
-	if expEOF != gotEOF {
-		t.Errorf("Expected Char.eof %t, got %t\n", expEOF, gotEOF)
+func expectEOF(t *testing.T, exp bool, buf *CharBuffer) {
+	if exp != buf.EOF() {
+		t.Errorf("Expected CharBuffer#EOF() %t, got %t\n", exp, buf.EOF())
 	}
 }

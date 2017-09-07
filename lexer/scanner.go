@@ -4,9 +4,6 @@ import (
 	"fmt"
 )
 
-// EOF represents the rune added at the end of a CharBuffer
-const EOF = '\000'
-
 // Loc corresponds to a line & column location within source code
 type Loc struct {
 	line int
@@ -30,19 +27,24 @@ type CharBuffer struct {
 }
 
 // Peek returns the next character without advancing
-func (cb *CharBuffer) Peek() (Char, bool) {
-	return cb.buffer[cb.index], cb.index+1 == len(cb.buffer)
+func (cb *CharBuffer) Peek() Char {
+	return cb.buffer[cb.index]
 }
 
 // Next returns the next character and advances the buffer
-func (cb *CharBuffer) Next() (Char, bool) {
-	if cb.index+1 == len(cb.buffer) {
-		return cb.buffer[cb.index], true
+func (cb *CharBuffer) Next() Char {
+	if cb.EOF() {
+		return cb.buffer[cb.index]
 	}
 
 	char := cb.buffer[cb.index]
 	cb.index++
-	return char, false
+	return char
+}
+
+// EOF returns true if the char buffer has been exhausted
+func (cb *CharBuffer) EOF() bool {
+	return cb.index+1 == len(cb.buffer)
 }
 
 // Scan creates a CharBuffer from a string of source code
