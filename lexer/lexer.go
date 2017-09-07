@@ -10,6 +10,10 @@ type Type string
 // Token classifications
 const (
 	EOF    Type = "EOF"
+	Plus        = "+"
+	Dash        = "-"
+	Star        = "*"
+	Slash       = "/"
 	Ident       = "Ident"
 	Number      = "Number"
 	String      = "String"
@@ -94,6 +98,8 @@ func eatToken(scanner *Scanner) (Token, error) {
 		return eatEOF(scanner)
 	case isWhitespace(peek.char):
 		return eatWhitespace(scanner)
+	case isOperator(peek.char):
+		return eatOperatorToken(scanner)
 	case isLetter(peek.char):
 		return eatWordToken(scanner)
 	case isDigit(peek.char):
@@ -113,6 +119,21 @@ func eatWhitespace(scanner *Scanner) (Token, error) {
 	}
 
 	return eatToken(scanner)
+}
+
+func eatOperatorToken(scanner *Scanner) (Token, error) {
+	switch scanner.Peek().char {
+	case '+':
+		return Token{Plus, "+", scanner.Next().loc}, nil
+	case '-':
+		return Token{Dash, "-", scanner.Next().loc}, nil
+	case '*':
+		return Token{Star, "*", scanner.Next().loc}, nil
+	case '/':
+		return Token{Slash, "/", scanner.Next().loc}, nil
+	default:
+		return Token{}, fmt.Errorf("%s expected operator", scanner.Next().loc)
+	}
 }
 
 func eatWordToken(scanner *Scanner) (Token, error) {
