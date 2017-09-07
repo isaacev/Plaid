@@ -112,3 +112,18 @@ func eatWordToken(scanner *Scanner) (Token, error) {
 
 	return Token{Ident, lexeme, loc}, nil
 }
+
+func eatNumberToken(scanner *Scanner) (Token, error) {
+	loc := scanner.Peek().loc
+	lexeme := ""
+
+	if isDigit(scanner.Peek().char) == false {
+		return Token{}, fmt.Errorf("%s expected number", loc)
+	}
+
+	for isDigit(scanner.Peek().char) {
+		lexeme += string(scanner.Next().char)
+	}
+
+	return Token{Number, lexeme, loc}, nil
+}

@@ -108,6 +108,13 @@ func TestEatWordToken(t *testing.T) {
 	expectLexerError(t, eatWordToken, "", "(1:0) expected word")
 }
 
+func TestEatNumberToken(t *testing.T) {
+	expectLexer(t, eatNumberToken, "123", Token{Number, "123", Loc{1, 1}})
+
+	expectLexerError(t, eatNumberToken, "foo", "(1:1) expected number")
+	expectLexerError(t, eatNumberToken, "", "(1:0) expected number")
+}
+
 type charPred func(rune) bool
 
 func expectBool(t *testing.T, fn charPred, r rune, exp bool) {
