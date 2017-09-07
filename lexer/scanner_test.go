@@ -67,13 +67,17 @@ func expectChar(t *testing.T, exp Char, got Char) {
 		t.Errorf("Expected Char.char %c, got %c\n", exp.char, got.char)
 	}
 
-	if exp.loc.String() != got.loc.String() {
-		t.Errorf("Expected Char.loc %s, got %s\n", exp.loc, got.loc)
-	}
+	expectLoc(t, exp.loc, got.loc)
 }
 
 func expectEOF(t *testing.T, exp bool, buf *CharBuffer) {
 	if exp != buf.EOF() {
 		t.Errorf("Expected CharBuffer#EOF() %t, got %t\n", exp, buf.EOF())
+	}
+}
+
+func expectLoc(t *testing.T, exp Loc, got Loc) {
+	if exp.String() != got.String() {
+		t.Errorf("Expected Char.loc %s, got %s\n", exp, got)
 	}
 }
