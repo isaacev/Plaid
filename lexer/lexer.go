@@ -81,6 +81,8 @@ func eatToken(scanner *Scanner) (Token, error) {
 		return eatWhitespace(scanner)
 	case isLetter(peek.char):
 		return eatWordToken(scanner)
+	case isDigit(peek.char):
+		return eatNumberToken(scanner)
 	default:
 		return Token{}, fmt.Errorf("%s unexpected symbol", peek.loc)
 	}

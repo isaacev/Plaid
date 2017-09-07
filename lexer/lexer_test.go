@@ -99,6 +99,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "", Token{EOF, "", Loc{1, 0}})
 	expectLexer(t, eatToken, "  \nfoo", Token{Ident, "foo", Loc{2, 1}})
 	expectLexer(t, eatToken, "foo", Token{Ident, "foo", Loc{1, 1}})
+	expectLexer(t, eatToken, "123", Token{Number, "123", Loc{1, 1}})
 
 	expectLexerError(t, eatToken, "@", "(1:1) unexpected symbol")
 }
