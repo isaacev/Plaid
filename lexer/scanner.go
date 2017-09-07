@@ -20,19 +20,19 @@ type Char struct {
 	loc  Loc
 }
 
-// CharBuffer holds a sequence of Char structs
-type CharBuffer struct {
+// Scanner holds a sequence of Char structs
+type Scanner struct {
 	index  int
 	buffer []Char
 }
 
 // Peek returns the next character without advancing
-func (cb *CharBuffer) Peek() Char {
+func (cb *Scanner) Peek() Char {
 	return cb.buffer[cb.index]
 }
 
 // Next returns the next character and advances the buffer
-func (cb *CharBuffer) Next() Char {
+func (cb *Scanner) Next() Char {
 	if cb.EOF() {
 		return cb.buffer[cb.index]
 	}
@@ -43,12 +43,12 @@ func (cb *CharBuffer) Next() Char {
 }
 
 // EOF returns true if the char buffer has been exhausted
-func (cb *CharBuffer) EOF() bool {
+func (cb *Scanner) EOF() bool {
 	return cb.index+1 == len(cb.buffer)
 }
 
-// Scan creates a CharBuffer from a string of source code
-func Scan(source string) *CharBuffer {
+// Scan creates a Scanner from a string of source code
+func Scan(source string) *Scanner {
 	buffer := []Char{}
 	line := 1
 	col := 0
@@ -69,5 +69,5 @@ func Scan(source string) *CharBuffer {
 	}
 
 	buffer = append(buffer, Char{'\000', Loc{line, col}})
-	return &CharBuffer{0, buffer}
+	return &Scanner{0, buffer}
 }

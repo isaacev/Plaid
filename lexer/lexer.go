@@ -25,7 +25,7 @@ type Token struct {
 // Lexer contains methods for generating a sequence of Tokens
 type Lexer struct {
 	buffer  []Token
-	scanner *CharBuffer
+	scanner *Scanner
 }
 
 // Peek returns the next token but does not advance the Lexer
@@ -50,8 +50,8 @@ func (l *Lexer) Next() (Token, error) {
 	return eatToken(l.scanner)
 }
 
-// Lex creates a new Lexer struct given a CharBuffer
-func Lex(scanner *CharBuffer) *Lexer {
+// Lex creates a new Lexer struct given a Scanner
+func Lex(scanner *Scanner) *Lexer {
 	return &Lexer{[]Token{}, scanner}
 }
 
@@ -67,7 +67,7 @@ func isLetter(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
 
-func eatToken(scanner *CharBuffer) (Token, error) {
+func eatToken(scanner *Scanner) (Token, error) {
 	peek := scanner.Peek()
 
 	switch {
@@ -82,11 +82,11 @@ func eatToken(scanner *CharBuffer) (Token, error) {
 	}
 }
 
-func eatEOF(scanner *CharBuffer) (Token, error) {
+func eatEOF(scanner *Scanner) (Token, error) {
 	return Token{EOF, "", scanner.Peek().loc}, nil
 }
 
-func eatWhitespace(scanner *CharBuffer) (Token, error) {
+func eatWhitespace(scanner *Scanner) (Token, error) {
 	for isWhitespace(scanner.Peek().char) {
 		scanner.Next()
 	}
@@ -94,7 +94,7 @@ func eatWhitespace(scanner *CharBuffer) (Token, error) {
 	return eatToken(scanner)
 }
 
-func eatWordToken(scanner *CharBuffer) (Token, error) {
+func eatWordToken(scanner *Scanner) (Token, error) {
 	loc := scanner.Peek().loc
 	lexeme := ""
 

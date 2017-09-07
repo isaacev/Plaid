@@ -111,7 +111,7 @@ func expectBool(t *testing.T, fn charPred, r rune, exp bool) {
 	}
 }
 
-type lexFunc func(scanner *CharBuffer) (Token, error)
+type lexFunc func(scanner *Scanner) (Token, error)
 
 func expectLexer(t *testing.T, fn lexFunc, source string, exp Token) {
 	scanner := Scan(source)
