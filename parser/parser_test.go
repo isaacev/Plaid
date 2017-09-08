@@ -88,28 +88,33 @@ func TestParseExpr(t *testing.T) {
 	p := makeParser("+a")
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
-	expectExpr(t, p, "(+ a)")
+	expr, err := parseExpr(p, Lowest)
+	expectNoErrors(t, "(+ a)", expr, err)
 
 	p = makeParser("+")
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
-	expectExprError(t, p, "unexpected symbol")
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "unexpected symbol", expr, err)
 
 	p = makeParser("a + b + c")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPrefix(lexer.Ident, parseIdent)
-	expectExpr(t, p, "(+ (+ a b) c)")
+	expr, err = parseExpr(p, Lowest)
+	expectNoErrors(t, "(+ (+ a b) c)", expr, err)
 
 	p = makeParser("a + b * c")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPostfix(lexer.Star, parseInfix, Product)
 	p.registerPrefix(lexer.Ident, parseIdent)
-	expectExpr(t, p, "(+ a (* b c))")
+	expr, err = parseExpr(p, Lowest)
+	expectNoErrors(t, "(+ a (* b c))", expr, err)
 
 	p = makeParser("a +")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPrefix(lexer.Ident, parseIdent)
-	expectExprError(t, p, "unexpected symbol")
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "unexpected symbol", expr, err)
 }
 
 func TestParseInfix(t *testing.T) {
@@ -125,11 +130,8 @@ func TestParseInfix(t *testing.T) {
 		t.Errorf("Expected no errors, got %v\n", err)
 	}
 
-	if expr, err = parseInfix(parser, left); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
-	} else if expr.String() != "(+ a b)" {
-		t.Errorf("Expected (+ a b), got %s\n", expr)
-	}
+	expr, err = parseInfix(parser, left)
+	expectNoErrors(t, "(+ a b)", expr, err)
 
 	parser = makeParser("a +")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
@@ -139,11 +141,8 @@ func TestParseInfix(t *testing.T) {
 		t.Errorf("Expected no errors, got %v\n", err)
 	}
 
-	if expr, err = parseInfix(parser, left); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "unexpected symbol" {
-		t.Errorf("Expected '%s', got %v\n", "unexpected symbol", err)
-	}
+	expr, err = parseInfix(parser, left)
+	expectAnError(t, "unexpected symbol", expr, err)
 }
 
 func TestParsePrefix(t *testing.T) {
@@ -151,21 +150,15 @@ func TestParsePrefix(t *testing.T) {
 	parser.registerPrefix(lexer.Plus, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parsePrefix(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
-	} else if expr.String() != "(+ a)" {
-		t.Errorf("Expected '(+ a)', got '%s'\n", expr.String())
-	}
+	expr, err := parsePrefix(parser)
+	expectNoErrors(t, "(+ a)", expr, err)
 
 	parser = makeParser("+")
 	parser.registerPrefix(lexer.Plus, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parsePrefix(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "unexpected symbol" {
-		t.Errorf("Expected '%s', got %v\n", "unexpected symbol", err)
-	}
+	expr, err = parsePrefix(parser)
+	expectAnError(t, "unexpected symbol", expr, err)
 }
 
 func TestParseGroup(t *testing.T) {
@@ -173,85 +166,57 @@ func TestParseGroup(t *testing.T) {
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parseGroup(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
-	} else if expr.String() != "a" {
-		t.Errorf("Expected 'a', got '%s'\n", expr.String())
-	}
+	expr, err := parseGroup(parser)
+	expectNoErrors(t, "a", expr, err)
 
 	parser = makeParser("a)")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parseGroup(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "expected left paren" {
-		t.Errorf("Expected '%s', got %v\n", "expected left paren", err)
-	}
+	expr, err = parseGroup(parser)
+	expectAnError(t, "expected left paren", expr, err)
 
 	parser = makeParser("(")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parseGroup(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "unexpected symbol" {
-		t.Errorf("Expected '%s', got %v\n", "unexpected symbol", err)
-	}
+	expr, err = parseGroup(parser)
+	expectAnError(t, "unexpected symbol", expr, err)
 
 	parser = makeParser("(a")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
-	if expr, err := parseGroup(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "expected right paren" {
-		t.Errorf("Expected '%s', got %v\n", "expected right paren", err)
-	}
+	expr, err = parseGroup(parser)
+	expectAnError(t, "expected right paren", expr, err)
 }
 
 func TestParseIdent(t *testing.T) {
 	parser := makeParser("abc")
 
-	if expr, err := parseIdent(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
-	} else if expr.String() != "abc" {
-		t.Errorf("Expected 'abc', got '%s'\n", expr.String())
-	}
+	expr, err := parseIdent(parser)
+	expectNoErrors(t, "abc", expr, err)
 
 	parser = makeParser("123")
 
-	if expr, err := parseIdent(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "expected identifier" {
-		t.Errorf("Expected '%s', got %v\n", "expected identifier", err)
-	}
+	expr, err = parseIdent(parser)
+	expectAnError(t, "expected identifier", expr, err)
 }
 
 func TestParseNumber(t *testing.T) {
 	parser := makeParser("123")
 
-	if expr, err := parseNumber(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
-	} else if expr.String() != "123" {
-		t.Errorf("Expected '123', got '%s'\n", expr.String())
-	}
+	expr, err := parseNumber(parser)
+	expectNoErrors(t, "123", expr, err)
 
 	parser = makeParser("abc")
 
-	if expr, err := parseNumber(parser); err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "expected number literal" {
-		t.Errorf("Expected '%s', got %v\n", "expected number literal", err)
-	}
+	expr, err = parseNumber(parser)
+	expectAnError(t, "expected number literal", expr, err)
 
 	loc := lexer.Loc{Line: 1, Col: 1}
-	expr, err := evalNumber(lexer.Token{Type: lexer.Number, Lexeme: "abc", Loc: loc})
-	if err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
-	} else if err.Error() != "malformed number literal" {
-		t.Errorf("Expected '%s', got %v\n", "malformed number literal", err)
-	}
+	expr, err = evalNumber(lexer.Token{Type: lexer.Number, Lexeme: "abc", Loc: loc})
+	expectAnError(t, "malformed number literal", expr, err)
 }
 
 func makeParser(source string) *Parser {
@@ -263,16 +228,16 @@ func makeParser(source string) *Parser {
 	}
 }
 
-func expectExpr(t *testing.T, p *Parser, ast string) {
-	if expr, err := parseExpr(p, Lowest); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
+func expectNoErrors(t *testing.T, ast string, expr Expr, err error) {
+	if err != nil {
+		t.Errorf("Expected no errors, got '%s'\n", err)
 	} else {
 		expectAST(t, ast, expr)
 	}
 }
 
-func expectExprError(t *testing.T, p *Parser, msg string) {
-	if expr, err := parseExpr(p, Lowest); err == nil {
+func expectAnError(t *testing.T, msg string, expr Expr, err error) {
+	if err == nil {
 		t.Errorf("Expected an error, got %s\n", expr)
 	} else if err.Error() != msg {
 		t.Errorf("Expected '%s', got '%s'\n", msg, err)
