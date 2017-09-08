@@ -13,6 +13,7 @@ const (
 	Slash       = "/"
 	ParenL      = "("
 	ParenR      = ")"
+	Colon       = ":"
 	Ident       = "Ident"
 	Number      = "Number"
 	String      = "String"
@@ -76,6 +77,8 @@ func isOperator(r rune) bool {
 		fallthrough
 	case '/':
 		return true
+	case ':':
+		return true
 	default:
 		return false
 	}
@@ -136,6 +139,8 @@ func eatOperatorToken(scanner *Scanner) Token {
 		return Token{Star, "*", scanner.Next().loc}
 	case '/':
 		return Token{Slash, "/", scanner.Next().loc}
+	case ':':
+		return Token{Colon, ":", scanner.Next().loc}
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
 	}
