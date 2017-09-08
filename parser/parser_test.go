@@ -261,7 +261,7 @@ func expectAnError(t *testing.T, msg string, expr Expr, err error) {
 	}
 }
 
-func expectAST(t *testing.T, ast string, got Expr) {
+func expectAST(t *testing.T, ast string, got Node) {
 	if ast != got.String() {
 		t.Errorf("Expected '%s', got '%s'\n", ast, got)
 	}
