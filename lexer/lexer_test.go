@@ -87,8 +87,10 @@ func TestEatOperatorToken(t *testing.T) {
 	expectLexer(t, eatOperatorToken, "/", Token{Slash, "/", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, ":", Token{Colon, ":", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, ":=", Token{Assign, ":=", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "=>", Token{Arrow, "=>", Loc{1, 1}})
 
 	expectLexerError(t, eatOperatorToken, "@", "(1:1) expected operator")
+	expectLexerError(t, eatOperatorToken, "=", "(1:1) expected operator")
 }
 
 func TestEatParen(t *testing.T) {

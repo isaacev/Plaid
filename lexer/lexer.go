@@ -17,6 +17,7 @@ const (
 	BraceR      = "}"
 	Colon       = ":"
 	Assign      = ":="
+	Arrow       = "=>"
 	Ident       = "Ident"
 	Number      = "Number"
 	String      = "String"
@@ -158,6 +159,15 @@ func eatOperatorToken(scanner *Scanner) Token {
 		}
 
 		return tok
+	case '=':
+		equals := scanner.Next()
+
+		if scanner.Peek().char == '>' {
+			scanner.Next()
+			return Token{Arrow, "=>", equals.loc}
+		}
+
+		fallthrough
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
 	}
