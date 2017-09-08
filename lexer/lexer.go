@@ -20,6 +20,7 @@ const (
 	Assign      = ":="
 	Arrow       = "=>"
 	Fn          = "fn"
+	If          = "if"
 	Let         = "let"
 	Return      = "return"
 	Ident       = "Ident"
@@ -228,6 +229,8 @@ func eatWordToken(scanner *Scanner) Token {
 	switch lexeme {
 	case "fn":
 		return Token{Fn, "fn", loc}
+	case "if":
+		return Token{If, "if", loc}
 	case "let":
 		return Token{Let, "let", loc}
 	case "return":
