@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"plaid/lexer"
 	"strconv"
+	"strings"
 )
 
 // Node is the ancestor of all AST nodes
@@ -89,3 +90,12 @@ type NumberExpr struct {
 func (ne NumberExpr) String() string { return strconv.Itoa(ne.val) }
 func (ne NumberExpr) isNode()        {}
 func (ne NumberExpr) isExpr()        {}
+
+func indentBlock(indent string, source string) string {
+	lines := strings.Split(source, "\n")
+	for i, line := range lines {
+		lines[i] = indent + line
+	}
+
+	return strings.Join(lines, "\n")
+}

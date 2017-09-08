@@ -49,6 +49,16 @@ func TestNumberExpr(t *testing.T) {
 	expectString(t, NumberExpr{tok, 123}, "123")
 }
 
+func TestIndentBlock(t *testing.T) {
+	source := "foo\nbar\n  baz"
+	exp := "...foo\n...bar\n...  baz"
+	got := indentBlock("...", source)
+
+	if exp != got {
+		t.Errorf("Expected '%s', got '%s'\n", exp, got)
+	}
+}
+
 func expectString(t *testing.T, node Node, exp string) {
 	got := node.String()
 
