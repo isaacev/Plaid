@@ -85,6 +85,20 @@ func TestParseInitializer(t *testing.T) {
 	expectParse("(a + b) * c", "(* (+ a b) c)")
 }
 
+func TestParseStmt(t *testing.T) {
+	expectStmtError := func(source string, msg string) {
+		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		stmt, err := parseStmt(parser)
+		if err == nil {
+			t.Errorf("Expected an error, got %s\n", stmt)
+		} else if err.Error() != msg {
+			t.Errorf("Expected '%s', got '%s'\n", msg, err)
+		}
+	}
+
+	expectStmtError("123 + 456", "expected start of statement")
+}
+
 func TestParseExpr(t *testing.T) {
 	p := makeParser("+a")
 	p.registerPrefix(lexer.Plus, parsePrefix)

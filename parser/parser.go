@@ -85,6 +85,13 @@ func Parse(l *lexer.Lexer) *Parser {
 	return parser
 }
 
+func parseStmt(p *Parser) (Stmt, error) {
+	switch p.lexer.Peek().Type {
+	default:
+		return nil, fmt.Errorf("expected start of statement")
+	}
+}
+
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	prefix, exists := p.prefixParseFuncs[p.lexer.Peek().Type]
 	if exists == false {

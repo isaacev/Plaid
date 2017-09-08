@@ -12,6 +12,13 @@ type Node interface {
 	isNode()
 }
 
+// Stmt describes all constructs that return no value
+type Stmt interface {
+	String() string
+	isNode()
+	isStmt()
+}
+
 // Expr describes all constructs that resolve to a value
 type Expr interface {
 	String() string
