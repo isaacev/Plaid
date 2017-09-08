@@ -18,6 +18,9 @@ const (
 	Colon       = ":"
 	Assign      = ":="
 	Arrow       = "=>"
+	Fn          = "fn"
+	Let         = "let"
+	Return      = "return"
 	Ident       = "Ident"
 	Number      = "Number"
 	String      = "String"
@@ -207,7 +210,16 @@ func eatWordToken(scanner *Scanner) Token {
 		lexeme += string(scanner.Next().char)
 	}
 
-	return Token{Ident, lexeme, loc}
+	switch lexeme {
+	case "fn":
+		return Token{Fn, "fn", loc}
+	case "let":
+		return Token{Let, "let", loc}
+	case "return":
+		return Token{Return, "return", loc}
+	default:
+		return Token{Ident, lexeme, loc}
+	}
 }
 
 func eatNumberToken(scanner *Scanner) Token {
