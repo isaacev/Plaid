@@ -145,6 +145,23 @@ func TestParseInfix(t *testing.T) {
 	expectAnError(t, "unexpected symbol", expr, err)
 }
 
+func TestParsePostfix(t *testing.T) {
+	parser := makeParser("a+")
+	parser.registerPostfix(lexer.Plus, parsePostfix, Postfix)
+	parser.registerPrefix(lexer.Ident, parseIdent)
+
+	var left Expr
+	var expr Expr
+	var err error
+
+	if left, err = parseIdent(parser); err != nil {
+		t.Errorf("Expected no errors, got %v\n", err)
+	}
+
+	expr, err = parsePostfix(parser, left)
+	expectNoErrors(t, "(+ a)", expr, err)
+}
+
 func TestParsePrefix(t *testing.T) {
 	parser := makeParser("+a")
 	parser.registerPrefix(lexer.Plus, parsePrefix)

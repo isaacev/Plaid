@@ -15,6 +15,7 @@ const (
 	Sum
 	Product
 	Prefix
+	Postfix
 )
 
 // PrefixParseFunc describes the parsing function for any construct where the
@@ -117,6 +118,13 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 	}
 
 	return BinaryExpr{oper, tok, left, right}, nil
+}
+
+func parsePostfix(p *Parser, left Expr) (Expr, error) {
+	tok := p.lexer.Next()
+	oper := tok.Lexeme
+
+	return UnaryExpr{oper, tok, left}, nil
 }
 
 func parsePrefix(p *Parser) (Expr, error) {
