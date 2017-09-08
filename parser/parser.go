@@ -70,6 +70,7 @@ func Parse(l *lexer.Lexer) (Expr, error) {
 		make(map[lexer.Type]PostfixParseFunc),
 	}
 
+	parser.registerPrefix(lexer.ParenL, parseGroup)
 	parser.registerPrefix(lexer.Plus, parsePrefix)
 	parser.registerPrefix(lexer.Dash, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
@@ -127,6 +128,25 @@ func parsePrefix(p *Parser) (Expr, error) {
 	}
 
 	return UnaryExpr{oper, tok, right}, nil
+}
+
+func parseGroup(p *Parser) (Expr, error) {
+	if p.peekTokenIsNot(lexer.ParenL) {
+		return nil, fmt.Errorf("expected left paren")
+	}
+
+	p.lexer.Next()
+	expr, err := parseExpr(p, Lowest)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.peekTokenIsNot(lexer.ParenR) {
+		return nil, fmt.Errorf("expected right paren")
+	}
+
+	p.lexer.Next()
+	return expr, nil
 }
 
 func parseIdent(p *Parser) (Expr, error) {

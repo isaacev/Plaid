@@ -37,6 +37,13 @@ func TestIsOperator(t *testing.T) {
 	expectBool(t, isOperator, '#', false)
 }
 
+func TestIsParen(t *testing.T) {
+	expectBool(t, isParen, '(', true)
+	expectBool(t, isParen, ')', true)
+	expectBool(t, isParen, '\'', false)
+	expectBool(t, isParen, '*', false)
+}
+
 func TestIsLetter(t *testing.T) {
 	expectBool(t, isLetter, '`', false)
 	expectBool(t, isLetter, 'a', true)
@@ -62,6 +69,8 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "-", Token{Dash, "-", Loc{1, 1}})
 	expectLexer(t, eatToken, "*", Token{Star, "*", Loc{1, 1}})
 	expectLexer(t, eatToken, "/", Token{Slash, "/", Loc{1, 1}})
+	expectLexer(t, eatToken, "(", Token{ParenL, "(", Loc{1, 1}})
+	expectLexer(t, eatToken, ")", Token{ParenR, ")", Loc{1, 1}})
 	expectLexer(t, eatToken, "foo", Token{Ident, "foo", Loc{1, 1}})
 	expectLexer(t, eatToken, "123", Token{Number, "123", Loc{1, 1}})
 
@@ -75,6 +84,13 @@ func TestEatOperatorToken(t *testing.T) {
 	expectLexer(t, eatOperatorToken, "/", Token{Slash, "/", Loc{1, 1}})
 
 	expectLexerError(t, eatOperatorToken, "@", "(1:1) expected operator")
+}
+
+func TestEatParen(t *testing.T) {
+	expectLexer(t, eatParenToken, "(", Token{ParenL, "(", Loc{1, 1}})
+	expectLexer(t, eatParenToken, ")", Token{ParenR, ")", Loc{1, 1}})
+
+	expectLexerError(t, eatParenToken, "@", "(1:1) expected paren")
 }
 
 func TestEatWordToken(t *testing.T) {

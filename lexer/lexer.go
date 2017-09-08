@@ -11,6 +11,8 @@ const (
 	Dash        = "-"
 	Star        = "*"
 	Slash       = "/"
+	ParenL      = "("
+	ParenR      = ")"
 	Ident       = "Ident"
 	Number      = "Number"
 	String      = "String"
@@ -79,6 +81,10 @@ func isOperator(r rune) bool {
 	}
 }
 
+func isParen(r rune) bool {
+	return (r == '(') || (r == ')')
+}
+
 func isLetter(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
@@ -97,6 +103,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatWhitespace(scanner)
 	case isOperator(peek.char):
 		return eatOperatorToken(scanner)
+	case isParen(peek.char):
+		return eatParenToken(scanner)
 	case isLetter(peek.char):
 		return eatWordToken(scanner)
 	case isDigit(peek.char):
@@ -130,6 +138,17 @@ func eatOperatorToken(scanner *Scanner) Token {
 		return Token{Slash, "/", scanner.Next().loc}
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
+	}
+}
+
+func eatParenToken(scanner *Scanner) Token {
+	switch scanner.Peek().char {
+	case '(':
+		return Token{ParenL, "(", scanner.Next().loc}
+	case ')':
+		return Token{ParenR, ")", scanner.Next().loc}
+	default:
+		return Token{Error, "expected paren", scanner.Next().loc}
 	}
 }
 
