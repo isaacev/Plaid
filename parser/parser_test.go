@@ -86,14 +86,16 @@ func TestParseInitializer(t *testing.T) {
 }
 
 func TestParseStmt(t *testing.T) {
+	expectStmt := func(source string, ast string) {
+		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		stmt, err := parseStmt(parser)
+		expectNoErrors(t, ast, stmt, err)
+	}
+
 	expectStmtError := func(source string, msg string) {
 		parser := Parse(lexer.Lex(lexer.Scan(source)))
 		stmt, err := parseStmt(parser)
-		if err == nil {
-			t.Errorf("Expected an error, got %s\n", stmt)
-		} else if err.Error() != msg {
-			t.Errorf("Expected '%s', got '%s'\n", msg, err)
-		}
+		expectAnError(t, msg, stmt, err)
 	}
 
 	expectStmtError("123 + 456", "expected start of statement")
@@ -260,17 +262,17 @@ func makeParser(source string) *Parser {
 	}
 }
 
-func expectNoErrors(t *testing.T, ast string, expr Expr, err error) {
+func expectNoErrors(t *testing.T, ast string, node Node, err error) {
 	if err != nil {
 		t.Errorf("Expected no errors, got '%s'\n", err)
 	} else {
-		expectAST(t, ast, expr)
+		expectAST(t, ast, node)
 	}
 }
 
-func expectAnError(t *testing.T, msg string, expr Expr, err error) {
+func expectAnError(t *testing.T, msg string, node Node, err error) {
 	if err == nil {
-		t.Errorf("Expected an error, got %s\n", expr)
+		t.Errorf("Expected an error, got %s\n", node)
 	} else if err.Error() != msg {
 		t.Errorf("Expected '%s', got '%s'\n", msg, err)
 	}
