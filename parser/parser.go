@@ -87,9 +87,44 @@ func Parse(l *lexer.Lexer) *Parser {
 
 func parseStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
+	case lexer.Let:
+		return parseDeclarationStmt(p)
 	default:
 		return nil, fmt.Errorf("expected start of statement")
 	}
+}
+
+func parseDeclarationStmt(p *Parser) (Stmt, error) {
+	if p.peekTokenIsNot(lexer.Let) {
+		return nil, fmt.Errorf("expected LET keyword")
+	}
+
+	tok := p.lexer.Next()
+	var expr Expr
+	var err error
+	if expr, err = parseIdent(p); err != nil {
+		return nil, err
+	}
+
+	name := expr.(IdentExpr)
+
+	if p.peekTokenIsNot(lexer.Assign) {
+		return nil, fmt.Errorf("expected :=")
+	}
+
+	p.lexer.Next()
+
+	expr, err = parseExpr(p, Lowest)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.peekTokenIsNot(lexer.Semi) {
+		return nil, fmt.Errorf("expected semicolon")
+	}
+
+	p.lexer.Next()
+	return DeclarationStmt{tok, name, expr}, nil
 }
 
 func parseExpr(p *Parser, level Precedence) (Expr, error) {

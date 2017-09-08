@@ -19,6 +19,17 @@ type Stmt interface {
 	isStmt()
 }
 
+// DeclarationStmt describes the declaration and assignment of a variable
+type DeclarationStmt struct {
+	tok  lexer.Token
+	name IdentExpr
+	expr Expr
+}
+
+func (ds DeclarationStmt) String() string { return fmt.Sprintf("(let %s %s)", ds.name, ds.expr) }
+func (ds DeclarationStmt) isNode()        {}
+func (ds DeclarationStmt) isStmt()        {}
+
 // Expr describes all constructs that resolve to a value
 type Expr interface {
 	String() string

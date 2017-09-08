@@ -98,7 +98,40 @@ func TestParseStmt(t *testing.T) {
 		expectAnError(t, msg, stmt, err)
 	}
 
+	expectStmt("let a := 123;", "(let a 123)")
 	expectStmtError("123 + 456", "expected start of statement")
+}
+
+func TestParseDeclarationStmt(t *testing.T) {
+	p := makeParser("let a := 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err := parseDeclarationStmt(p)
+	expectNoErrors(t, "(let a 123)", stmt, err)
+
+	p = makeParser("a := 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseDeclarationStmt(p)
+	expectAnError(t, "expected LET keyword", stmt, err)
+
+	p = makeParser("let 0 := 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseDeclarationStmt(p)
+	expectAnError(t, "expected identifier", stmt, err)
+
+	p = makeParser("let a = 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseDeclarationStmt(p)
+	expectAnError(t, "expected :=", stmt, err)
+
+	p = makeParser("let a :=;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseDeclarationStmt(p)
+	expectAnError(t, "unexpected symbol", stmt, err)
+
+	p = makeParser("let a := 123")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseDeclarationStmt(p)
+	expectAnError(t, "expected semicolon", stmt, err)
 }
 
 func TestParseExpr(t *testing.T) {

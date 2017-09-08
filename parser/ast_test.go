@@ -7,6 +7,13 @@ import (
 
 var tok = lexer.Token{}
 
+func TestDeclarationStmt(t *testing.T) {
+	(DeclarationStmt{}).isNode()
+	(DeclarationStmt{}).isStmt()
+
+	expectString(t, DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}}, "(let a 123)")
+}
+
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()
