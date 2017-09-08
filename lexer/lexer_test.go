@@ -70,6 +70,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "-", Token{Dash, "-", Loc{1, 1}})
 	expectLexer(t, eatToken, "*", Token{Star, "*", Loc{1, 1}})
 	expectLexer(t, eatToken, "/", Token{Slash, "/", Loc{1, 1}})
+	expectLexer(t, eatToken, ";", Token{Semi, ";", Loc{1, 1}})
 	expectLexer(t, eatToken, "(", Token{ParenL, "(", Loc{1, 1}})
 	expectLexer(t, eatToken, ")", Token{ParenR, ")", Loc{1, 1}})
 	expectLexer(t, eatToken, "{", Token{BraceL, "{", Loc{1, 1}})
@@ -94,6 +95,12 @@ func TestEatOperatorToken(t *testing.T) {
 
 	expectLexerError(t, eatOperatorToken, "@", "(1:1) expected operator")
 	expectLexerError(t, eatOperatorToken, "=", "(1:1) expected operator")
+}
+
+func TestEatSemicolonToken(t *testing.T) {
+	expectLexer(t, eatSemicolonToken, ";", Token{Semi, ";", Loc{1, 1}})
+
+	expectLexerError(t, eatSemicolonToken, "@", "(1:1) expected semicolon")
 }
 
 func TestEatParen(t *testing.T) {

@@ -11,6 +11,7 @@ const (
 	Dash        = "-"
 	Star        = "*"
 	Slash       = "/"
+	Semi        = ";"
 	ParenL      = "("
 	ParenR      = ")"
 	BraceL      = "{"
@@ -91,6 +92,10 @@ func isOperator(r rune) bool {
 	}
 }
 
+func isSemicolon(r rune) bool {
+	return (r == ';')
+}
+
 func isParen(r rune) bool {
 	return (r == '(') || (r == ')')
 }
@@ -117,6 +122,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatWhitespace(scanner)
 	case isOperator(peek.char):
 		return eatOperatorToken(scanner)
+	case isSemicolon(peek.char):
+		return eatSemicolonToken(scanner)
 	case isParen(peek.char):
 		return eatParenToken(scanner)
 	case isBrace(peek.char):
@@ -174,6 +181,14 @@ func eatOperatorToken(scanner *Scanner) Token {
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
 	}
+}
+
+func eatSemicolonToken(scanner *Scanner) Token {
+	if scanner.Peek().char != ';' {
+		return Token{Error, "expected semicolon", scanner.Next().loc}
+	}
+
+	return Token{Semi, ";", scanner.Next().loc}
 }
 
 func eatParenToken(scanner *Scanner) Token {
