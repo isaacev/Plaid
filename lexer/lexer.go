@@ -13,6 +13,8 @@ const (
 	Slash       = "/"
 	ParenL      = "("
 	ParenR      = ")"
+	BraceL      = "{"
+	BraceR      = "}"
 	Colon       = ":"
 	Ident       = "Ident"
 	Number      = "Number"
@@ -88,6 +90,10 @@ func isParen(r rune) bool {
 	return (r == '(') || (r == ')')
 }
 
+func isBrace(r rune) bool {
+	return (r == '{') || (r == '}')
+}
+
 func isLetter(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
@@ -108,6 +114,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatOperatorToken(scanner)
 	case isParen(peek.char):
 		return eatParenToken(scanner)
+	case isBrace(peek.char):
+		return eatBraceToken(scanner)
 	case isLetter(peek.char):
 		return eatWordToken(scanner)
 	case isDigit(peek.char):
@@ -154,6 +162,17 @@ func eatParenToken(scanner *Scanner) Token {
 		return Token{ParenR, ")", scanner.Next().loc}
 	default:
 		return Token{Error, "expected paren", scanner.Next().loc}
+	}
+}
+
+func eatBraceToken(scanner *Scanner) Token {
+	switch scanner.Peek().char {
+	case '{':
+		return Token{BraceL, "{", scanner.Next().loc}
+	case '}':
+		return Token{BraceR, "}", scanner.Next().loc}
+	default:
+		return Token{Error, "expected brace", scanner.Next().loc}
 	}
 }
 

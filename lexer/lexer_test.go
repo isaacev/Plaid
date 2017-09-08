@@ -72,6 +72,8 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "/", Token{Slash, "/", Loc{1, 1}})
 	expectLexer(t, eatToken, "(", Token{ParenL, "(", Loc{1, 1}})
 	expectLexer(t, eatToken, ")", Token{ParenR, ")", Loc{1, 1}})
+	expectLexer(t, eatToken, "{", Token{BraceL, "{", Loc{1, 1}})
+	expectLexer(t, eatToken, "}", Token{BraceR, "}", Loc{1, 1}})
 	expectLexer(t, eatToken, "foo", Token{Ident, "foo", Loc{1, 1}})
 	expectLexer(t, eatToken, "123", Token{Number, "123", Loc{1, 1}})
 
@@ -93,6 +95,13 @@ func TestEatParen(t *testing.T) {
 	expectLexer(t, eatParenToken, ")", Token{ParenR, ")", Loc{1, 1}})
 
 	expectLexerError(t, eatParenToken, "@", "(1:1) expected paren")
+}
+
+func TestEatBrace(t *testing.T) {
+	expectLexer(t, eatBraceToken, "{", Token{BraceL, "{", Loc{1, 1}})
+	expectLexer(t, eatBraceToken, "}", Token{BraceR, "}", Loc{1, 1}})
+
+	expectLexerError(t, eatBraceToken, "@", "(1:1) expected brace")
 }
 
 func TestEatWordToken(t *testing.T) {
