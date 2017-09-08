@@ -65,7 +65,8 @@ func TestPeekPrecedence(t *testing.T) {
 
 func TestParseInitializer(t *testing.T) {
 	expectParse := func(source string, ast string) {
-		if expr, err := Parse(lexer.Lex(lexer.Scan(source))); err != nil {
+		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		if expr, err := parseExpr(parser, Lowest); err != nil {
 			t.Errorf("Expected no errors, got '%s'\n", err)
 		} else {
 			expectAST(t, ast, expr)

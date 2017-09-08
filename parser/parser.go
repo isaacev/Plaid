@@ -63,7 +63,7 @@ func (p *Parser) peekPrecedence() Precedence {
 }
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(l *lexer.Lexer) (Expr, error) {
+func Parse(l *lexer.Lexer) *Parser {
 	parser := &Parser{
 		l,
 		make(map[lexer.Type]Precedence),
@@ -82,7 +82,7 @@ func Parse(l *lexer.Lexer) (Expr, error) {
 	parser.registerPostfix(lexer.Star, parseInfix, Product)
 	parser.registerPostfix(lexer.Slash, parseInfix, Product)
 
-	return parseExpr(parser, Lowest)
+	return parser
 }
 
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
