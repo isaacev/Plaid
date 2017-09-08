@@ -1,72 +1,24 @@
 package lexer
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestLexerPeekNext(t *testing.T) {
-	var tok Token
-	var err error
 	lexer := Lex(Scan("abc def"))
 
-	tok, err = lexer.Peek()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{Ident, "abc", Loc{1, 1}}, tok)
-		expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.buffer[0])
-	}
-
-	tok, err = lexer.Peek()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{Ident, "abc", Loc{1, 1}}, tok)
-		expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.buffer[0])
-	}
-
-	tok, err = lexer.Next()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{Ident, "abc", Loc{1, 1}}, tok)
-	}
-
-	tok, err = lexer.Peek()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{Ident, "def", Loc{1, 5}}, tok)
-		expectToken(t, Token{Ident, "def", Loc{1, 5}}, lexer.buffer[0])
-	}
-
-	tok, err = lexer.Next()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{Ident, "def", Loc{1, 5}}, tok)
-	}
-
-	tok, err = lexer.Next()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{EOF, "", Loc{1, 7}}, tok)
-	}
-
-	tok, err = lexer.Next()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{EOF, "", Loc{1, 7}}, tok)
-	}
-
-	tok, err = lexer.Peek()
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, Token{EOF, "", Loc{1, 7}}, tok)
-	}
+	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.Peek())
+	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.buffer[0])
+	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.Peek())
+	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.buffer[0])
+	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.Next())
+	expectToken(t, Token{Ident, "def", Loc{1, 5}}, lexer.Peek())
+	expectToken(t, Token{Ident, "def", Loc{1, 5}}, lexer.buffer[0])
+	expectToken(t, Token{Ident, "def", Loc{1, 5}}, lexer.Next())
+	expectToken(t, Token{EOF, "", Loc{1, 7}}, lexer.Next())
+	expectToken(t, Token{EOF, "", Loc{1, 7}}, lexer.Next())
+	expectToken(t, Token{EOF, "", Loc{1, 7}}, lexer.Peek())
 }
 
 func TestIsWhitespace(t *testing.T) {
@@ -149,27 +101,24 @@ func expectBool(t *testing.T, fn charPred, r rune, exp bool) {
 	}
 }
 
-type lexFunc func(scanner *Scanner) (Token, error)
+type lexFunc func(scanner *Scanner) Token
 
 func expectLexer(t *testing.T, fn lexFunc, source string, exp Token) {
 	scanner := Scan(source)
-	got, err := fn(scanner)
-
-	if err != nil {
-		t.Error(err)
-	} else {
-		expectToken(t, exp, got)
-	}
+	got := fn(scanner)
+	expectToken(t, exp, got)
 }
 
 func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
 	scanner := Scan(source)
-	got, err := fn(scanner)
+	got := fn(scanner)
 
-	if err == nil {
-		t.Errorf("Expected syntax error '%s', got Token.typ %s\n", msg, got.typ)
-	} else if msg != err.Error() {
-		t.Errorf("Expected '%s', got '%s'", msg, err.Error())
+	if got.typ == Error {
+		if msg != formatErrorMessage(got) {
+			t.Errorf("Expected syntax error '%s', got '%s'\n", msg, formatErrorMessage(got))
+		}
+	} else {
+		t.Errorf("Expected Error, got %v\n", got)
 	}
 }
 
@@ -183,4 +132,8 @@ func expectToken(t *testing.T, exp Token, got Token) {
 	}
 
 	expectLoc(t, exp.loc, got.loc)
+}
+
+func formatErrorMessage(tok Token) string {
+	return fmt.Sprintf("%s %s", tok.loc, tok.lexeme)
 }
