@@ -102,6 +102,25 @@ func TestParseStmt(t *testing.T) {
 	expectStmtError("123 + 456", "expected start of statement")
 }
 
+func TestParseStmtBlock(t *testing.T) {
+	expectStmtBlock := func(source string, ast string) {
+		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		block, err := parseStmtBlock(parser)
+		expectNoErrors(t, ast, block, err)
+	}
+
+	expectStmtBlockError := func(source string, msg string) {
+		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		block, err := parseStmtBlock(parser)
+		expectAnError(t, msg, block, err)
+	}
+
+	expectStmtBlock("{ let a := 123; }", "{\n  (let a 123)}")
+	expectStmtBlockError("let a := 123; }", "expected left brace")
+	expectStmtBlockError("{ let a := 123 }", "expected semicolon")
+	expectStmtBlockError("{ let a := 123;", "expected right brace")
+}
+
 func TestParseDeclarationStmt(t *testing.T) {
 	p := makeParser("let a := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)

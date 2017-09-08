@@ -20,6 +20,23 @@ type Stmt interface {
 	isStmt()
 }
 
+// StmtBlock describes any series of statements bounded by curly braces
+type StmtBlock struct {
+	left  lexer.Token
+	stmts []Stmt
+	right lexer.Token
+}
+
+func (sb StmtBlock) String() string {
+	out := "{"
+	for _, stmt := range sb.stmts {
+		out += "\n" + indentBlock("  ", stmt.String())
+	}
+	return out + "}"
+}
+
+func (sb StmtBlock) isNode() {}
+
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
 	tok  lexer.Token

@@ -94,6 +94,30 @@ func parseStmt(p *Parser) (Stmt, error) {
 	}
 }
 
+func parseStmtBlock(p *Parser) (StmtBlock, error) {
+	if p.peekTokenIsNot(lexer.BraceL) {
+		return StmtBlock{}, fmt.Errorf("expected left brace")
+	}
+
+	left := p.lexer.Next()
+	stmts := []Stmt{}
+	for p.peekTokenIsNot(lexer.BraceR) && p.peekTokenIsNot(lexer.EOF) && p.peekTokenIsNot(lexer.Error) {
+		stmt, err := parseStmt(p)
+		if err != nil {
+			return StmtBlock{}, err
+		}
+
+		stmts = append(stmts, stmt)
+	}
+
+	if p.peekTokenIsNot(lexer.BraceR) {
+		return StmtBlock{}, fmt.Errorf("expected right brace")
+	}
+
+	right := p.lexer.Next()
+	return StmtBlock{left, stmts, right}, nil
+}
+
 func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	if p.peekTokenIsNot(lexer.Let) {
 		return nil, fmt.Errorf("expected LET keyword")
