@@ -18,24 +18,9 @@ const (
 
 // Token is a basic syntactic unit
 type Token struct {
-	typ    Type
-	lexeme string
-	loc    Loc
-}
-
-// Type returns the Token classification
-func (t Token) Type() Type {
-	return t.typ
-}
-
-// Lexeme returns the Token lexeme string
-func (t Token) Lexeme() string {
-	return t.lexeme
-}
-
-// Loc returns the Token Loc struct
-func (t Token) Loc() Loc {
-	return t.loc
+	Type   Type
+	Lexeme string
+	Loc    Loc
 }
 
 // Lexer contains methods for generating a sequence of Tokens

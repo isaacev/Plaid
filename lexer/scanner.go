@@ -6,12 +6,12 @@ import (
 
 // Loc corresponds to a line & column location within source code
 type Loc struct {
-	line int
-	col  int
+	Line int
+	Col  int
 }
 
 func (l Loc) String() string {
-	return fmt.Sprintf("(%d:%d)", l.line, l.col)
+	return fmt.Sprintf("(%d:%d)", l.Line, l.Col)
 }
 
 // Char maps a character to that character's line & column within source code

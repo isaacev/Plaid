@@ -113,7 +113,7 @@ func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
 	scanner := Scan(source)
 	got := fn(scanner)
 
-	if got.typ == Error {
+	if got.Type == Error {
 		if msg != formatErrorMessage(got) {
 			t.Errorf("Expected syntax error '%s', got '%s'\n", msg, formatErrorMessage(got))
 		}
@@ -123,17 +123,17 @@ func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
 }
 
 func expectToken(t *testing.T, exp Token, got Token) {
-	if exp.typ != got.typ {
-		t.Errorf("Expected Token.typ %s, got %s\n", exp.typ, got.typ)
+	if exp.Type != got.Type {
+		t.Errorf("Expected Token.Type %s, got %s\n", exp.Type, got.Type)
 	}
 
-	if exp.lexeme != got.lexeme {
-		t.Errorf("Expected Token.lexeme '%s', got '%s'\n", exp.lexeme, got.lexeme)
+	if exp.Lexeme != got.Lexeme {
+		t.Errorf("Expected Token.Lexeme '%s', got '%s'\n", exp.Lexeme, got.Lexeme)
 	}
 
-	expectLoc(t, exp.loc, got.loc)
+	expectLoc(t, exp.Loc, got.Loc)
 }
 
 func formatErrorMessage(tok Token) string {
-	return fmt.Sprintf("%s %s", tok.loc, tok.lexeme)
+	return fmt.Sprintf("%s %s", tok.Loc, tok.Lexeme)
 }
