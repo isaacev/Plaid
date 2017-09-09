@@ -152,6 +152,8 @@ func (fp FunctionParam) String() string {
 	return fp.name.String()
 }
 
+func (fp FunctionParam) isNode() {}
+
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	oper  string
