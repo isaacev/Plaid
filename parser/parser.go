@@ -76,13 +76,26 @@ func Parse(l *lexer.Lexer) *Parser {
 	parser.registerPrefix(lexer.Dash, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 	parser.registerPrefix(lexer.Number, parseNumber)
+}
+
+func parseProgram(p *Parser) (Program, error) {
+	stmts := []Stmt{}
 
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
 	parser.registerPostfix(lexer.Dash, parseInfix, Sum)
 	parser.registerPostfix(lexer.Star, parseInfix, Product)
 	parser.registerPostfix(lexer.Slash, parseInfix, Product)
+	for p.peekTokenIsNot(lexer.Error) && p.peekTokenIsNot(lexer.EOF) {
+		stmt, err := parseStmt(p)
+		if err != nil {
+			return Program{}, err
+		}
+
+		stmts = append(stmts, stmt)
+	}
 
 	return parser
+	return Program{stmts}, nil
 }
 
 func parseStmt(p *Parser) (Stmt, error) {
