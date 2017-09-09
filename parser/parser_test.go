@@ -96,7 +96,7 @@ func TestParseProgram(t *testing.T) {
 	p = makeParser("let a = 123; let b := 456;")
 	loadGrammar(p)
 	prog, err = parseProgram(p)
-	expectAnError(t, "expected :=", prog, err)
+	expectAnError(t, "(1:7) expected :=", prog, err)
 }
 
 func TestParseStmt(t *testing.T) {
@@ -115,7 +115,7 @@ func TestParseStmt(t *testing.T) {
 	}
 
 	expectStmt("let a := 123;", "(let a 123)")
-	expectStmtError("123 + 456", "expected start of statement")
+	expectStmtError("123 + 456", "(1:1) expected start of statement")
 }
 
 func TestParseStmtBlock(t *testing.T) {
@@ -134,9 +134,9 @@ func TestParseStmtBlock(t *testing.T) {
 	}
 
 	expectStmtBlock("{ let a := 123; }", "{\n  (let a 123)}")
-	expectStmtBlockError("let a := 123; }", "expected left brace")
-	expectStmtBlockError("{ let a := 123 }", "expected semicolon")
-	expectStmtBlockError("{ let a := 123;", "expected right brace")
+	expectStmtBlockError("let a := 123; }", "(1:1) expected left brace")
+	expectStmtBlockError("{ let a := 123 }", "(1:16) expected semicolon")
+	expectStmtBlockError("{ let a := 123;", "(1:15) expected right brace")
 }
 
 func TestParseDeclarationStmt(t *testing.T) {
@@ -148,27 +148,27 @@ func TestParseDeclarationStmt(t *testing.T) {
 	p = makeParser("a := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
-	expectAnError(t, "expected LET keyword", stmt, err)
+	expectAnError(t, "(1:1) expected LET keyword", stmt, err)
 
 	p = makeParser("let 0 := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
-	expectAnError(t, "expected identifier", stmt, err)
+	expectAnError(t, "(1:5) expected identifier", stmt, err)
 
 	p = makeParser("let a = 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
-	expectAnError(t, "expected :=", stmt, err)
+	expectAnError(t, "(1:7) expected :=", stmt, err)
 
 	p = makeParser("let a :=;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
-	expectAnError(t, "unexpected symbol", stmt, err)
+	expectAnError(t, "(1:9) unexpected symbol", stmt, err)
 
 	p = makeParser("let a := 123")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
-	expectAnError(t, "expected semicolon", stmt, err)
+	expectAnError(t, "(1:12) expected semicolon", stmt, err)
 }
 
 func TestParseTypeSig(t *testing.T) {
@@ -181,20 +181,20 @@ func TestParseTypeSig(t *testing.T) {
 	expectTypeSig(t, parseTypeSig, "[Int?]?", "[Int?]?")
 	expectTypeSig(t, parseTypeSig, "[Int]?", "[Int]?")
 
-	expectTypeSigError(t, parseTypeSig, "[?]", "unexpected symbol")
-	expectTypeSigError(t, parseTypeSig, "[Int", "expected right bracket")
-	expectTypeSigError(t, parseTypeSig, "?", "unexpected symbol")
+	expectTypeSigError(t, parseTypeSig, "[?]", "(1:2) unexpected symbol")
+	expectTypeSigError(t, parseTypeSig, "[Int", "(1:4) expected right bracket")
+	expectTypeSigError(t, parseTypeSig, "?", "(1:1) unexpected symbol")
 }
 
 func TestParseTypeIdent(t *testing.T) {
 	expectTypeSig(t, parseTypeIdent, "Int", "Int")
-	expectTypeSigError(t, parseTypeIdent, "123", "expected identifier")
+	expectTypeSigError(t, parseTypeIdent, "123", "(1:1) expected identifier")
 }
 
 func TestParseTypeList(t *testing.T) {
 	expectTypeSig(t, parseTypeList, "[Int]", "[Int]")
-	expectTypeSigError(t, parseTypeList, "Int]", "expected left bracket")
-	expectTypeSigError(t, parseTypeList, "[?]", "unexpected symbol")
+	expectTypeSigError(t, parseTypeList, "Int]", "(1:1) expected left bracket")
+	expectTypeSigError(t, parseTypeList, "[?]", "(1:2) unexpected symbol")
 }
 
 func TestParseTypeOptional(t *testing.T) {
@@ -219,7 +219,7 @@ func TestParseTypeOptional(t *testing.T) {
 	expectTypeOpt(parseTypeIdent, "Int?", "Int?")
 	expectTypeOpt(parseTypeList, "[Int]?", "[Int]?")
 
-	expectTypeOptError(parseTypeIdent, "Int", "expected question mark")
+	expectTypeOptError(parseTypeIdent, "Int", "(1:3) expected question mark")
 }
 
 func TestParseExpr(t *testing.T) {
@@ -233,7 +233,7 @@ func TestParseExpr(t *testing.T) {
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
-	expectAnError(t, "unexpected symbol", expr, err)
+	expectAnError(t, "(1:1) unexpected symbol", expr, err)
 
 	p = makeParser("a + b + c")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
@@ -252,7 +252,7 @@ func TestParseExpr(t *testing.T) {
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
-	expectAnError(t, "unexpected symbol", expr, err)
+	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
 func TestParseInfix(t *testing.T) {
@@ -280,7 +280,7 @@ func TestParseInfix(t *testing.T) {
 	}
 
 	expr, err = parseInfix(parser, left)
-	expectAnError(t, "unexpected symbol", expr, err)
+	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
 func TestParsePostfix(t *testing.T) {
@@ -313,7 +313,7 @@ func TestParsePrefix(t *testing.T) {
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parsePrefix(parser)
-	expectAnError(t, "unexpected symbol", expr, err)
+	expectAnError(t, "(1:1) unexpected symbol", expr, err)
 }
 
 func TestParseGroup(t *testing.T) {
@@ -329,21 +329,21 @@ func TestParseGroup(t *testing.T) {
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parseGroup(parser)
-	expectAnError(t, "expected left paren", expr, err)
+	expectAnError(t, "(1:1) expected left paren", expr, err)
 
 	parser = makeParser("(")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parseGroup(parser)
-	expectAnError(t, "unexpected symbol", expr, err)
+	expectAnError(t, "(1:1) unexpected symbol", expr, err)
 
 	parser = makeParser("(a")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parseGroup(parser)
-	expectAnError(t, "expected right paren", expr, err)
+	expectAnError(t, "(1:2) expected right paren", expr, err)
 }
 
 func TestParseIdent(t *testing.T) {
@@ -355,7 +355,7 @@ func TestParseIdent(t *testing.T) {
 	parser = makeParser("123")
 
 	expr, err = parseIdent(parser)
-	expectAnError(t, "expected identifier", expr, err)
+	expectAnError(t, "(1:1) expected identifier", expr, err)
 }
 
 func TestParseNumber(t *testing.T) {
@@ -367,11 +367,11 @@ func TestParseNumber(t *testing.T) {
 	parser = makeParser("abc")
 
 	expr, err = parseNumber(parser)
-	expectAnError(t, "expected number literal", expr, err)
+	expectAnError(t, "(1:1) expected number literal", expr, err)
 
 	loc := lexer.Loc{Line: 1, Col: 1}
 	expr, err = evalNumber(lexer.Token{Type: lexer.Number, Lexeme: "abc", Loc: loc})
-	expectAnError(t, "malformed number literal", expr, err)
+	expectAnError(t, "(1:1) malformed number literal", expr, err)
 }
 
 type typeSigParser func(p *Parser) (TypeSig, error)

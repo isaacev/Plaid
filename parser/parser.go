@@ -13,7 +13,7 @@ type SyntaxError struct {
 }
 
 func (se SyntaxError) Error() string {
-	return fmt.Sprintf("%s", se.msg)
+	return fmt.Sprintf("%s %s", se.loc, se.msg)
 }
 
 // Precedence describes the relative binding powers of different operators
