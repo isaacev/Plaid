@@ -151,6 +151,67 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	return DeclarationStmt{tok, name, expr}, nil
 }
 
+func parseTypeSig(p *Parser) (TypeSig, error) {
+	var child TypeSig
+	var err error
+
+	switch p.lexer.Peek().Type {
+	case lexer.Ident:
+		child, err = parseTypeIdent(p)
+	case lexer.BracketL:
+		child, err = parseTypeList(p)
+	default:
+		return nil, fmt.Errorf("unexpected symbol")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for p.lexer.Peek().Type == lexer.Question {
+		child, _ = parseTypeOptional(p, child)
+	}
+
+	return child, nil
+}
+
+func parseTypeIdent(p *Parser) (TypeSig, error) {
+	if p.peekTokenIsNot(lexer.Ident) {
+		return nil, fmt.Errorf("expected identifier")
+	}
+
+	tok := p.lexer.Next()
+	return TypeIdent{tok, tok.Lexeme}, nil
+}
+
+func parseTypeList(p *Parser) (TypeSig, error) {
+	if p.peekTokenIsNot(lexer.BracketL) {
+		return nil, fmt.Errorf("expected left bracket")
+	}
+
+	tok := p.lexer.Next()
+	child, err := parseTypeSig(p)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.peekTokenIsNot(lexer.BracketR) {
+		return nil, fmt.Errorf("expected right bracket")
+	}
+
+	p.lexer.Next()
+	return TypeList{tok, child}, nil
+}
+
+func parseTypeOptional(p *Parser, child TypeSig) (TypeSig, error) {
+	if p.peekTokenIsNot(lexer.Question) {
+		return nil, fmt.Errorf("expected question mark")
+	}
+
+	tok := p.lexer.Next()
+	return TypeOptional{tok, child}, nil
+}
+
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	prefix, exists := p.prefixParseFuncs[p.lexer.Peek().Type]
 	if exists == false {

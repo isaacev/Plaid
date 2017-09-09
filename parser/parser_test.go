@@ -153,6 +153,55 @@ func TestParseDeclarationStmt(t *testing.T) {
 	expectAnError(t, "expected semicolon", stmt, err)
 }
 
+func TestParseTypeSig(t *testing.T) {
+	expectTypeSig(t, parseTypeSig, "Int", "Int")
+	expectTypeSig(t, parseTypeSig, "[Int]", "[Int]")
+	expectTypeSig(t, parseTypeSig, "Int?", "Int?")
+	expectTypeSig(t, parseTypeSig, "Int??", "Int??")
+	expectTypeSig(t, parseTypeSig, "Int???", "Int???")
+	expectTypeSig(t, parseTypeSig, "[Int?]", "[Int?]")
+	expectTypeSig(t, parseTypeSig, "[Int?]?", "[Int?]?")
+	expectTypeSig(t, parseTypeSig, "[Int]?", "[Int]?")
+
+	expectTypeSigError(t, parseTypeSig, "[?]", "unexpected symbol")
+	expectTypeSigError(t, parseTypeSig, "[Int", "expected right bracket")
+	expectTypeSigError(t, parseTypeSig, "?", "unexpected symbol")
+}
+
+func TestParseTypeIdent(t *testing.T) {
+	expectTypeSig(t, parseTypeIdent, "Int", "Int")
+	expectTypeSigError(t, parseTypeIdent, "123", "expected identifier")
+}
+
+func TestParseTypeList(t *testing.T) {
+	expectTypeSig(t, parseTypeList, "[Int]", "[Int]")
+	expectTypeSigError(t, parseTypeList, "Int]", "expected left bracket")
+	expectTypeSigError(t, parseTypeList, "[?]", "unexpected symbol")
+}
+
+func TestParseTypeOptional(t *testing.T) {
+	expectTypeOpt := func(fn typeSigParser, source string, ast string) {
+		p := Parse(lexer.Lex(lexer.Scan(source)))
+		sig, err := fn(p)
+		expectNoErrors(t, sig.String(), sig, err)
+		sig, err = parseTypeOptional(p, sig)
+		expectNoErrors(t, ast, sig, err)
+	}
+
+	expectTypeOptError := func(fn typeSigParser, source string, msg string) {
+		p := Parse(lexer.Lex(lexer.Scan(source)))
+		sig, err := fn(p)
+		expectNoErrors(t, sig.String(), sig, err)
+		sig, err = parseTypeOptional(p, sig)
+		expectAnError(t, msg, sig, err)
+	}
+
+	expectTypeOpt(parseTypeIdent, "Int?", "Int?")
+	expectTypeOpt(parseTypeList, "[Int]?", "[Int]?")
+
+	expectTypeOptError(parseTypeIdent, "Int", "expected question mark")
+}
+
 func TestParseExpr(t *testing.T) {
 	p := makeParser("+a")
 	p.registerPrefix(lexer.Plus, parsePrefix)
@@ -312,6 +361,20 @@ func makeParser(source string) *Parser {
 		make(map[lexer.Type]PrefixParseFunc),
 		make(map[lexer.Type]PostfixParseFunc),
 	}
+}
+
+type typeSigParser func(p *Parser) (TypeSig, error)
+
+func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
+	p := Parse(lexer.Lex(lexer.Scan(source)))
+	sig, err := fn(p)
+	expectNoErrors(t, ast, sig, err)
+}
+
+func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg string) {
+	p := Parse(lexer.Lex(lexer.Scan(source)))
+	sig, err := fn(p)
+	expectAnError(t, msg, sig, err)
 }
 
 func expectNoErrors(t *testing.T, ast string, node Node, err error) {
