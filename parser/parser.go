@@ -65,7 +65,7 @@ func (p *Parser) peekPrecedence() Precedence {
 // Parse initializers a parser and defines the grammar precedence levels
 func Parse(source string) (Program, error) {
 	p := makeParser(source)
-	configParser(p)
+	loadGrammar(p)
 	return parseProgram(p)
 }
 
@@ -82,7 +82,7 @@ func makeParser(source string) *Parser {
 	return p
 }
 
-func configParser(p *Parser) {
+func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.ParenL, parseGroup)
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Dash, parsePrefix)

@@ -66,14 +66,14 @@ func TestPeekPrecedence(t *testing.T) {
 func TestParseStmt(t *testing.T) {
 	expectStmt := func(source string, ast string) {
 		parser := makeParser(source)
-		configParser(parser)
+		loadGrammar(parser)
 		stmt, err := parseStmt(parser)
 		expectNoErrors(t, ast, stmt, err)
 	}
 
 	expectStmtError := func(source string, msg string) {
 		parser := makeParser(source)
-		configParser(parser)
+		loadGrammar(parser)
 		stmt, err := parseStmt(parser)
 		expectAnError(t, msg, stmt, err)
 	}
@@ -85,14 +85,14 @@ func TestParseStmt(t *testing.T) {
 func TestParseStmtBlock(t *testing.T) {
 	expectStmtBlock := func(source string, ast string) {
 		parser := makeParser(source)
-		configParser(parser)
+		loadGrammar(parser)
 		block, err := parseStmtBlock(parser)
 		expectNoErrors(t, ast, block, err)
 	}
 
 	expectStmtBlockError := func(source string, msg string) {
 		parser := makeParser(source)
-		configParser(parser)
+		loadGrammar(parser)
 		block, err := parseStmtBlock(parser)
 		expectAnError(t, msg, block, err)
 	}
@@ -164,7 +164,7 @@ func TestParseTypeList(t *testing.T) {
 func TestParseTypeOptional(t *testing.T) {
 	expectTypeOpt := func(fn typeSigParser, source string, ast string) {
 		p := makeParser(source)
-		configParser(p)
+		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
 		sig, err = parseTypeOptional(p, sig)
@@ -173,7 +173,7 @@ func TestParseTypeOptional(t *testing.T) {
 
 	expectTypeOptError := func(fn typeSigParser, source string, msg string) {
 		p := makeParser(source)
-		configParser(p)
+		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
 		sig, err = parseTypeOptional(p, sig)
@@ -342,14 +342,14 @@ type typeSigParser func(p *Parser) (TypeSig, error)
 
 func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
 	p := makeParser(source)
-	configParser(p)
+	loadGrammar(p)
 	sig, err := fn(p)
 	expectNoErrors(t, ast, sig, err)
 }
 
 func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg string) {
 	p := makeParser(source)
-	configParser(p)
+	loadGrammar(p)
 	sig, err := fn(p)
 	expectAnError(t, msg, sig, err)
 }
