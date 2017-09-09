@@ -110,7 +110,7 @@ func loadGrammar(p *Parser) {
 func parseProgram(p *Parser) (Program, error) {
 	stmts := []Stmt{}
 
-	for p.peekTokenIsNot(lexer.Error) && p.peekTokenIsNot(lexer.EOF) {
+	for p.peekTokenIsNot(lexer.Error, lexer.EOF) {
 		stmt, err := parseStmt(p)
 		if err != nil {
 			return Program{}, err
@@ -138,7 +138,7 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 
 	left := p.lexer.Next()
 	stmts := []Stmt{}
-	for p.peekTokenIsNot(lexer.BraceR) && p.peekTokenIsNot(lexer.EOF) && p.peekTokenIsNot(lexer.Error) {
+	for p.peekTokenIsNot(lexer.BraceR, lexer.EOF, lexer.Error) {
 		stmt, err := parseStmt(p)
 		if err != nil {
 			return StmtBlock{}, err
