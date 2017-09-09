@@ -140,7 +140,13 @@ type FunctionParam struct {
 	sig  TypeSig
 }
 
-func (fp FunctionParam) String() string { return fmt.Sprintf("%s:%s", fp.name, fp.sig) }
+func (fp FunctionParam) String() string {
+	if fp.sig != nil {
+		return fmt.Sprintf("%s:%s", fp.name, fp.sig)
+	}
+
+	return fp.name.String()
+}
 
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {

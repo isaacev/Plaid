@@ -64,7 +64,7 @@ func TestFunctionExpr(t *testing.T) {
 
 	params := []FunctionParam{
 		FunctionParam{IdentExpr{tok, "x"}, TypeIdent{tok, "Int"}},
-		FunctionParam{IdentExpr{tok, "y"}, TypeIdent{tok, "Bool"}},
+		FunctionParam{IdentExpr{tok, "y"}, nil},
 	}
 	ret := TypeIdent{tok, "Str"}
 	block := StmtBlock{tok, []Stmt{
