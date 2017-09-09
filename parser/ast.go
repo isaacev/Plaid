@@ -111,6 +111,37 @@ type Expr interface {
 	isExpr()
 }
 
+// FunctionExpr describes a function's entire type signature and body
+type FunctionExpr struct {
+	tok    lexer.Token
+	params []FunctionParam
+	ret    TypeSig
+	block  StmtBlock
+}
+
+func (fe FunctionExpr) String() string {
+	out := "(fn ("
+	for i, param := range fe.params {
+		if i > 0 {
+			out += " "
+		}
+		out += param.String()
+	}
+	out += fmt.Sprintf("):%s %s)", fe.ret, fe.block)
+	return out
+}
+
+func (fe FunctionExpr) isExpr() {}
+func (fe FunctionExpr) isNode() {}
+
+// FunctionParam describes a single function argument's name and type signature
+type FunctionParam struct {
+	name IdentExpr
+	sig  TypeSig
+}
+
+func (fp FunctionParam) String() string { return fmt.Sprintf("%s:%s", fp.name, fp.sig) }
+
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	oper  string

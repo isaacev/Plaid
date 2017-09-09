@@ -58,6 +58,22 @@ func TestTypeOptional(t *testing.T) {
 	expectString(t, TypeOptional{tok, TypeIdent{tok, "Int"}}, "Int?")
 }
 
+func TestFunctionExpr(t *testing.T) {
+	(FunctionExpr{}).isNode()
+	(FunctionExpr{}).isExpr()
+
+	params := []FunctionParam{
+		FunctionParam{IdentExpr{tok, "x"}, TypeIdent{tok, "Int"}},
+		FunctionParam{IdentExpr{tok, "y"}, TypeIdent{tok, "Bool"}},
+	}
+	ret := TypeIdent{tok, "Str"}
+	block := StmtBlock{tok, []Stmt{
+		DeclarationStmt{tok, IdentExpr{tok, "z"}, NumberExpr{tok, 123}},
+	}, tok}
+
+	expectString(t, FunctionExpr{tok, params, ret, block}, "(fn (x:Int y:Bool):Str {\n  (let z 123)})")
+}
+
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()
