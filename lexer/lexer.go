@@ -5,27 +5,29 @@ type Type string
 
 // Token classifications
 const (
-	Error  Type = "Error"
-	EOF         = "EOF"
-	Plus        = "+"
-	Dash        = "-"
-	Star        = "*"
-	Slash       = "/"
-	Semi        = ";"
-	ParenL      = "("
-	ParenR      = ")"
-	BraceL      = "{"
-	BraceR      = "}"
-	Colon       = ":"
-	Assign      = ":="
-	Arrow       = "=>"
-	Fn          = "fn"
-	If          = "if"
-	Let         = "let"
-	Return      = "return"
-	Ident       = "Ident"
-	Number      = "Number"
-	String      = "String"
+	Error    Type = "Error"
+	EOF           = "EOF"
+	Plus          = "+"
+	Dash          = "-"
+	Star          = "*"
+	Slash         = "/"
+	Semi          = ";"
+	ParenL        = "("
+	ParenR        = ")"
+	BraceL        = "{"
+	BraceR        = "}"
+	BracketL      = "["
+	BracketR      = "]"
+	Colon         = ":"
+	Assign        = ":="
+	Arrow         = "=>"
+	Fn            = "fn"
+	If            = "if"
+	Let           = "let"
+	Return        = "return"
+	Ident         = "Ident"
+	Number        = "Number"
+	String        = "String"
 )
 
 // Token is a basic syntactic unit
@@ -105,6 +107,10 @@ func isBrace(r rune) bool {
 	return (r == '{') || (r == '}')
 }
 
+func isBracket(r rune) bool {
+	return (r == '[') || (r == ']')
+}
+
 func isLetter(r rune) bool {
 	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z')
 }
@@ -129,6 +135,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatParenToken(scanner)
 	case isBrace(peek.char):
 		return eatBraceToken(scanner)
+	case isBracket(peek.char):
+		return eatBracketToken(scanner)
 	case isLetter(peek.char):
 		return eatWordToken(scanner)
 	case isDigit(peek.char):
@@ -211,6 +219,17 @@ func eatBraceToken(scanner *Scanner) Token {
 		return Token{BraceR, "}", scanner.Next().loc}
 	default:
 		return Token{Error, "expected brace", scanner.Next().loc}
+	}
+}
+
+func eatBracketToken(scanner *Scanner) Token {
+	switch scanner.Peek().char {
+	case '[':
+		return Token{BracketL, "[", scanner.Next().loc}
+	case ']':
+		return Token{BracketR, "]", scanner.Next().loc}
+	default:
+		return Token{Error, "expected bracket", scanner.Next().loc}
 	}
 }
 
