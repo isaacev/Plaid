@@ -127,7 +127,11 @@ func (fe FunctionExpr) String() string {
 		}
 		out += param.String()
 	}
-	out += fmt.Sprintf("):%s %s)", fe.ret, fe.block)
+	out += ")"
+	if fe.ret != nil {
+		out += fmt.Sprintf(":%s", fe.ret)
+	}
+	out += fmt.Sprintf(" %s)", fe.block)
 	return out
 }
 
