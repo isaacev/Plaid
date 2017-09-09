@@ -71,7 +71,7 @@ func TestFunctionExpr(t *testing.T) {
 		DeclarationStmt{tok, IdentExpr{tok, "z"}, NumberExpr{tok, 123}},
 	}, tok}
 
-	expectString(t, FunctionExpr{tok, params, ret, block}, "(fn (x:Int y:Bool):Str {\n  (let z 123)})")
+	expectString(t, FunctionExpr{tok, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
 }
 
 func TestBinaryExpr(t *testing.T) {
