@@ -217,6 +217,7 @@ func TestParseTypeSig(t *testing.T) {
 	expectTypeSig(t, parseTypeSig, "[Int?]", "[Int?]")
 	expectTypeSig(t, parseTypeSig, "[Int?]?", "[Int?]?")
 	expectTypeSig(t, parseTypeSig, "[Int]?", "[Int]?")
+	expectTypeSig(t, parseTypeSig, "([Int]?, Bool)", "([Int]? Bool)")
 
 	expectTypeSigError(t, parseTypeSig, "[?]", "(1:2) unexpected symbol")
 	expectTypeSigError(t, parseTypeSig, "[Int", "(1:4) expected right bracket")
