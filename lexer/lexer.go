@@ -13,6 +13,7 @@ const (
 	Slash         = "/"
 	Question      = "?"
 	Semi          = ";"
+	Comma         = ","
 	ParenL        = "("
 	ParenR        = ")"
 	BraceL        = "{"
@@ -102,6 +103,10 @@ func isSemicolon(r rune) bool {
 	return (r == ';')
 }
 
+func isComma(r rune) bool {
+	return (r == ',')
+}
+
 func isParen(r rune) bool {
 	return (r == '(') || (r == ')')
 }
@@ -134,6 +139,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatOperatorToken(scanner)
 	case isSemicolon(peek.char):
 		return eatSemicolonToken(scanner)
+	case isComma(peek.char):
+		return eatCommaToken(scanner)
 	case isParen(peek.char):
 		return eatParenToken(scanner)
 	case isBrace(peek.char):
@@ -203,6 +210,14 @@ func eatSemicolonToken(scanner *Scanner) Token {
 	}
 
 	return Token{Semi, ";", scanner.Next().loc}
+}
+
+func eatCommaToken(scanner *Scanner) Token {
+	if scanner.Peek().char != ',' {
+		return Token{Error, "expected comma", scanner.Next().loc}
+	}
+
+	return Token{Comma, ",", scanner.Next().loc}
 }
 
 func eatParenToken(scanner *Scanner) Token {

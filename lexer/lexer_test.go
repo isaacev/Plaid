@@ -73,6 +73,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "/", Token{Slash, "/", Loc{1, 1}})
 	expectLexer(t, eatToken, "?", Token{Question, "?", Loc{1, 1}})
 	expectLexer(t, eatToken, ";", Token{Semi, ";", Loc{1, 1}})
+	expectLexer(t, eatToken, ",", Token{Comma, ",", Loc{1, 1}})
 	expectLexer(t, eatToken, "(", Token{ParenL, "(", Loc{1, 1}})
 	expectLexer(t, eatToken, ")", Token{ParenR, ")", Loc{1, 1}})
 	expectLexer(t, eatToken, "{", Token{BraceL, "{", Loc{1, 1}})
@@ -107,6 +108,12 @@ func TestEatSemicolonToken(t *testing.T) {
 	expectLexer(t, eatSemicolonToken, ";", Token{Semi, ";", Loc{1, 1}})
 
 	expectLexerError(t, eatSemicolonToken, "@", "(1:1) expected semicolon")
+}
+
+func TestEatCommaToken(t *testing.T) {
+	expectLexer(t, eatCommaToken, ",", Token{Comma, ",", Loc{1, 1}})
+
+	expectLexerError(t, eatCommaToken, "@", "(1:1) expected comma")
 }
 
 func TestEatParen(t *testing.T) {
