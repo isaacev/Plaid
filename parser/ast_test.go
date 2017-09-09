@@ -24,6 +24,27 @@ func TestDeclarationStmt(t *testing.T) {
 	expectString(t, DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}}, "(let a 123)")
 }
 
+func TestTypeIdent(t *testing.T) {
+	(TypeIdent{}).isNode()
+	(TypeIdent{}).isType()
+
+	expectString(t, TypeIdent{tok, "Int"}, "Int")
+}
+
+func TestTypeList(t *testing.T) {
+	(TypeList{}).isNode()
+	(TypeList{}).isType()
+
+	expectString(t, TypeList{tok, TypeIdent{tok, "Int"}}, "[Int]")
+}
+
+func TestTypeOptional(t *testing.T) {
+	(TypeOptional{}).isNode()
+	(TypeOptional{}).isType()
+
+	expectString(t, TypeOptional{tok, TypeIdent{tok, "Int"}}, "Int?")
+}
+
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()

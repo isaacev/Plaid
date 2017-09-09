@@ -48,6 +48,43 @@ func (ds DeclarationStmt) String() string { return fmt.Sprintf("(let %s %s)", ds
 func (ds DeclarationStmt) isNode()        {}
 func (ds DeclarationStmt) isStmt()        {}
 
+// TypeSig describes a syntax type annotation
+type TypeSig interface {
+	String() string
+	isNode()
+	isType()
+}
+
+// TypeIdent describes a named reference to a type
+type TypeIdent struct {
+	tok  lexer.Token
+	name string
+}
+
+func (ti TypeIdent) String() string { return ti.name }
+func (ti TypeIdent) isNode()        {}
+func (ti TypeIdent) isType()        {}
+
+// TypeList describes a list type
+type TypeList struct {
+	tok   lexer.Token
+	child TypeSig
+}
+
+func (tl TypeList) String() string { return fmt.Sprintf("[%s]", tl.child) }
+func (tl TypeList) isNode()        {}
+func (tl TypeList) isType()        {}
+
+// TypeOptional describes a list type
+type TypeOptional struct {
+	tok   lexer.Token
+	child TypeSig
+}
+
+func (to TypeOptional) String() string { return fmt.Sprintf("%s?", to.child) }
+func (to TypeOptional) isNode()        {}
+func (to TypeOptional) isType()        {}
+
 // Expr describes all constructs that resolve to a value
 type Expr interface {
 	String() string
