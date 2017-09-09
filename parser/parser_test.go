@@ -98,7 +98,7 @@ func TestPeekPrecedence(t *testing.T) {
 	}
 }
 
-func TestParseFunction(t *testing.T) {
+func TestParse(t *testing.T) {
 	prog, err := Parse("let a := 123; let b := 456;")
 	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
 }
