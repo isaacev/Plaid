@@ -6,6 +6,16 @@ import (
 	"strconv"
 )
 
+// SyntaxError combines a source code location with the resulting error message
+type SyntaxError struct {
+	loc lexer.Loc
+	msg string
+}
+
+func (se SyntaxError) Error() string {
+	return fmt.Sprintf("%s", se.msg)
+}
+
 // Precedence describes the relative binding powers of different operators
 type Precedence int
 
@@ -127,13 +137,13 @@ func parseStmt(p *Parser) (Stmt, error) {
 	case lexer.Let:
 		return parseDeclarationStmt(p)
 	default:
-		return nil, fmt.Errorf("expected start of statement")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected start of statement"}
 	}
 }
 
 func parseStmtBlock(p *Parser) (StmtBlock, error) {
 	if p.peekTokenIsNot(lexer.BraceL) {
-		return StmtBlock{}, fmt.Errorf("expected left brace")
+		return StmtBlock{}, SyntaxError{p.lexer.Peek().Loc, "expected left brace"}
 	}
 
 	left := p.lexer.Next()
@@ -148,7 +158,7 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 	}
 
 	if p.peekTokenIsNot(lexer.BraceR) {
-		return StmtBlock{}, fmt.Errorf("expected right brace")
+		return StmtBlock{}, SyntaxError{p.lexer.Peek().Loc, "expected right brace"}
 	}
 
 	right := p.lexer.Next()
@@ -157,7 +167,7 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 
 func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	if p.peekTokenIsNot(lexer.Let) {
-		return nil, fmt.Errorf("expected LET keyword")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected LET keyword"}
 	}
 
 	tok := p.lexer.Next()
@@ -170,7 +180,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	name := expr.(IdentExpr)
 
 	if p.peekTokenIsNot(lexer.Assign) {
-		return nil, fmt.Errorf("expected :=")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected :="}
 	}
 
 	p.lexer.Next()
@@ -181,7 +191,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	}
 
 	if p.peekTokenIsNot(lexer.Semi) {
-		return nil, fmt.Errorf("expected semicolon")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected semicolon"}
 	}
 
 	p.lexer.Next()
@@ -198,7 +208,7 @@ func parseTypeSig(p *Parser) (TypeSig, error) {
 	case lexer.BracketL:
 		child, err = parseTypeList(p)
 	default:
-		return nil, fmt.Errorf("unexpected symbol")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "unexpected symbol"}
 	}
 
 	if err != nil {
@@ -214,7 +224,7 @@ func parseTypeSig(p *Parser) (TypeSig, error) {
 
 func parseTypeIdent(p *Parser) (TypeSig, error) {
 	if p.peekTokenIsNot(lexer.Ident) {
-		return nil, fmt.Errorf("expected identifier")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected identifier"}
 	}
 
 	tok := p.lexer.Next()
@@ -223,7 +233,7 @@ func parseTypeIdent(p *Parser) (TypeSig, error) {
 
 func parseTypeList(p *Parser) (TypeSig, error) {
 	if p.peekTokenIsNot(lexer.BracketL) {
-		return nil, fmt.Errorf("expected left bracket")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected left bracket"}
 	}
 
 	tok := p.lexer.Next()
@@ -233,7 +243,7 @@ func parseTypeList(p *Parser) (TypeSig, error) {
 	}
 
 	if p.peekTokenIsNot(lexer.BracketR) {
-		return nil, fmt.Errorf("expected right bracket")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected right bracket"}
 	}
 
 	p.lexer.Next()
@@ -242,7 +252,7 @@ func parseTypeList(p *Parser) (TypeSig, error) {
 
 func parseTypeOptional(p *Parser, child TypeSig) (TypeSig, error) {
 	if p.peekTokenIsNot(lexer.Question) {
-		return nil, fmt.Errorf("expected question mark")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected question mark"}
 	}
 
 	tok := p.lexer.Next()
@@ -252,7 +262,7 @@ func parseTypeOptional(p *Parser, child TypeSig) (TypeSig, error) {
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	prefix, exists := p.prefixParseFuncs[p.lexer.Peek().Type]
 	if exists == false {
-		return nil, fmt.Errorf("unexpected symbol")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "unexpected symbol"}
 	}
 
 	left, err := prefix(p)
@@ -304,7 +314,7 @@ func parsePrefix(p *Parser) (Expr, error) {
 
 func parseGroup(p *Parser) (Expr, error) {
 	if p.peekTokenIsNot(lexer.ParenL) {
-		return nil, fmt.Errorf("expected left paren")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected left paren"}
 	}
 
 	p.lexer.Next()
@@ -314,7 +324,7 @@ func parseGroup(p *Parser) (Expr, error) {
 	}
 
 	if p.peekTokenIsNot(lexer.ParenR) {
-		return nil, fmt.Errorf("expected right paren")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected right paren"}
 	}
 
 	p.lexer.Next()
@@ -323,7 +333,7 @@ func parseGroup(p *Parser) (Expr, error) {
 
 func parseIdent(p *Parser) (Expr, error) {
 	if p.peekTokenIsNot(lexer.Ident) {
-		return nil, fmt.Errorf("expected identifier")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected identifier"}
 	}
 
 	tok := p.lexer.Next()
@@ -332,7 +342,7 @@ func parseIdent(p *Parser) (Expr, error) {
 
 func parseNumber(p *Parser) (Expr, error) {
 	if p.peekTokenIsNot(lexer.Number) {
-		return nil, fmt.Errorf("expected number literal")
+		return nil, SyntaxError{p.lexer.Peek().Loc, "expected number literal"}
 	}
 
 	tok := p.lexer.Next()
@@ -342,7 +352,7 @@ func parseNumber(p *Parser) (Expr, error) {
 func evalNumber(tok lexer.Token) (NumberExpr, error) {
 	val, err := strconv.ParseUint(tok.Lexeme, 10, 64)
 	if err != nil {
-		return NumberExpr{}, fmt.Errorf("malformed number literal")
+		return NumberExpr{}, SyntaxError{tok.Loc, "malformed number literal"}
 	}
 
 	return NumberExpr{tok, int(val)}, nil
