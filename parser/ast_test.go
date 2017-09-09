@@ -7,6 +7,19 @@ import (
 
 var tok = lexer.Token{}
 
+func TestProgram(t *testing.T) {
+	(Program{}).isNode()
+
+	prog := Program{[]Stmt{
+		DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}},
+		DeclarationStmt{tok, IdentExpr{tok, "b"}, NumberExpr{tok, 456}},
+	}}
+	expectString(t, prog, "(let a 123)\n(let b 456)")
+
+	prog = Program{[]Stmt{}}
+	expectString(t, prog, "")
+}
+
 func TestStmtBlock(t *testing.T) {
 	(StmtBlock{}).isNode()
 

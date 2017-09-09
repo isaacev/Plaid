@@ -18,8 +18,19 @@ type Program struct {
 	stmts []Stmt
 }
 
-func (p Program) String() string { return "" }
-func (p Program) isNode()        {}
+func (p Program) String() string {
+	out := ""
+	for i, stmt := range p.stmts {
+		if i > 0 {
+			out += "\n"
+		}
+
+		out += stmt.String()
+	}
+	return out
+}
+
+func (p Program) isNode() {}
 
 // Stmt describes all constructs that return no value
 type Stmt interface {
