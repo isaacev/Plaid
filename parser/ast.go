@@ -95,6 +95,22 @@ func (tt TypeTuple) String() string {
 func (tt TypeTuple) isNode() {}
 func (tt TypeTuple) isType() {}
 
+// TypeFunction describes a function type annotation
+type TypeFunction struct {
+	params TypeTuple
+	ret    TypeSig
+}
+
+func (tf TypeFunction) String() string {
+	out := tf.params.String()
+	out += " => "
+	out += tf.ret.String()
+	return out
+}
+
+func (tf TypeFunction) isNode() {}
+func (tf TypeFunction) isType() {}
+
 // TypeIdent describes a named reference to a type
 type TypeIdent struct {
 	tok  lexer.Token

@@ -218,6 +218,7 @@ func TestParseTypeSig(t *testing.T) {
 	expectTypeSig(t, parseTypeSig, "[Int?]?", "[Int?]?")
 	expectTypeSig(t, parseTypeSig, "[Int]?", "[Int]?")
 	expectTypeSig(t, parseTypeSig, "([Int]?, Bool)", "([Int]? Bool)")
+	expectTypeSig(t, parseTypeSig, "() => [Int]?", "() => [Int]?")
 
 	expectTypeSigError(t, parseTypeSig, "[?]", "(1:2) unexpected symbol")
 	expectTypeSigError(t, parseTypeSig, "[Int", "(1:4) expected right bracket")
@@ -268,6 +269,18 @@ func TestParseTypeTuple(t *testing.T) {
 	expectTypeSigError(t, parseTypeTuple, "Int)", "(1:1) expected left paren")
 	expectTypeSigError(t, parseTypeTuple, "(123)", "(1:2) unexpected symbol")
 	expectTypeSigError(t, parseTypeTuple, "(Int", "(1:4) expected right paren")
+}
+
+func TestParseTypeFunction(t *testing.T) {
+	expectTypeSig(t, parseTypeTuple, "()=>Nil", "() => Nil")
+	expectTypeSig(t, parseTypeTuple, "(a, b, c)=>[Int]", "(a b c) => [Int]")
+	expectTypeSig(t, parseTypeTuple, "(a, b, c,)=>[Int]", "(a b c) => [Int]")
+	expectTypeSigError(t, parseTypeTuple, "() => 123", "(1:7) unexpected symbol")
+
+	p := makeParser("= > Int")
+	tuple := TypeTuple{tok, []TypeSig{}}
+	sig, err := parseTypeFunction(p, tuple)
+	expectAnError(t, "(1:1) expected arrow", sig, err)
 }
 
 func TestParseExpr(t *testing.T) {

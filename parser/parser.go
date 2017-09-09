@@ -306,7 +306,26 @@ func parseTypeTuple(p *Parser) (TypeSig, error) {
 		return nil, err
 	}
 
-	return TypeTuple{tok, params}, nil
+	tuple := TypeTuple{tok, params}
+	if p.peekTokenIsNot(lexer.Arrow) {
+		return tuple, nil
+	}
+
+	return parseTypeFunction(p, tuple)
+}
+
+func parseTypeFunction(p *Parser, tuple TypeTuple) (TypeSig, error) {
+	_, err := p.expectNextToken(lexer.Arrow, "expected arrow")
+	if err != nil {
+		return nil, err
+	}
+
+	ret, err := parseTypeSig(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return TypeFunction{tuple, ret}, nil
 }
 
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
