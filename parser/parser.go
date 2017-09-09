@@ -35,8 +35,20 @@ type Parser struct {
 	postfixParseFuncs map[lexer.Type]PostfixParseFunc
 }
 
-func (p *Parser) peekTokenIsNot(typ lexer.Type) bool {
-	return (p.lexer.Peek().Type != typ)
+func (p *Parser) peekTokenIsNot(first lexer.Type, rest ...lexer.Type) bool {
+	peek := p.lexer.Peek().Type
+
+	if first == peek {
+		return false
+	}
+
+	for _, other := range rest {
+		if other == peek {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (p *Parser) registerPrecedence(typ lexer.Type, level Precedence) {

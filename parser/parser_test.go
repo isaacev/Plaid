@@ -6,11 +6,30 @@ import (
 )
 
 func TestPeekTokenIsNot(t *testing.T) {
-	parser := makeParser("abc")
+	expectTokenToMatch := func(source string, tests ...lexer.Type) {
+		p := makeParser(source)
+		got := p.peekTokenIsNot(tests[0], tests[1:]...)
 
-	if parser.peekTokenIsNot(lexer.Ident) == true {
-		t.Errorf("Expected Parser.peekTokenIsNot %t, got %t\n", false, true)
+		if got != false {
+			t.Errorf("Expected %t, got %t\n", false, got)
+		}
 	}
+
+	expectTokenToNotMatch := func(source string, tests ...lexer.Type) {
+		p := makeParser(source)
+		got := p.peekTokenIsNot(tests[0], tests[1:]...)
+
+		if got != true {
+			t.Errorf("Expected %t, got %t\n", false, got)
+		}
+	}
+
+	expectTokenToMatch("abc", lexer.Ident)
+	expectTokenToMatch("abc", lexer.Number, lexer.Ident)
+	expectTokenToMatch("123", lexer.Number, lexer.Ident)
+	expectTokenToMatch("", lexer.EOF, lexer.Error)
+	expectTokenToMatch("#", lexer.EOF, lexer.Error)
+	expectTokenToNotMatch("abc", lexer.EOF, lexer.Error)
 }
 
 func TestRegisterPrecedence(t *testing.T) {
