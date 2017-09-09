@@ -74,6 +74,27 @@ type TypeSig interface {
 	isType()
 }
 
+// TypeTuple describes a set of 0 or more types wrapped in parentheses
+type TypeTuple struct {
+	tok   lexer.Token
+	elems []TypeSig
+}
+
+func (tt TypeTuple) String() string {
+	out := "("
+	for i, elem := range tt.elems {
+		if i > 0 {
+			out += " "
+		}
+		out += elem.String()
+	}
+	out += ")"
+	return out
+}
+
+func (tt TypeTuple) isNode() {}
+func (tt TypeTuple) isType() {}
+
 // TypeIdent describes a named reference to a type
 type TypeIdent struct {
 	tok  lexer.Token

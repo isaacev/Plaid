@@ -223,6 +223,8 @@ func parseTypeSig(p *Parser) (TypeSig, error) {
 		child, err = parseTypeIdent(p)
 	case lexer.BracketL:
 		child, err = parseTypeList(p)
+	case lexer.ParenL:
+		child, err = parseTypeTuple(p)
 	default:
 		return nil, makeSyntaxError(p.lexer.Peek(), "unexpected symbol", true)
 	}
@@ -274,6 +276,37 @@ func parseTypeOptional(p *Parser, child TypeSig) (TypeSig, error) {
 	}
 
 	return TypeOptional{tok, child}, nil
+}
+
+func parseTypeTuple(p *Parser) (TypeSig, error) {
+	tok, err := p.expectNextToken(lexer.ParenL, "expected left paren")
+	if err != nil {
+		return nil, err
+	}
+
+	params := []TypeSig{}
+	for p.peekTokenIsNot(lexer.ParenR, lexer.Error, lexer.EOF) {
+		var sig TypeSig
+		sig, err = parseTypeSig(p)
+		if err != nil {
+			return nil, err
+		}
+
+		params = append(params, sig)
+
+		if p.peekTokenIsNot(lexer.Comma) {
+			break
+		} else {
+			p.lexer.Next()
+		}
+	}
+
+	_, err = p.expectNextToken(lexer.ParenR, "expected right paren")
+	if err != nil {
+		return nil, err
+	}
+
+	return TypeTuple{tok, params}, nil
 }
 
 func parseExpr(p *Parser, level Precedence) (Expr, error) {

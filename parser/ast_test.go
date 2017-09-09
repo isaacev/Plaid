@@ -37,6 +37,15 @@ func TestDeclarationStmt(t *testing.T) {
 	expectString(t, DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}}, "(let a 123)")
 }
 
+func TestTypeTuple(t *testing.T) {
+	(TypeTuple{}).isNode()
+	(TypeTuple{}).isType()
+
+	expectString(t, TypeTuple{}, "()")
+	tuple := TypeTuple{tok, []TypeSig{TypeIdent{tok, "Bool"}, TypeOptional{tok, TypeIdent{tok, "Str"}}}}
+	expectString(t, tuple, "(Bool Str?)")
+}
+
 func TestTypeIdent(t *testing.T) {
 	(TypeIdent{}).isNode()
 	(TypeIdent{}).isType()

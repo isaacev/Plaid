@@ -259,6 +259,16 @@ func TestParseTypeOptional(t *testing.T) {
 	expectTypeOptError(parseTypeIdent, "Int", "(1:3) expected question mark")
 }
 
+func TestParseTypeTuple(t *testing.T) {
+	expectTypeSig(t, parseTypeTuple, "()", "()")
+	expectTypeSig(t, parseTypeTuple, "(Int)", "(Int)")
+	expectTypeSig(t, parseTypeTuple, "(Int, Int)", "(Int Int)")
+	expectTypeSig(t, parseTypeTuple, "(Int, Int,)", "(Int Int)")
+	expectTypeSigError(t, parseTypeTuple, "Int)", "(1:1) expected left paren")
+	expectTypeSigError(t, parseTypeTuple, "(123)", "(1:2) unexpected symbol")
+	expectTypeSigError(t, parseTypeTuple, "(Int", "(1:4) expected right paren")
+}
+
 func TestParseExpr(t *testing.T) {
 	p := makeParser("+a")
 	p.registerPrefix(lexer.Plus, parsePrefix)
