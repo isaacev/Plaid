@@ -48,6 +48,27 @@ func TestPeekTokenIsNot(t *testing.T) {
 	expectTokenToNotMatch("abc", lexer.EOF, lexer.Error)
 }
 
+func TestExpectNextToken(t *testing.T) {
+	p := makeParser("foo 123")
+	tok, err := p.expectNextToken(lexer.Ident, "expected an identifier")
+	if err != nil {
+		t.Errorf("Expected no error, got %s\n", err)
+	} else if tok.Type != lexer.Ident {
+		t.Errorf("Expected '%s', got '%s'\n", lexer.Ident, tok.Type)
+	}
+
+	p = makeParser("123 foo")
+	tok, err = p.expectNextToken(lexer.Ident, "expected an identifier")
+	exp := "(1:1) expected an identifier"
+	if err != nil {
+		if err.Error() != exp {
+			t.Errorf("Expected '%s', got '%s'\n", exp, err)
+		}
+	} else if tok.Type != lexer.Ident {
+		t.Errorf("Expected an error, got '%s'\n", tok.Type)
+	}
+}
+
 func TestRegisterPrecedence(t *testing.T) {
 	parser := makeParser("")
 	parser.registerPrecedence(lexer.Ident, Sum)

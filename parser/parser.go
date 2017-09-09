@@ -69,6 +69,15 @@ func (p *Parser) peekTokenIsNot(first lexer.Type, rest ...lexer.Type) bool {
 	return true
 }
 
+func (p *Parser) expectNextToken(which lexer.Type, otherwise string) (lexer.Token, error) {
+	if p.peekTokenIsNot(which) {
+		peek := p.lexer.Peek()
+		return peek, makeSyntaxError(peek, otherwise, false)
+	}
+
+	return p.lexer.Next(), nil
+}
+
 func (p *Parser) registerPrecedence(typ lexer.Type, level Precedence) {
 	p.precedenceTable[typ] = level
 }
