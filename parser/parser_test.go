@@ -63,37 +63,17 @@ func TestPeekPrecedence(t *testing.T) {
 	}
 }
 
-func TestParseInitializer(t *testing.T) {
-	expectParse := func(source string, ast string) {
-		parser := Parse(lexer.Lex(lexer.Scan(source)))
-		if expr, err := parseExpr(parser, Lowest); err != nil {
-			t.Errorf("Expected no errors, got '%s'\n", err)
-		} else {
-			expectAST(t, ast, expr)
-		}
-	}
-
-	expectParse("a + b", "(+ a b)")
-	expectParse("2 + 2", "(+ 2 2)")
-	expectParse("2 + xyz", "(+ 2 xyz)")
-	expectParse("a - b", "(- a b)")
-	expectParse("a + + b", "(+ a (+ b))")
-	expectParse("+a + + b", "(+ (+ a) (+ b))")
-	expectParse("a + b + c", "(+ (+ a b) c)")
-	expectParse("a * b + c", "(+ (* a b) c)")
-	expectParse("a + b * c", "(+ a (* b c))")
-	expectParse("(a + b) * c", "(* (+ a b) c)")
-}
-
 func TestParseStmt(t *testing.T) {
 	expectStmt := func(source string, ast string) {
-		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		parser := makeParser(source)
+		configParser(parser)
 		stmt, err := parseStmt(parser)
 		expectNoErrors(t, ast, stmt, err)
 	}
 
 	expectStmtError := func(source string, msg string) {
-		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		parser := makeParser(source)
+		configParser(parser)
 		stmt, err := parseStmt(parser)
 		expectAnError(t, msg, stmt, err)
 	}
@@ -104,13 +84,15 @@ func TestParseStmt(t *testing.T) {
 
 func TestParseStmtBlock(t *testing.T) {
 	expectStmtBlock := func(source string, ast string) {
-		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		parser := makeParser(source)
+		configParser(parser)
 		block, err := parseStmtBlock(parser)
 		expectNoErrors(t, ast, block, err)
 	}
 
 	expectStmtBlockError := func(source string, msg string) {
-		parser := Parse(lexer.Lex(lexer.Scan(source)))
+		parser := makeParser(source)
+		configParser(parser)
 		block, err := parseStmtBlock(parser)
 		expectAnError(t, msg, block, err)
 	}
@@ -181,7 +163,8 @@ func TestParseTypeList(t *testing.T) {
 
 func TestParseTypeOptional(t *testing.T) {
 	expectTypeOpt := func(fn typeSigParser, source string, ast string) {
-		p := Parse(lexer.Lex(lexer.Scan(source)))
+		p := makeParser(source)
+		configParser(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
 		sig, err = parseTypeOptional(p, sig)
@@ -189,7 +172,8 @@ func TestParseTypeOptional(t *testing.T) {
 	}
 
 	expectTypeOptError := func(fn typeSigParser, source string, msg string) {
-		p := Parse(lexer.Lex(lexer.Scan(source)))
+		p := makeParser(source)
+		configParser(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
 		sig, err = parseTypeOptional(p, sig)
@@ -354,25 +338,18 @@ func TestParseNumber(t *testing.T) {
 	expectAnError(t, "malformed number literal", expr, err)
 }
 
-func makeParser(source string) *Parser {
-	return &Parser{
-		lexer.Lex(lexer.Scan(source)),
-		make(map[lexer.Type]Precedence),
-		make(map[lexer.Type]PrefixParseFunc),
-		make(map[lexer.Type]PostfixParseFunc),
-	}
-}
-
 type typeSigParser func(p *Parser) (TypeSig, error)
 
 func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
-	p := Parse(lexer.Lex(lexer.Scan(source)))
+	p := makeParser(source)
+	configParser(p)
 	sig, err := fn(p)
 	expectNoErrors(t, ast, sig, err)
 }
 
 func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg string) {
-	p := Parse(lexer.Lex(lexer.Scan(source)))
+	p := makeParser(source)
+	configParser(p)
 	sig, err := fn(p)
 	expectAnError(t, msg, sig, err)
 }

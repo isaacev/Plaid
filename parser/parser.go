@@ -63,28 +63,41 @@ func (p *Parser) peekPrecedence() Precedence {
 }
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(l *lexer.Lexer) *Parser {
-	parser := &Parser{
+func Parse(source string) (Program, error) {
+	p := makeParser(source)
+	configParser(p)
+	return parseProgram(p)
+}
+
+func makeParser(source string) *Parser {
+	s := lexer.Scan(source)
+	l := lexer.Lex(s)
+	p := &Parser{
 		l,
 		make(map[lexer.Type]Precedence),
 		make(map[lexer.Type]PrefixParseFunc),
 		make(map[lexer.Type]PostfixParseFunc),
 	}
 
-	parser.registerPrefix(lexer.ParenL, parseGroup)
-	parser.registerPrefix(lexer.Plus, parsePrefix)
-	parser.registerPrefix(lexer.Dash, parsePrefix)
-	parser.registerPrefix(lexer.Ident, parseIdent)
-	parser.registerPrefix(lexer.Number, parseNumber)
+	return p
+}
+
+func configParser(p *Parser) {
+	p.registerPrefix(lexer.ParenL, parseGroup)
+	p.registerPrefix(lexer.Plus, parsePrefix)
+	p.registerPrefix(lexer.Dash, parsePrefix)
+	p.registerPrefix(lexer.Ident, parseIdent)
+	p.registerPrefix(lexer.Number, parseNumber)
+
+	p.registerPostfix(lexer.Plus, parseInfix, Sum)
+	p.registerPostfix(lexer.Dash, parseInfix, Sum)
+	p.registerPostfix(lexer.Star, parseInfix, Product)
+	p.registerPostfix(lexer.Slash, parseInfix, Product)
 }
 
 func parseProgram(p *Parser) (Program, error) {
 	stmts := []Stmt{}
 
-	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
-	parser.registerPostfix(lexer.Dash, parseInfix, Sum)
-	parser.registerPostfix(lexer.Star, parseInfix, Product)
-	parser.registerPostfix(lexer.Slash, parseInfix, Product)
 	for p.peekTokenIsNot(lexer.Error) && p.peekTokenIsNot(lexer.EOF) {
 		stmt, err := parseStmt(p)
 		if err != nil {
@@ -94,7 +107,6 @@ func parseProgram(p *Parser) (Program, error) {
 		stmts = append(stmts, stmt)
 	}
 
-	return parser
 	return Program{stmts}, nil
 }
 
