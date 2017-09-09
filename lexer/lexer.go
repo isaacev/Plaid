@@ -94,6 +94,8 @@ func isOperator(r rune) bool {
 		return true
 	case ':':
 		return true
+	case '=':
+		return true
 	default:
 		return false
 	}
@@ -198,7 +200,7 @@ func eatOperatorToken(scanner *Scanner) Token {
 			return Token{Arrow, "=>", equals.loc}
 		}
 
-		fallthrough
+		return Token{Error, "expected operator", equals.loc}
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
 	}

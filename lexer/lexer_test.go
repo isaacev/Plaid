@@ -36,6 +36,7 @@ func TestIsOperator(t *testing.T) {
 	expectBool(t, isOperator, '/', true)
 	expectBool(t, isOperator, '?', true)
 	expectBool(t, isOperator, ':', true)
+	expectBool(t, isOperator, '=', true)
 	expectBool(t, isOperator, '#', false)
 }
 
