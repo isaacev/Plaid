@@ -271,6 +271,117 @@ func TestParseExpr(t *testing.T) {
 	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
+func TestParseFunction(t *testing.T) {
+	p := makeParser("fn () {}")
+	expr, err := parseFunction(p)
+	expectNoErrors(t, "(fn () {})", expr, err)
+
+	p = makeParser("fn ():Int {}")
+	expr, err = parseFunction(p)
+	expectNoErrors(t, "(fn ():Int {})", expr, err)
+
+	p = makeParser("fn ():[Int?]? {}")
+	expr, err = parseFunction(p)
+	expectNoErrors(t, "(fn ():[Int?]? {})", expr, err)
+
+	p = makeParser("fn (a) { let x := 123; }")
+	loadGrammar(p)
+	expr, err = parseFunction(p)
+	expectNoErrors(t, "(fn (a) {\n  (let x 123)})", expr, err)
+
+	p = makeParser("func (a) { let x := 123; }")
+	expr, err = parseFunction(p)
+	expectAnError(t, "(1:1) expected FN keyword", expr, err)
+
+	p = makeParser("fn (,) { let x := 123; }")
+	expr, err = parseFunction(p)
+	expectAnError(t, "(1:5) expected identifier", expr, err)
+
+	p = makeParser("fn (): { let x := 123; }")
+	expr, err = parseFunction(p)
+	expectAnError(t, "(1:8) unexpected symbol", expr, err)
+
+	p = makeParser("fn () { let x = 123; }")
+	expr, err = parseFunction(p)
+	expectAnError(t, "(1:15) expected :=", expr, err)
+}
+
+func TestParseFunctionParams(t *testing.T) {
+	expectParams := func(prog string, exp string) {
+		p := makeParser(prog)
+		params, err := parseFunctionParams(p)
+
+		if err != nil {
+			t.Errorf("Expected no errors, got '%s'\n", err)
+		}
+
+		got := "("
+		for _, param := range params {
+			got += " " + param.String()
+		}
+		got += " )"
+		if exp != got {
+			t.Errorf("Expected %s, got %s\n", exp, got)
+		}
+	}
+
+	expectParamError := func(prog string, msg string) {
+		p := makeParser(prog)
+		params, err := parseFunctionParams(p)
+
+		if err == nil {
+			got := "("
+			for _, param := range params {
+				got += " " + param.String()
+			}
+			got += " )"
+			t.Errorf("Expected an error, got %s\n", got)
+		} else if err.Error() != msg {
+			t.Errorf("Expected '%s', got '%s'\n", msg, err)
+		}
+	}
+
+	expectParams("()", "( )")
+	expectParams("(a)", "( a )")
+	expectParams("(a,)", "( a )")
+	expectParams("(a : Int)", "( a:Int )")
+	expectParams("(a : Int,)", "( a:Int )")
+	expectParams("(a : Int,b)", "( a:Int b )")
+	expectParams("(a : Int, b:Bool)", "( a:Int b:Bool )")
+	expectParams("(a : Int, b:Bool?)", "( a:Int b:Bool? )")
+	expectParams("(a : [Int]?, b:Bool?)", "( a:[Int]? b:Bool? )")
+
+	expectParamError("(,)", "(1:2) expected identifier")
+	expectParamError("(123)", "(1:2) expected identifier")
+	expectParamError("(a,,)", "(1:4) expected identifier")
+	expectParamError("a:Int)", "(1:1) expected left paren")
+	expectParamError("(a:Int", "(1:6) expected right paren")
+}
+
+func TestParseFunctionParam(t *testing.T) {
+	p := makeParser("a:Int")
+	param, err := parseFunctionParam(p)
+	expectNoErrors(t, "a:Int", param, err)
+
+	p = makeParser("0:Int")
+	param, err = parseFunctionParam(p)
+	expectAnError(t, "(1:1) expected identifier", param, err)
+
+	p = makeParser("a:456")
+	param, err = parseFunctionParam(p)
+	expectAnError(t, "(1:3) unexpected symbol", param, err)
+}
+
+func TestParseFunctionReturnSig(t *testing.T) {
+	p := makeParser(": Int")
+	sig, err := parseFunctionReturnSig(p)
+	expectNoErrors(t, "Int", sig, err)
+
+	p = makeParser(": 456")
+	sig, err = parseFunctionReturnSig(p)
+	expectAnError(t, "(1:3) unexpected symbol", sig, err)
+}
+
 func TestParseInfix(t *testing.T) {
 	parser := makeParser("a + b")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)

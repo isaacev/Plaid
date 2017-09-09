@@ -113,6 +113,7 @@ func makeParser(source string) *Parser {
 }
 
 func loadGrammar(p *Parser) {
+	p.registerPrefix(lexer.Fn, parseFunction)
 	p.registerPrefix(lexer.ParenL, parseGroup)
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Dash, parsePrefix)
@@ -288,6 +289,101 @@ func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	}
 
 	return left, nil
+}
+
+func parseFunction(p *Parser) (Expr, error) {
+	if p.peekTokenIsNot(lexer.Fn) {
+		return nil, makeSyntaxError(p.lexer.Peek(), "expected FN keyword", false)
+	}
+	tok := p.lexer.Next()
+
+	params, ret, err := parseFunctionSignature(p)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := parseStmtBlock(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return FunctionExpr{tok, params, ret, block}, nil
+}
+
+func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeSig, error) {
+	var params []FunctionParam
+	var ret TypeSig
+	var err error
+
+	if params, err = parseFunctionParams(p); err != nil {
+		return nil, nil, err
+	}
+
+	if ret, err = parseFunctionReturnSig(p); err != nil {
+		return nil, nil, err
+	}
+
+	return params, ret, nil
+}
+
+func parseFunctionParams(p *Parser) ([]FunctionParam, error) {
+	if p.peekTokenIsNot(lexer.ParenL) {
+		return nil, makeSyntaxError(p.lexer.Peek(), "expected left paren", false)
+	}
+	p.lexer.Next()
+
+	params := []FunctionParam{}
+	for p.peekTokenIsNot(lexer.ParenR, lexer.EOF, lexer.Error) {
+		param, err := parseFunctionParam(p)
+		if err != nil {
+			return nil, err
+		}
+
+		params = append(params, param)
+
+		if p.peekTokenIsNot(lexer.Comma) {
+			break
+		} else {
+			p.lexer.Next()
+		}
+	}
+
+	if p.peekTokenIsNot(lexer.ParenR) {
+		return nil, makeSyntaxError(p.lexer.Peek(), "expected right paren", false)
+	}
+	p.lexer.Next()
+
+	return params, nil
+}
+
+func parseFunctionParam(p *Parser) (FunctionParam, error) {
+	ident, err := parseIdent(p)
+	if err != nil {
+		return FunctionParam{}, err
+	}
+
+	var sig TypeSig
+	if p.lexer.Peek().Type == lexer.Colon {
+		p.lexer.Next()
+		sig, err = parseTypeSig(p)
+		if err != nil {
+			return FunctionParam{}, err
+		}
+	}
+
+	return FunctionParam{ident.(IdentExpr), sig}, nil
+}
+
+func parseFunctionReturnSig(p *Parser) (sig TypeSig, err error) {
+	if p.lexer.Peek().Type == lexer.Colon {
+		p.lexer.Next()
+		sig, err = parseTypeSig(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return sig, nil
 }
 
 func parseInfix(p *Parser, left Expr) (Expr, error) {
