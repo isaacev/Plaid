@@ -82,6 +82,18 @@ func TestPeekPrecedence(t *testing.T) {
 	}
 }
 
+func TestParseProgram(t *testing.T) {
+	p := makeParser("let a := 123; let b := 456;")
+	loadGrammar(p)
+	prog, err := parseProgram(p)
+	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
+
+	p = makeParser("let a = 123; let b := 456;")
+	loadGrammar(p)
+	prog, err = parseProgram(p)
+	expectAnError(t, "expected :=", prog, err)
+}
+
 func TestParseStmt(t *testing.T) {
 	expectStmt := func(source string, ast string) {
 		parser := makeParser(source)
