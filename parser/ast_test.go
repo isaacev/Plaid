@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-var tok = lexer.Token{}
+var nop = lexer.Token{}
 
 func TestProgram(t *testing.T) {
 	(Program{}).isNode()
 
 	prog := Program{[]Stmt{
-		DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}},
-		DeclarationStmt{tok, IdentExpr{tok, "b"}, NumberExpr{tok, 456}},
+		DeclarationStmt{nop, IdentExpr{nop, "a"}, NumberExpr{nop, 123}},
+		DeclarationStmt{nop, IdentExpr{nop, "b"}, NumberExpr{nop, 456}},
 	}}
 	expectString(t, prog, "(let a 123)\n(let b 456)")
 
@@ -23,10 +23,10 @@ func TestProgram(t *testing.T) {
 func TestStmtBlock(t *testing.T) {
 	(StmtBlock{}).isNode()
 
-	block := StmtBlock{tok, []Stmt{
-		DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}},
-		DeclarationStmt{tok, IdentExpr{tok, "b"}, NumberExpr{tok, 456}},
-	}, tok}
+	block := StmtBlock{nop, []Stmt{
+		DeclarationStmt{nop, IdentExpr{nop, "a"}, NumberExpr{nop, 123}},
+		DeclarationStmt{nop, IdentExpr{nop, "b"}, NumberExpr{nop, 456}},
+	}, nop}
 	expectString(t, block, "{\n  (let a 123)\n  (let b 456)}")
 }
 
@@ -34,7 +34,7 @@ func TestDeclarationStmt(t *testing.T) {
 	(DeclarationStmt{}).isNode()
 	(DeclarationStmt{}).isStmt()
 
-	expectString(t, DeclarationStmt{tok, IdentExpr{tok, "a"}, NumberExpr{tok, 123}}, "(let a 123)")
+	expectString(t, DeclarationStmt{nop, IdentExpr{nop, "a"}, NumberExpr{nop, 123}}, "(let a 123)")
 }
 
 func TestTypeTuple(t *testing.T) {
@@ -42,7 +42,7 @@ func TestTypeTuple(t *testing.T) {
 	(TypeTuple{}).isType()
 
 	expectString(t, TypeTuple{}, "()")
-	tuple := TypeTuple{tok, []TypeSig{TypeIdent{tok, "Bool"}, TypeOptional{tok, TypeIdent{tok, "Str"}}}}
+	tuple := TypeTuple{nop, []TypeSig{TypeIdent{nop, "Bool"}, TypeOptional{nop, TypeIdent{nop, "Str"}}}}
 	expectString(t, tuple, "(Bool Str?)")
 }
 
@@ -51,31 +51,31 @@ func TestTypeFunction(t *testing.T) {
 	(TypeFunction{}).isType()
 
 	args := TypeTuple{}
-	expectString(t, TypeFunction{args, TypeIdent{tok, "Int"}}, "() => Int")
+	expectString(t, TypeFunction{args, TypeIdent{nop, "Int"}}, "() => Int")
 
-	args = TypeTuple{tok, []TypeSig{TypeIdent{tok, "Bool"}, TypeOptional{tok, TypeIdent{tok, "Str"}}}}
-	expectString(t, TypeFunction{args, TypeIdent{tok, "Int"}}, "(Bool Str?) => Int")
+	args = TypeTuple{nop, []TypeSig{TypeIdent{nop, "Bool"}, TypeOptional{nop, TypeIdent{nop, "Str"}}}}
+	expectString(t, TypeFunction{args, TypeIdent{nop, "Int"}}, "(Bool Str?) => Int")
 }
 
 func TestTypeIdent(t *testing.T) {
 	(TypeIdent{}).isNode()
 	(TypeIdent{}).isType()
 
-	expectString(t, TypeIdent{tok, "Int"}, "Int")
+	expectString(t, TypeIdent{nop, "Int"}, "Int")
 }
 
 func TestTypeList(t *testing.T) {
 	(TypeList{}).isNode()
 	(TypeList{}).isType()
 
-	expectString(t, TypeList{tok, TypeIdent{tok, "Int"}}, "[Int]")
+	expectString(t, TypeList{nop, TypeIdent{nop, "Int"}}, "[Int]")
 }
 
 func TestTypeOptional(t *testing.T) {
 	(TypeOptional{}).isNode()
 	(TypeOptional{}).isType()
 
-	expectString(t, TypeOptional{tok, TypeIdent{tok, "Int"}}, "Int?")
+	expectString(t, TypeOptional{nop, TypeIdent{nop, "Int"}}, "Int?")
 }
 
 func TestFunctionExpr(t *testing.T) {
@@ -83,50 +83,50 @@ func TestFunctionExpr(t *testing.T) {
 	(FunctionExpr{}).isExpr()
 
 	params := []FunctionParam{
-		FunctionParam{IdentExpr{tok, "x"}, TypeIdent{tok, "Int"}},
-		FunctionParam{IdentExpr{tok, "y"}, nil},
+		FunctionParam{IdentExpr{nop, "x"}, TypeIdent{nop, "Int"}},
+		FunctionParam{IdentExpr{nop, "y"}, nil},
 	}
-	ret := TypeIdent{tok, "Str"}
-	block := StmtBlock{tok, []Stmt{
-		DeclarationStmt{tok, IdentExpr{tok, "z"}, NumberExpr{tok, 123}},
-	}, tok}
+	ret := TypeIdent{nop, "Str"}
+	block := StmtBlock{nop, []Stmt{
+		DeclarationStmt{nop, IdentExpr{nop, "z"}, NumberExpr{nop, 123}},
+	}, nop}
 
-	expectString(t, FunctionExpr{tok, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
+	expectString(t, FunctionExpr{nop, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
 }
 
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()
 
-	expectString(t, BinaryExpr{"+", tok, NumberExpr{tok, 123}, NumberExpr{tok, 456}}, "(+ 123 456)")
+	expectString(t, BinaryExpr{"+", nop, NumberExpr{nop, 123}, NumberExpr{nop, 456}}, "(+ 123 456)")
 }
 
 func TestUnaryExpr(t *testing.T) {
 	(UnaryExpr{}).isNode()
 	(UnaryExpr{}).isExpr()
 
-	expectString(t, UnaryExpr{"+", tok, NumberExpr{tok, 123}}, "(+ 123)")
+	expectString(t, UnaryExpr{"+", nop, NumberExpr{nop, 123}}, "(+ 123)")
 }
 
 func TestIdentExpr(t *testing.T) {
 	(IdentExpr{}).isNode()
 	(IdentExpr{}).isExpr()
 
-	expectString(t, IdentExpr{tok, "abc"}, "abc")
+	expectString(t, IdentExpr{nop, "abc"}, "abc")
 }
 
 func TestStringExpr(t *testing.T) {
 	(StringExpr{}).isNode()
 	(StringExpr{}).isExpr()
 
-	expectString(t, StringExpr{tok, "abc"}, "\"abc\"")
+	expectString(t, StringExpr{nop, "abc"}, "\"abc\"")
 }
 
 func TestNumberExpr(t *testing.T) {
 	(NumberExpr{}).isNode()
 	(NumberExpr{}).isExpr()
 
-	expectString(t, NumberExpr{tok, 123}, "123")
+	expectString(t, NumberExpr{nop, 123}, "123")
 }
 
 func TestIndentBlock(t *testing.T) {

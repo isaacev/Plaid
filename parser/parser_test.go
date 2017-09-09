@@ -278,7 +278,7 @@ func TestParseTypeFunction(t *testing.T) {
 	expectTypeSigError(t, parseTypeTuple, "() => 123", "(1:7) unexpected symbol")
 
 	p := makeParser("= > Int")
-	tuple := TypeTuple{tok, []TypeSig{}}
+	tuple := TypeTuple{nop, []TypeSig{}}
 	sig, err := parseTypeFunction(p, tuple)
 	expectAnError(t, "(1:1) expected arrow", sig, err)
 }
