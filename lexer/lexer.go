@@ -11,6 +11,7 @@ const (
 	Dash          = "-"
 	Star          = "*"
 	Slash         = "/"
+	Question      = "?"
 	Semi          = ";"
 	ParenL        = "("
 	ParenR        = ")"
@@ -87,6 +88,8 @@ func isOperator(r rune) bool {
 	case '*':
 		fallthrough
 	case '/':
+		return true
+	case '?':
 		return true
 	case ':':
 		return true
@@ -168,6 +171,8 @@ func eatOperatorToken(scanner *Scanner) Token {
 		return Token{Star, "*", scanner.Next().loc}
 	case '/':
 		return Token{Slash, "/", scanner.Next().loc}
+	case '?':
+		return Token{Question, "?", scanner.Next().loc}
 	case ':':
 		colon := scanner.Next()
 		tok := Token{Colon, ":", colon.loc}

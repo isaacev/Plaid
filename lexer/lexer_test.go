@@ -34,6 +34,7 @@ func TestIsOperator(t *testing.T) {
 	expectBool(t, isOperator, '-', true)
 	expectBool(t, isOperator, '*', true)
 	expectBool(t, isOperator, '/', true)
+	expectBool(t, isOperator, '?', true)
 	expectBool(t, isOperator, ':', true)
 	expectBool(t, isOperator, '#', false)
 }
@@ -70,6 +71,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "-", Token{Dash, "-", Loc{1, 1}})
 	expectLexer(t, eatToken, "*", Token{Star, "*", Loc{1, 1}})
 	expectLexer(t, eatToken, "/", Token{Slash, "/", Loc{1, 1}})
+	expectLexer(t, eatToken, "?", Token{Question, "?", Loc{1, 1}})
 	expectLexer(t, eatToken, ";", Token{Semi, ";", Loc{1, 1}})
 	expectLexer(t, eatToken, "(", Token{ParenL, "(", Loc{1, 1}})
 	expectLexer(t, eatToken, ")", Token{ParenR, ")", Loc{1, 1}})
@@ -92,6 +94,7 @@ func TestEatOperatorToken(t *testing.T) {
 	expectLexer(t, eatOperatorToken, "-", Token{Dash, "-", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, "*", Token{Star, "*", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, "/", Token{Slash, "/", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "?", Token{Question, "?", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, ":", Token{Colon, ":", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, ":=", Token{Assign, ":=", Loc{1, 1}})
 	expectLexer(t, eatOperatorToken, "=>", Token{Arrow, "=>", Loc{1, 1}})
