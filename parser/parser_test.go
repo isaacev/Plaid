@@ -252,6 +252,12 @@ func TestParseExprStmt(t *testing.T) {
 	expectNoErrors(t, "(= a 123)", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
+	p = makeParser("callee(1, 2);")
+	loadGrammar(p)
+	stmt, err = parseExprStmt(p)
+	expectNoErrors(t, "(callee (1 2))", stmt, err)
+	expectStart(t, stmt, 1, 1)
+
 	p = makeParser("a := 123")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)

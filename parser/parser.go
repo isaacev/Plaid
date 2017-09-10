@@ -252,6 +252,8 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 
 	var stmt Stmt
 	switch expr.(type) {
+	case DispatchExpr:
+		stmt = ExprStmt{expr}
 	case AssignExpr:
 		stmt = ExprStmt{expr}
 	default:
