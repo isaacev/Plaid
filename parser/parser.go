@@ -30,7 +30,7 @@ type Precedence int
 
 // The staticly defined precedence levels
 const (
-	Lowest Precedence = iota
+	Lowest Precedence = iota * 10
 	Assign
 	Sum
 	Product
