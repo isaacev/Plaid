@@ -84,6 +84,15 @@ func (rs ReturnStmt) String() string {
 func (rs ReturnStmt) isNode() {}
 func (rs ReturnStmt) isStmt() {}
 
+// ExprStmt describes certain expressions that can be used in the place of statements
+type ExprStmt struct {
+	expr Expr
+}
+
+func (es ExprStmt) String() string { return es.expr.String() }
+func (es ExprStmt) isNode()        {}
+func (es ExprStmt) isStmt()        {}
+
 // TypeSig describes a syntax type annotation
 type TypeSig interface {
 	String() string
@@ -207,6 +216,17 @@ func (fp FunctionParam) String() string {
 }
 
 func (fp FunctionParam) isNode() {}
+
+// AssignExpr describes the binding of a value to an assignable expression
+type AssignExpr struct {
+	tok   lexer.Token
+	left  Expr
+	right Expr
+}
+
+func (ae AssignExpr) String() string { return fmt.Sprintf("(= %s %s)", ae.left, ae.right) }
+func (ae AssignExpr) isNode()        {}
+func (ae AssignExpr) isExpr()        {}
 
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {

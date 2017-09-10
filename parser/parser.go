@@ -30,6 +30,7 @@ type Precedence int
 // The staticly defined precedence levels
 const (
 	Lowest Precedence = iota
+	Assign
 	Sum
 	Product
 	Prefix
@@ -129,6 +130,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.Ident, parseIdent)
 	p.registerPrefix(lexer.Number, parseNumber)
 
+	p.registerPostfix(lexer.Assign, parseAssign, Assign)
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPostfix(lexer.Dash, parseInfix, Sum)
 	p.registerPostfix(lexer.Star, parseInfix, Product)
@@ -157,7 +159,7 @@ func parseStmt(p *Parser) (Stmt, error) {
 	case lexer.Return:
 		return parseReturnStmt(p)
 	default:
-		return nil, makeSyntaxError(p.lexer.Peek(), "expected start of statement", false)
+		return parseExprStmt(p)
 	}
 }
 
@@ -236,6 +238,20 @@ func parseReturnStmt(p *Parser) (Stmt, error) {
 	}
 
 	return ReturnStmt{tok, expr}, nil
+}
+
+func parseExprStmt(p *Parser) (Stmt, error) {
+	expr, err := parseExpr(p, Lowest)
+	if err != nil {
+		return nil, err
+	}
+
+	switch expr.(type) {
+	case AssignExpr:
+		return ExprStmt{expr}, nil
+	default:
+		return nil, makeSyntaxError(p.lexer.Peek(), "expected start of statement", false)
+	}
 }
 
 func parseTypeSig(p *Parser) (TypeSig, error) {
@@ -481,6 +497,17 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 	}
 
 	return BinaryExpr{oper, tok, left, right}, nil
+}
+
+func parseAssign(p *Parser, left Expr) (Expr, error) {
+	level := p.peekPrecedence()
+	tok := p.lexer.Next()
+	right, err := parseExpr(p, level-1)
+	if err != nil {
+		return nil, err
+	}
+
+	return AssignExpr{tok, left, right}, nil
 }
 
 func parsePostfix(p *Parser, left Expr) (Expr, error) {
