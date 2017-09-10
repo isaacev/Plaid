@@ -67,6 +67,23 @@ func (ds DeclarationStmt) String() string { return fmt.Sprintf("(let %s %s)", ds
 func (ds DeclarationStmt) isNode()        {}
 func (ds DeclarationStmt) isStmt()        {}
 
+// ReturnStmt describes a return keyword and an optional returned expression.
+type ReturnStmt struct {
+	tok  lexer.Token
+	expr Expr
+}
+
+func (rs ReturnStmt) String() string {
+	if rs.expr != nil {
+		return fmt.Sprintf("(return %s)", rs.expr)
+	}
+
+	return "(return)"
+}
+
+func (rs ReturnStmt) isNode() {}
+func (rs ReturnStmt) isStmt() {}
+
 // TypeSig describes a syntax type annotation
 type TypeSig interface {
 	String() string

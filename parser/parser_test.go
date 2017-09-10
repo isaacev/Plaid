@@ -152,6 +152,7 @@ func TestParseStmt(t *testing.T) {
 	}
 
 	expectStmt("let a := 123;", "(let a 123)")
+	expectStmt("return 123;", "(return 123)")
 	expectStmtError("123 + 456", "(1:1) expected start of statement")
 }
 
@@ -206,6 +207,30 @@ func TestParseDeclarationStmt(t *testing.T) {
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:12) expected semicolon", stmt, err)
+}
+
+func TestParseReturnStmt(t *testing.T) {
+	p := makeParser("return;")
+	stmt, err := parseReturnStmt(p)
+	expectNoErrors(t, "(return)", stmt, err)
+
+	p = makeParser("return 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseReturnStmt(p)
+	expectNoErrors(t, "(return 123)", stmt, err)
+
+	p = makeParser("123;")
+	stmt, err = parseReturnStmt(p)
+	expectAnError(t, "(1:1) expected RETURN keyword", stmt, err)
+
+	p = makeParser("return")
+	stmt, err = parseReturnStmt(p)
+	expectAnError(t, "(1:6) expected semicolon", stmt, err)
+
+	p = makeParser("return let := 123;")
+	p.registerPrefix(lexer.Number, parseNumber)
+	stmt, err = parseReturnStmt(p)
+	expectAnError(t, "(1:8) unexpected symbol", stmt, err)
 }
 
 func TestParseTypeSig(t *testing.T) {

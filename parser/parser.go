@@ -154,6 +154,8 @@ func parseStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
 	case lexer.Let:
 		return parseDeclarationStmt(p)
+	case lexer.Return:
+		return parseReturnStmt(p)
 	default:
 		return nil, makeSyntaxError(p.lexer.Peek(), "expected start of statement", false)
 	}
@@ -212,6 +214,28 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 	}
 
 	return DeclarationStmt{tok, name, expr}, nil
+}
+
+func parseReturnStmt(p *Parser) (Stmt, error) {
+	tok, err := p.expectNextToken(lexer.Return, "expected RETURN keyword")
+	if err != nil {
+		return nil, err
+	}
+
+	var expr Expr
+	if p.peekTokenIsNot(lexer.Semi, lexer.EOF, lexer.Error) {
+		expr, err = parseExpr(p, Lowest)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
+	if err != nil {
+		return nil, err
+	}
+
+	return ReturnStmt{tok, expr}, nil
 }
 
 func parseTypeSig(p *Parser) (TypeSig, error) {
