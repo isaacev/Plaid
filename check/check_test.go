@@ -91,6 +91,28 @@ func TestCheckStmt(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckExpr(t *testing.T) {
+	prog, _ := parser.Parse("let a := 2 + 1;")
+	scope := Check(prog)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, scope.variables["a"], BuiltinInt)
+
+	prog, _ = parser.Parse("let a := 1;")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, scope.variables["a"], BuiltinInt)
+
+	prog, _ = parser.Parse("let a := \"abc\";")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, scope.variables["a"], BuiltinStr)
+
+	prog, _ = parser.Parse("let a := -5;")
+	scope = Check(prog)
+	expectAnError(t, scope.Errs[0], "unknown expression type")
+	expectBool(t, scope.variables["a"].IsError(), true)
+}
+
 func TestCheckBinaryExpr(t *testing.T) {
 	scope := makeScope(nil)
 	scope.registerVariable("a", BuiltinInt)

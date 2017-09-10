@@ -88,6 +88,22 @@ func checkProgram(scope *Scope, prog parser.Program) {
 
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+func checkExpr(scope *Scope, expr parser.Expr) Type {
+	switch expr := expr.(type) {
+	case parser.BinaryExpr:
+		return checkBinaryExpr(scope, expr)
+	case parser.IdentExpr:
+		return checkIdentExpr(scope, expr)
+	case parser.NumberExpr:
+		return checkNumberExpr(scope, expr)
+	case parser.StringExpr:
+		return checkStringExpr(scope, expr)
+	default:
+		scope.addError(fmt.Errorf("unknown expression type"))
+		return TypeError{}
+	}
+}
+
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
 	switch expr.Oper {
 	case "+":
