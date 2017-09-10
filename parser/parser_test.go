@@ -350,6 +350,7 @@ func TestParseFunction(t *testing.T) {
 	p := makeParser("fn () {}")
 	expr, err := parseFunction(p)
 	expectNoErrors(t, "(fn () {})", expr, err)
+	expectStart(t, expr, 1, 1)
 
 	p = makeParser("fn ():Int {}")
 	expr, err = parseFunction(p)
