@@ -406,7 +406,7 @@ func TestParseFunctionParams(t *testing.T) {
 		params, err := parseFunctionParams(p)
 
 		if err != nil {
-			t.Errorf("Expected no errors, got '%s'\n", err)
+			t.Fatalf("Expected no errors, got '%s'\n", err)
 		}
 
 		got := "("
@@ -487,7 +487,7 @@ func TestParseInfix(t *testing.T) {
 	var err error
 
 	if left, err = parseIdent(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
+		t.Fatalf("Expected no errors, got %v\n", err)
 	}
 
 	expr, err = parseInfix(parser, left)
@@ -499,7 +499,7 @@ func TestParseInfix(t *testing.T) {
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	if left, err = parseIdent(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
+		t.Fatalf("Expected no errors, got %v\n", err)
 	}
 
 	expr, err = parseInfix(parser, left)
@@ -529,7 +529,7 @@ func TestParsePostfix(t *testing.T) {
 	var err error
 
 	if left, err = parseIdent(parser); err != nil {
-		t.Errorf("Expected no errors, got %v\n", err)
+		t.Fatalf("Expected no errors, got %v\n", err)
 	}
 
 	expr, err = parsePostfix(parser, left)
@@ -653,7 +653,7 @@ func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg strin
 
 func expectNoErrors(t *testing.T, ast string, node Node, err error) {
 	if err != nil {
-		t.Errorf("Expected no errors, got '%s'\n", err)
+		t.Fatalf("Expected no errors, got '%s'\n", err)
 	} else {
 		expectAST(t, ast, node)
 	}
