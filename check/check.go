@@ -88,6 +88,12 @@ func checkProgram(scope *Scope, prog parser.Program) {
 
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+	case parser.DeclarationStmt:
+		checkDeclarationStmt(scope, stmt)
+		break
+	}
+}
+
 func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(scope, stmt.Expr)
