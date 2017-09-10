@@ -14,6 +14,20 @@ func (l Loc) String() string {
 	return fmt.Sprintf("(%d:%d)", l.Line, l.Col)
 }
 
+// SmallerLoc takes to Loc structs and returns the Loc that occurs earlier in
+// the source code
+func SmallerLoc(a Loc, b Loc) Loc {
+	if a.Line < b.Line {
+		return a
+	} else if b.Line < a.Line {
+		return b
+	} else if a.Col < b.Col {
+		return a
+	}
+
+	return b
+}
+
 // Char maps a character to that character's line & column within source code
 type Char struct {
 	char rune

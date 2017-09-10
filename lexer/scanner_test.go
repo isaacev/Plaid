@@ -12,6 +12,22 @@ func TestLoc(t *testing.T) {
 	}
 }
 
+func TestSmallerLoc(t *testing.T) {
+	expectSmallerLoc := func(a Loc, b Loc, exp Loc) {
+		greater := SmallerLoc(a, b)
+
+		if exp.String() != greater.String() {
+			t.Errorf("Expected %s, got %s\n", exp, greater)
+		}
+	}
+
+	expectSmallerLoc(Loc{2, 4}, Loc{2, 4}, Loc{2, 4}) // same line/col
+	expectSmallerLoc(Loc{3, 1}, Loc{2, 4}, Loc{2, 4}) // a from bigger line
+	expectSmallerLoc(Loc{2, 4}, Loc{3, 1}, Loc{2, 4}) // b from bigger line
+	expectSmallerLoc(Loc{2, 8}, Loc{2, 4}, Loc{2, 4}) // a from bigger col
+	expectSmallerLoc(Loc{2, 4}, Loc{2, 8}, Loc{2, 4}) // b from bigger col
+}
+
 func TestScanner(t *testing.T) {
 	buf := Scanner{0, []Char{
 		Char{'a', Loc{1, 1}},
