@@ -89,6 +89,14 @@ func TestCheckNumberExpr(t *testing.T) {
 	expectEquivalentType(t, typ, BuiltinInt)
 }
 
+func TestCheckStringExpr(t *testing.T) {
+	scope := makeScope(nil)
+	expr := parser.StringExpr{Tok: lexer.Token{}, Val: "abc"}
+	typ := checkStringExpr(scope, expr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinStr)
+}
+
 func expectNoErrors(t *testing.T, errs []error) {
 	if len(errs) > 0 {
 		for i, err := range errs {

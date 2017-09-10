@@ -9,6 +9,7 @@ import (
 // A collection of types native to the execution environment
 var (
 	BuiltinInt Type = TypeIdent{"Int"}
+	BuiltinStr      = TypeIdent{"Str"}
 )
 
 // Check takes an existing abstract syntax tree and performs type checks and
@@ -94,4 +95,6 @@ func checkNumberExpr(scope *Scope, expr parser.NumberExpr) Type {
 	return BuiltinInt
 }
 
+func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
+	return BuiltinStr
 }
