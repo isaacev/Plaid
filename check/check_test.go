@@ -81,6 +81,14 @@ func TestCheckProgram(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckNumberExpr(t *testing.T) {
+	scope := makeScope(nil)
+	expr := parser.NumberExpr{Tok: lexer.Token{}, Val: 123}
+	typ := checkNumberExpr(scope, expr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinInt)
+}
+
 func expectNoErrors(t *testing.T, errs []error) {
 	if len(errs) > 0 {
 		for i, err := range errs {

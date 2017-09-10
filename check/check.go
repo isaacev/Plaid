@@ -6,6 +6,9 @@ import (
 	"sort"
 )
 
+// A collection of types native to the execution environment
+var (
+	BuiltinInt Type = TypeIdent{"Int"}
 )
 
 // Check takes an existing abstract syntax tree and performs type checks and
@@ -85,6 +88,10 @@ func checkProgram(scope *Scope, prog parser.Program) {
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
 	}
+}
+
+func checkNumberExpr(scope *Scope, expr parser.NumberExpr) Type {
+	return BuiltinInt
 }
 
 }
