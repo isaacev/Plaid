@@ -2,9 +2,12 @@ package check
 
 import (
 	"fmt"
+	"plaid/lexer"
 	"plaid/parser"
 	"testing"
 )
+
+var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
 	scope := Check(parser.Program{})
@@ -84,13 +87,13 @@ func TestCheckProgram(t *testing.T) {
 func TestCheckIdentExpr(t *testing.T) {
 	scope := makeScope(nil)
 	scope.registerVariable("x", BuiltinInt)
-	expr := parser.IdentExpr{Tok: lexer.Token{}, Name: "x"}
+	expr := parser.IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(scope, expr)
 	expectNoErrors(t, scope.Errs)
 	expectEquivalentType(t, typ, BuiltinInt)
 
 	scope = makeScope(nil)
-	expr = parser.IdentExpr{Tok: lexer.Token{}, Name: "x"}
+	expr = parser.IdentExpr{Tok: nop, Name: "x"}
 	typ = checkIdentExpr(scope, expr)
 	expectAnError(t, scope.Errs[0], "variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
@@ -98,7 +101,7 @@ func TestCheckIdentExpr(t *testing.T) {
 
 func TestCheckNumberExpr(t *testing.T) {
 	scope := makeScope(nil)
-	expr := parser.NumberExpr{Tok: lexer.Token{}, Val: 123}
+	expr := parser.NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(scope, expr)
 	expectNoErrors(t, scope.Errs)
 	expectEquivalentType(t, typ, BuiltinInt)
@@ -106,7 +109,7 @@ func TestCheckNumberExpr(t *testing.T) {
 
 func TestCheckStringExpr(t *testing.T) {
 	scope := makeScope(nil)
-	expr := parser.StringExpr{Tok: lexer.Token{}, Val: "abc"}
+	expr := parser.StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(scope, expr)
 	expectNoErrors(t, scope.Errs)
 	expectEquivalentType(t, typ, BuiltinStr)
