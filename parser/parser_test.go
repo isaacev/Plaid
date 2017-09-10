@@ -487,6 +487,19 @@ func TestParseInfix(t *testing.T) {
 	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
+func TestParseAssignExpr(t *testing.T) {
+	p := makeParser("a := 123")
+	loadGrammar(p)
+	expr, err := parseExpr(p, Lowest)
+	expectNoErrors(t, "(= a 123)", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("a :=")
+	loadGrammar(p)
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "(1:4) unexpected symbol", expr, err)
+}
+
 func TestParsePostfix(t *testing.T) {
 	parser := makeParser("a+")
 	parser.registerPostfix(lexer.Plus, parsePostfix, Postfix)

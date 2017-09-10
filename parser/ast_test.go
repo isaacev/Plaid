@@ -102,6 +102,13 @@ func TestFunctionExpr(t *testing.T) {
 	expectString(t, FunctionExpr{nop, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
 }
 
+func TestAssignExpr(t *testing.T) {
+	(AssignExpr{}).isNode()
+	(AssignExpr{}).isExpr()
+
+	expectString(t, AssignExpr{nop, IdentExpr{nop, "a"}, IdentExpr{nop, "b"}}, "(= a b)")
+}
+
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()
