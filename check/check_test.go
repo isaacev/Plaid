@@ -84,6 +84,44 @@ func TestCheckProgram(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckAddition(t *testing.T) {
+	scope := makeScope(nil)
+	scope.registerVariable("a", BuiltinInt)
+	scope.registerVariable("b", BuiltinInt)
+	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
+	typ := checkAddition(scope, leftExpr, rightExpr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinInt)
+
+	scope = makeScope(nil)
+	scope.registerVariable("a", BuiltinStr)
+	scope.registerVariable("b", BuiltinInt)
+	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
+	typ = checkAddition(scope, leftExpr, rightExpr)
+	expectAnError(t, scope.Errs[0], "left side must have type Int, got Str")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil)
+	scope.registerVariable("a", BuiltinInt)
+	scope.registerVariable("b", BuiltinStr)
+	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
+	typ = checkAddition(scope, leftExpr, rightExpr)
+	expectAnError(t, scope.Errs[0], "right side must have type Int, got Str")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil)
+	scope.registerVariable("a", TypeError{})
+	scope.registerVariable("b", BuiltinStr)
+	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
+	typ = checkAddition(scope, leftExpr, rightExpr)
+	expectNoErrors(t, scope.Errs)
+	expectBool(t, typ.IsError(), true)
+}
+
 func TestCheckIdentExpr(t *testing.T) {
 	scope := makeScope(nil)
 	scope.registerVariable("x", BuiltinInt)

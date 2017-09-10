@@ -91,6 +91,29 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 	}
 }
 
+func checkAddition(scope *Scope, left parser.Expr, right parser.Expr) Type {
+	leftType := checkExpr(scope, left)
+	rightType := checkExpr(scope, right)
+
+	if leftType.IsError() || rightType.IsError() {
+		return TypeError{}
+	}
+
+	typ := BuiltinInt
+
+	if leftType.Equals(BuiltinInt) == false {
+		scope.addError(fmt.Errorf("left side must have type %s, got %s", BuiltinInt, leftType))
+		typ = TypeError{}
+	}
+
+	if rightType.Equals(BuiltinInt) == false {
+		scope.addError(fmt.Errorf("right side must have type %s, got %s", BuiltinInt, rightType))
+		typ = TypeError{}
+	}
+
+	return typ
+}
+
 func checkIdentExpr(scope *Scope, expr parser.IdentExpr) Type {
 	if scope.hasVariable(expr.Name) {
 		return scope.getVariable(expr.Name)
