@@ -52,17 +52,17 @@ type Stmt interface {
 
 // StmtBlock describes any series of statements bounded by curly braces
 type StmtBlock struct {
-	left  lexer.Token
-	stmts []Stmt
-	right lexer.Token
+	Left  lexer.Token
+	Stmts []Stmt
+	Right lexer.Token
 }
 
 // Start returns a location that this node can be considered to start at
-func (sb StmtBlock) Start() lexer.Loc { return sb.left.Loc }
+func (sb StmtBlock) Start() lexer.Loc { return sb.Left.Loc }
 
 func (sb StmtBlock) String() string {
 	out := "{"
-	for _, stmt := range sb.stmts {
+	for _, stmt := range sb.Stmts {
 		out += "\n" + indentBlock("  ", stmt.String())
 	}
 	return out + "}"
@@ -72,29 +72,29 @@ func (sb StmtBlock) isNode() {}
 
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
-	tok  lexer.Token
-	name IdentExpr
-	expr Expr
+	Tok  lexer.Token
+	Name IdentExpr
+	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ds DeclarationStmt) Start() lexer.Loc { return ds.tok.Loc }
-func (ds DeclarationStmt) String() string   { return fmt.Sprintf("(let %s %s)", ds.name, ds.expr) }
+func (ds DeclarationStmt) Start() lexer.Loc { return ds.Tok.Loc }
+func (ds DeclarationStmt) String() string   { return fmt.Sprintf("(let %s %s)", ds.Name, ds.Expr) }
 func (ds DeclarationStmt) isNode()          {}
 func (ds DeclarationStmt) isStmt()          {}
 
 // ReturnStmt describes a return keyword and an optional returned expression.
 type ReturnStmt struct {
-	tok  lexer.Token
-	expr Expr
+	Tok  lexer.Token
+	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (rs ReturnStmt) Start() lexer.Loc { return rs.tok.Loc }
+func (rs ReturnStmt) Start() lexer.Loc { return rs.Tok.Loc }
 
 func (rs ReturnStmt) String() string {
-	if rs.expr != nil {
-		return fmt.Sprintf("(return %s)", rs.expr)
+	if rs.Expr != nil {
+		return fmt.Sprintf("(return %s)", rs.Expr)
 	}
 
 	return "(return)"
@@ -105,12 +105,12 @@ func (rs ReturnStmt) isStmt() {}
 
 // ExprStmt describes certain expressions that can be used in the place of statements
 type ExprStmt struct {
-	expr Expr
+	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (es ExprStmt) Start() lexer.Loc { return es.expr.Start() }
-func (es ExprStmt) String() string   { return es.expr.String() }
+func (es ExprStmt) Start() lexer.Loc { return es.Expr.Start() }
+func (es ExprStmt) String() string   { return es.Expr.String() }
 func (es ExprStmt) isNode()          {}
 func (es ExprStmt) isStmt()          {}
 
@@ -124,16 +124,16 @@ type TypeSig interface {
 
 // TypeTuple describes a set of 0 or more types wrapped in parentheses
 type TypeTuple struct {
-	tok   lexer.Token
-	elems []TypeSig
+	Tok   lexer.Token
+	Elems []TypeSig
 }
 
 // Start returns a location that this node can be considered to start at
-func (tt TypeTuple) Start() lexer.Loc { return tt.tok.Loc }
+func (tt TypeTuple) Start() lexer.Loc { return tt.Tok.Loc }
 
 func (tt TypeTuple) String() string {
 	out := "("
-	for i, elem := range tt.elems {
+	for i, elem := range tt.Elems {
 		if i > 0 {
 			out += " "
 		}
@@ -148,17 +148,17 @@ func (tt TypeTuple) isType() {}
 
 // TypeFunction describes a function type annotation
 type TypeFunction struct {
-	params TypeTuple
-	ret    TypeSig
+	Params TypeTuple
+	Ret    TypeSig
 }
 
 // Start returns a location that this node can be considered to start at
-func (tf TypeFunction) Start() lexer.Loc { return tf.params.Start() }
+func (tf TypeFunction) Start() lexer.Loc { return tf.Params.Start() }
 
 func (tf TypeFunction) String() string {
-	out := tf.params.String()
+	out := tf.Params.String()
 	out += " => "
-	out += tf.ret.String()
+	out += tf.Ret.String()
 	return out
 }
 
@@ -167,37 +167,37 @@ func (tf TypeFunction) isType() {}
 
 // TypeIdent describes a named reference to a type
 type TypeIdent struct {
-	tok  lexer.Token
-	name string
+	Tok  lexer.Token
+	Name string
 }
 
 // Start returns a location that this node can be considered to start at
-func (ti TypeIdent) Start() lexer.Loc { return ti.tok.Loc }
-func (ti TypeIdent) String() string   { return ti.name }
+func (ti TypeIdent) Start() lexer.Loc { return ti.Tok.Loc }
+func (ti TypeIdent) String() string   { return ti.Name }
 func (ti TypeIdent) isNode()          {}
 func (ti TypeIdent) isType()          {}
 
 // TypeList describes a list type
 type TypeList struct {
-	tok   lexer.Token
-	child TypeSig
+	Tok   lexer.Token
+	Child TypeSig
 }
 
 // Start returns a location that this node can be considered to start at
-func (tl TypeList) Start() lexer.Loc { return tl.tok.Loc }
-func (tl TypeList) String() string   { return fmt.Sprintf("[%s]", tl.child) }
+func (tl TypeList) Start() lexer.Loc { return tl.Tok.Loc }
+func (tl TypeList) String() string   { return fmt.Sprintf("[%s]", tl.Child) }
 func (tl TypeList) isNode()          {}
 func (tl TypeList) isType()          {}
 
 // TypeOptional describes a list type
 type TypeOptional struct {
-	tok   lexer.Token
-	child TypeSig
+	Tok   lexer.Token
+	Child TypeSig
 }
 
 // Start returns a location that this node can be considered to start at
-func (to TypeOptional) Start() lexer.Loc { return to.child.Start() }
-func (to TypeOptional) String() string   { return fmt.Sprintf("%s?", to.child) }
+func (to TypeOptional) Start() lexer.Loc { return to.Child.Start() }
+func (to TypeOptional) String() string   { return fmt.Sprintf("%s?", to.Child) }
 func (to TypeOptional) isNode()          {}
 func (to TypeOptional) isType()          {}
 
@@ -211,28 +211,28 @@ type Expr interface {
 
 // FunctionExpr describes a function's entire type signature and body
 type FunctionExpr struct {
-	tok    lexer.Token
-	params []FunctionParam
-	ret    TypeSig
-	block  StmtBlock
+	Tok    lexer.Token
+	Params []FunctionParam
+	Ret    TypeSig
+	Block  StmtBlock
 }
 
 // Start returns a location that this node can be considered to start at
-func (fe FunctionExpr) Start() lexer.Loc { return fe.tok.Loc }
+func (fe FunctionExpr) Start() lexer.Loc { return fe.Tok.Loc }
 
 func (fe FunctionExpr) String() string {
 	out := "(fn ("
-	for i, param := range fe.params {
+	for i, param := range fe.Params {
 		if i > 0 {
 			out += " "
 		}
 		out += param.String()
 	}
 	out += ")"
-	if fe.ret != nil {
-		out += fmt.Sprintf(":%s", fe.ret)
+	if fe.Ret != nil {
+		out += fmt.Sprintf(":%s", fe.Ret)
 	}
-	out += fmt.Sprintf(" %s)", fe.block)
+	out += fmt.Sprintf(" %s)", fe.Block)
 	return out
 }
 
@@ -241,37 +241,37 @@ func (fe FunctionExpr) isNode() {}
 
 // FunctionParam describes a single function argument's name and type signature
 type FunctionParam struct {
-	name IdentExpr
-	sig  TypeSig
+	Name IdentExpr
+	Sig  TypeSig
 }
 
 // Start returns a location that this node can be considered to start at
-func (fp FunctionParam) Start() lexer.Loc { return fp.name.Start() }
+func (fp FunctionParam) Start() lexer.Loc { return fp.Name.Start() }
 
 func (fp FunctionParam) String() string {
-	if fp.sig != nil {
-		return fmt.Sprintf("%s:%s", fp.name, fp.sig)
+	if fp.Sig != nil {
+		return fmt.Sprintf("%s:%s", fp.Name, fp.Sig)
 	}
 
-	return fp.name.String()
+	return fp.Name.String()
 }
 
 func (fp FunctionParam) isNode() {}
 
 // DispatchExpr describes a function call including the callee and any arguments
 type DispatchExpr struct {
-	callee Expr
-	args   []Expr
+	Callee Expr
+	Args   []Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (de DispatchExpr) Start() lexer.Loc { return de.callee.Start() }
+func (de DispatchExpr) Start() lexer.Loc { return de.Callee.Start() }
 
 func (de DispatchExpr) String() string {
 	out := "("
-	out += de.callee.String()
+	out += de.Callee.String()
 	out += " ("
-	for i, arg := range de.args {
+	for i, arg := range de.Args {
 		if i > 0 {
 			out += " "
 		}
@@ -286,77 +286,77 @@ func (de DispatchExpr) isExpr() {}
 
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
-	tok   lexer.Token
-	left  Expr
-	right Expr
+	Tok   lexer.Token
+	Left  Expr
+	Right Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ae AssignExpr) Start() lexer.Loc { return ae.left.Start() }
-func (ae AssignExpr) String() string   { return fmt.Sprintf("(= %s %s)", ae.left, ae.right) }
+func (ae AssignExpr) Start() lexer.Loc { return ae.Left.Start() }
+func (ae AssignExpr) String() string   { return fmt.Sprintf("(= %s %s)", ae.Left, ae.Right) }
 func (ae AssignExpr) isNode()          {}
 func (ae AssignExpr) isExpr()          {}
 
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
-	oper  string
-	tok   lexer.Token
-	left  Expr
-	right Expr
+	Oper  string
+	Tok   lexer.Token
+	Left  Expr
+	Right Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (be BinaryExpr) Start() lexer.Loc { return be.left.Start() }
-func (be BinaryExpr) String() string   { return fmt.Sprintf("(%s %s %s)", be.oper, be.left, be.right) }
+func (be BinaryExpr) Start() lexer.Loc { return be.Left.Start() }
+func (be BinaryExpr) String() string   { return fmt.Sprintf("(%s %s %s)", be.Oper, be.Left, be.Right) }
 func (be BinaryExpr) isNode()          {}
 func (be BinaryExpr) isExpr()          {}
 
 // UnaryExpr describes any single expression associated to an operator
 type UnaryExpr struct {
-	oper string
-	tok  lexer.Token
-	expr Expr
+	Oper string
+	Tok  lexer.Token
+	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ue UnaryExpr) Start() lexer.Loc { return lexer.SmallerLoc(ue.tok.Loc, ue.expr.Start()) }
-func (ue UnaryExpr) String() string   { return fmt.Sprintf("(%s %s)", ue.oper, ue.expr) }
+func (ue UnaryExpr) Start() lexer.Loc { return lexer.SmallerLoc(ue.Tok.Loc, ue.Expr.Start()) }
+func (ue UnaryExpr) String() string   { return fmt.Sprintf("(%s %s)", ue.Oper, ue.Expr) }
 func (ue UnaryExpr) isNode()          {}
 func (ue UnaryExpr) isExpr()          {}
 
 // IdentExpr describes an identifier
 type IdentExpr struct {
-	tok  lexer.Token
-	name string
+	Tok  lexer.Token
+	Name string
 }
 
 // Start returns a location that this node can be considered to start at
-func (ie IdentExpr) Start() lexer.Loc { return ie.tok.Loc }
-func (ie IdentExpr) String() string   { return ie.name }
+func (ie IdentExpr) Start() lexer.Loc { return ie.Tok.Loc }
+func (ie IdentExpr) String() string   { return ie.Name }
 func (ie IdentExpr) isNode()          {}
 func (ie IdentExpr) isExpr()          {}
 
 // StringExpr describes a string literal
 type StringExpr struct {
-	tok lexer.Token
-	val string
+	Tok lexer.Token
+	Val string
 }
 
 // Start returns a location that this node can be considered to start at
-func (se StringExpr) Start() lexer.Loc { return se.tok.Loc }
-func (se StringExpr) String() string   { return fmt.Sprintf("\"%s\"", se.val) }
+func (se StringExpr) Start() lexer.Loc { return se.Tok.Loc }
+func (se StringExpr) String() string   { return fmt.Sprintf("\"%s\"", se.Val) }
 func (se StringExpr) isNode()          {}
 func (se StringExpr) isExpr()          {}
 
 // NumberExpr describes a string literal
 type NumberExpr struct {
-	tok lexer.Token
-	val int
+	Tok lexer.Token
+	Val int
 }
 
 // Start returns a location that this node can be considered to start at
-func (ne NumberExpr) Start() lexer.Loc { return ne.tok.Loc }
-func (ne NumberExpr) String() string   { return strconv.Itoa(ne.val) }
+func (ne NumberExpr) Start() lexer.Loc { return ne.Tok.Loc }
+func (ne NumberExpr) String() string   { return strconv.Itoa(ne.Val) }
 func (ne NumberExpr) isNode()          {}
 func (ne NumberExpr) isExpr()          {}
 
