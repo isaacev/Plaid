@@ -130,6 +130,13 @@ func TestParseProgram(t *testing.T) {
 	loadGrammar(p)
 	prog, err := parseProgram(p)
 	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
+	expectStart(t, prog, 1, 1)
+
+	p = makeParser("")
+	loadGrammar(p)
+	prog, err = parseProgram(p)
+	expectNoErrors(t, "", prog, err)
+	expectStart(t, prog, 1, 1)
 
 	p = makeParser("let a = 123; let b := 456;")
 	loadGrammar(p)
