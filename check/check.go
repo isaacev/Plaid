@@ -78,8 +78,12 @@ func makeScope(parent *Scope) *Scope {
 
 func checkProgram(scope *Scope, prog parser.Program) {
 	for _, stmt := range prog.Stmts {
-		switch stmt := stmt.(type) {
-		}
+		checkStmt(scope, stmt)
+	}
+}
+
+func checkStmt(scope *Scope, stmt parser.Stmt) {
+	switch stmt := stmt.(type) {
 	}
 }
 

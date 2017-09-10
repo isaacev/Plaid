@@ -74,6 +74,13 @@ func TestScopeString(t *testing.T) {
 `)
 }
 
+func TestCheckProgram(t *testing.T) {
+	prog, _ := parser.Parse("let a := 123;")
+	scope := makeScope(nil)
+	checkProgram(scope, prog)
+	expectNoErrors(t, scope.Errs)
+}
+
 func expectNoErrors(t *testing.T, errs []error) {
 	if len(errs) > 0 {
 		for i, err := range errs {
