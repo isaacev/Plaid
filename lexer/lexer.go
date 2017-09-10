@@ -129,6 +129,10 @@ func isDigit(r rune) bool {
 	return ('0' <= r && r <= '9')
 }
 
+func isDoubleQuote(r rune) bool {
+	return (r == '"')
+}
+
 func eatToken(scanner *Scanner) Token {
 	peek := scanner.Peek()
 
@@ -153,6 +157,8 @@ func eatToken(scanner *Scanner) Token {
 		return eatWordToken(scanner)
 	case isDigit(peek.char):
 		return eatNumberToken(scanner)
+	case isDoubleQuote(peek.char):
+		return eatStringToken(scanner)
 	default:
 		return Token{Error, "unexpected symbol", peek.loc}
 	}
@@ -294,4 +300,28 @@ func eatNumberToken(scanner *Scanner) Token {
 	}
 
 	return Token{Number, lexeme, loc}
+}
+
+func eatStringToken(scanner *Scanner) Token {
+	loc := scanner.Peek().loc
+	lexeme := ""
+
+	if isDoubleQuote(scanner.Peek().char) == false {
+		return Token{Error, "expected string", loc}
+	}
+
+	lexeme += string(scanner.Next().char)
+	for {
+		switch scanner.Peek().char {
+		case '"':
+			lexeme += string(scanner.Next().char)
+			return Token{String, lexeme, loc}
+		case '\000':
+			fallthrough
+		case '\n':
+			return Token{Error, "unclosed string", scanner.Peek().loc}
+		default:
+			lexeme += string(scanner.Next().char)
+		}
+	}
 }

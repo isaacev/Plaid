@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"plaid/lexer"
 	"strconv"
+	"strings"
 )
 
 // SyntaxError combines a source code location with the resulting error message
@@ -129,6 +130,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.Dash, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	p.registerPrefix(lexer.Number, parseNumber)
+	p.registerPrefix(lexer.String, parseString)
 
 	p.registerPostfix(lexer.Assign, parseAssign, Assign)
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
@@ -572,4 +574,21 @@ func evalNumber(tok lexer.Token) (NumberExpr, error) {
 	}
 
 	return NumberExpr{tok, int(val)}, nil
+}
+
+func parseString(p *Parser) (Expr, error) {
+	tok, err := p.expectNextToken(lexer.String, "expected string literal")
+	if err != nil {
+		return nil, err
+	}
+
+	return evalString(tok)
+}
+
+func evalString(tok lexer.Token) (StringExpr, error) {
+	dblQuote := "\""
+	remSuffix := strings.TrimSuffix(tok.Lexeme, dblQuote)
+	remBoth := strings.TrimPrefix(remSuffix, dblQuote)
+
+	return StringExpr{tok, remBoth}, nil
 }

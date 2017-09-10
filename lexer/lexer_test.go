@@ -65,6 +65,12 @@ func TestIsDigit(t *testing.T) {
 	expectBool(t, isDigit, ':', false)
 }
 
+func TestIsDoubleQuote(t *testing.T) {
+	expectBool(t, isDoubleQuote, '"', true)
+	expectBool(t, isDoubleQuote, '!', false)
+	expectBool(t, isDoubleQuote, '#', false)
+}
+
 func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "", Token{EOF, "", Loc{1, 0}})
 	expectLexer(t, eatToken, "  \nfoo", Token{Ident, "foo", Loc{2, 1}})
@@ -87,6 +93,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "let", Token{Let, "let", Loc{1, 1}})
 	expectLexer(t, eatToken, "return", Token{Return, "return", Loc{1, 1}})
 	expectLexer(t, eatToken, "123", Token{Number, "123", Loc{1, 1}})
+	expectLexer(t, eatToken, `"foo"`, Token{String, `"foo"`, Loc{1, 1}})
 
 	expectLexerError(t, eatToken, "@", "(1:1) unexpected symbol")
 }
@@ -154,6 +161,14 @@ func TestEatNumberToken(t *testing.T) {
 
 	expectLexerError(t, eatNumberToken, "foo", "(1:1) expected number")
 	expectLexerError(t, eatNumberToken, "", "(1:0) expected number")
+}
+
+func TestEatStringToken(t *testing.T) {
+	expectLexer(t, eatStringToken, `"foo"`, Token{String, `"foo"`, Loc{1, 1}})
+
+	expectLexerError(t, eatStringToken, "123", "(1:1) expected string")
+	expectLexerError(t, eatStringToken, `"foo`, "(1:4) unclosed string")
+	expectLexerError(t, eatStringToken, "\"foo\n\"", "(1:5) unclosed string")
 }
 
 type charPred func(rune) bool

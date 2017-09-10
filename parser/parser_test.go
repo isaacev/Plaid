@@ -615,6 +615,25 @@ func TestParseNumber(t *testing.T) {
 	expectAnError(t, "(1:1) malformed number literal", expr, err)
 }
 
+func TestParseString(t *testing.T) {
+	p := makeParser(`"foo"`)
+	expr, err := parseString(p)
+	expectNoErrors(t, `"foo"`, expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("123")
+	expr, err = parseString(p)
+	expectAnError(t, "(1:1) expected string literal", expr, err)
+
+	p = makeParser("\"foo\n\"")
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "(1:5) unclosed string", expr, err)
+
+	p = makeParser("\"foo")
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "(1:4) unclosed string", expr, err)
+}
+
 type typeSigParser func(p *Parser) (TypeSig, error)
 
 func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
