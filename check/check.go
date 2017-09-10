@@ -88,6 +88,12 @@ func checkProgram(scope *Scope, prog parser.Program) {
 
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
+	name := stmt.Name.Name
+	typ := checkExpr(scope, stmt.Expr)
+	scope.registerVariable(name, typ)
+}
+
 func checkExpr(scope *Scope, expr parser.Expr) Type {
 	switch expr := expr.(type) {
 	case parser.BinaryExpr:
