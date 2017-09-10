@@ -88,6 +88,13 @@ func checkProgram(scope *Scope, prog parser.Program) {
 
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
+	switch expr.Oper {
+	case "+":
+		return checkAddition(scope, expr.Left, expr.Right)
+	default:
+		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
+		return TypeError{}
 	}
 }
 

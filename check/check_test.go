@@ -84,6 +84,30 @@ func TestCheckProgram(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckStmt(t *testing.T) {
+	prog, _ := parser.Parse("let a := 123;")
+	scope := makeScope(nil)
+	checkStmt(scope, prog.Stmts[0])
+	expectNoErrors(t, scope.Errs)
+}
+
+func TestCheckBinaryExpr(t *testing.T) {
+	scope := makeScope(nil)
+	scope.registerVariable("a", BuiltinInt)
+	scope.registerVariable("b", BuiltinInt)
+	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
+	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
+	typ := checkBinaryExpr(scope, expr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinInt)
+
+	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(scope, expr)
+	expectAnError(t, scope.Errs[0], "unknown infix operator '@'")
+	expectBool(t, typ.IsError(), true)
+}
+
 func TestCheckAddition(t *testing.T) {
 	scope := makeScope(nil)
 	scope.registerVariable("a", BuiltinInt)
