@@ -248,12 +248,20 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
+	var stmt Stmt
 	switch expr.(type) {
 	case AssignExpr:
-		return ExprStmt{expr}, nil
+		stmt = ExprStmt{expr}
 	default:
 		return nil, SyntaxError{expr.Start(), "expected start of statement"}
 	}
+
+	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
+	if err != nil {
+		return nil, err
+	}
+
+	return stmt, nil
 }
 
 func parseTypeSig(p *Parser) (TypeSig, error) {

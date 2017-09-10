@@ -245,6 +245,11 @@ func TestParseExprStmt(t *testing.T) {
 	expectNoErrors(t, "(= a 123)", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
+	p = makeParser("a := 123")
+	loadGrammar(p)
+	stmt, err = parseExprStmt(p)
+	expectAnError(t, "(1:8) expected semicolon", stmt, err)
+
 	p = makeParser("let a := 123")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)
