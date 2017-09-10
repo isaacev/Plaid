@@ -238,6 +238,24 @@ func TestParseReturnStmt(t *testing.T) {
 	expectAnError(t, "(1:8) unexpected symbol", stmt, err)
 }
 
+func TestParseExprStmt(t *testing.T) {
+	p := makeParser("a := 123;")
+	loadGrammar(p)
+	stmt, err := parseExprStmt(p)
+	expectNoErrors(t, "(= a 123)", stmt, err)
+	expectStart(t, stmt, 1, 1)
+
+	p = makeParser("let a := 123")
+	loadGrammar(p)
+	stmt, err = parseExprStmt(p)
+	expectAnError(t, "(1:1) unexpected symbol", stmt, err)
+
+	p = makeParser("2 + 2")
+	loadGrammar(p)
+	stmt, err = parseExprStmt(p)
+	expectAnError(t, "(1:1) expected start of statement", stmt, err)
+}
+
 func TestParseTypeSig(t *testing.T) {
 	expectTypeSig(t, parseTypeSig, "Int", "Int")
 	expectTypeSig(t, parseTypeSig, "[Int]", "[Int]")

@@ -45,6 +45,13 @@ func TestReturnStmt(t *testing.T) {
 	expectString(t, ReturnStmt{nop, NumberExpr{nop, 123}}, "(return 123)")
 }
 
+func TestExprStmt(t *testing.T) {
+	(ExprStmt{}).isNode()
+	(ExprStmt{}).isStmt()
+
+	expectString(t, ExprStmt{IdentExpr{nop, "abc"}}, "abc")
+}
+
 func TestTypeTuple(t *testing.T) {
 	(TypeTuple{}).isNode()
 	(TypeTuple{}).isType()
