@@ -258,6 +258,32 @@ func (fp FunctionParam) String() string {
 
 func (fp FunctionParam) isNode() {}
 
+// DispatchExpr describes a function call including the callee and any arguments
+type DispatchExpr struct {
+	callee Expr
+	args   []Expr
+}
+
+// Start returns a location that this node can be considered to start at
+func (de DispatchExpr) Start() lexer.Loc { return de.callee.Start() }
+
+func (de DispatchExpr) String() string {
+	out := "("
+	out += de.callee.String()
+	out += " ("
+	for i, arg := range de.args {
+		if i > 0 {
+			out += " "
+		}
+		out += arg.String()
+	}
+	out += "))"
+	return out
+}
+
+func (de DispatchExpr) isNode() {}
+func (de DispatchExpr) isExpr() {}
+
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
 	tok   lexer.Token

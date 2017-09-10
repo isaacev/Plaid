@@ -518,6 +518,38 @@ func TestParseInfix(t *testing.T) {
 	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
+func TestParseDispatchExpr(t *testing.T) {
+	p := makeParser("callee()")
+	loadGrammar(p)
+	ident, _ := parseIdent(p)
+	expr, err := parseDispatch(p, ident)
+	expectNoErrors(t, "(callee ())", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("callee(1, 2, 3)")
+	loadGrammar(p)
+	expr, err = parseExpr(p, Lowest)
+	expectNoErrors(t, "(callee (1 2 3))", expr, err)
+
+	p = makeParser("callee)")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseDispatch(p, ident)
+	expectAnError(t, "(1:7) expected left paren", expr, err)
+
+	p = makeParser("callee(let")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseDispatch(p, ident)
+	expectAnError(t, "(1:8) unexpected symbol", expr, err)
+
+	p = makeParser("callee(123")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseDispatch(p, ident)
+	expectAnError(t, "(1:10) expected right paren", expr, err)
+}
+
 func TestParseAssignExpr(t *testing.T) {
 	p := makeParser("a := 123")
 	loadGrammar(p)

@@ -36,6 +36,7 @@ const (
 	Product
 	Prefix
 	Postfix
+	Dispatch
 )
 
 // PrefixParseFunc describes the parsing function for any construct where the
@@ -132,6 +133,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.Number, parseNumber)
 	p.registerPrefix(lexer.String, parseString)
 
+	p.registerPostfix(lexer.ParenL, parseDispatch, Dispatch)
 	p.registerPostfix(lexer.Assign, parseAssign, Assign)
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPostfix(lexer.Dash, parseInfix, Sum)
@@ -507,6 +509,36 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 	}
 
 	return BinaryExpr{oper, tok, left, right}, nil
+}
+
+func parseDispatch(p *Parser, left Expr) (Expr, error) {
+	_, err := p.expectNextToken(lexer.ParenL, "expected left paren")
+	if err != nil {
+		return nil, err
+	}
+
+	var args []Expr
+	for p.peekTokenIsNot(lexer.ParenR) {
+		var arg Expr
+		arg, err = parseExpr(p, Lowest)
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, arg)
+		if p.peekTokenIsNot(lexer.Comma) {
+			break
+		}
+
+		p.lexer.Next()
+	}
+
+	_, err = p.expectNextToken(lexer.ParenR, "expected right paren")
+	if err != nil {
+		return nil, err
+	}
+
+	return DispatchExpr{left, args}, nil
 }
 
 func parseAssign(p *Parser, left Expr) (Expr, error) {

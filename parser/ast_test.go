@@ -109,6 +109,20 @@ func TestFunctionExpr(t *testing.T) {
 	expectString(t, FunctionExpr{nop, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
 }
 
+func TestDispatchExpr(t *testing.T) {
+	(DispatchExpr{}).isNode()
+	(DispatchExpr{}).isExpr()
+
+	callee := IdentExpr{nop, "callee"}
+	args := []Expr{
+		NumberExpr{nop, 123},
+		NumberExpr{nop, 456},
+	}
+
+	expectString(t, DispatchExpr{callee, args}, "(callee (123 456))")
+	expectString(t, DispatchExpr{callee, nil}, "(callee ())")
+}
+
 func TestAssignExpr(t *testing.T) {
 	(AssignExpr{}).isNode()
 	(AssignExpr{}).isExpr()
