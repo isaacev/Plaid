@@ -96,6 +96,7 @@ func TestTypeOptional(t *testing.T) {
 func TestFunctionExpr(t *testing.T) {
 	(FunctionExpr{}).isNode()
 	(FunctionExpr{}).isExpr()
+	(FunctionParam{}).isNode()
 
 	params := []FunctionParam{
 		FunctionParam{IdentExpr{nop, "x"}, TypeIdent{nop, "Int"}},
