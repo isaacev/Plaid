@@ -16,13 +16,13 @@ type Node interface {
 
 // Program describes all top-level statements within a script
 type Program struct {
-	stmts []Stmt
+	Stmts []Stmt
 }
 
 // Start returns a location that this node can be considered to start at
 func (p Program) Start() lexer.Loc {
-	if len(p.stmts) > 0 {
-		return p.stmts[0].Start()
+	if len(p.Stmts) > 0 {
+		return p.Stmts[0].Start()
 	}
 
 	return lexer.Loc{Line: 1, Col: 1}
@@ -30,7 +30,7 @@ func (p Program) Start() lexer.Loc {
 
 func (p Program) String() string {
 	out := ""
-	for i, stmt := range p.stmts {
+	for i, stmt := range p.Stmts {
 		if i > 0 {
 			out += "\n"
 		}
