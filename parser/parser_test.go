@@ -122,6 +122,7 @@ func TestPeekPrecedence(t *testing.T) {
 func TestParse(t *testing.T) {
 	prog, err := Parse("let a := 123; let b := 456;")
 	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
+	expectStart(t, prog, 1, 1)
 }
 
 func TestParseProgram(t *testing.T) {
@@ -142,6 +143,7 @@ func TestParseStmt(t *testing.T) {
 		loadGrammar(parser)
 		stmt, err := parseStmt(parser)
 		expectNoErrors(t, ast, stmt, err)
+		expectStart(t, stmt, 1, 1)
 	}
 
 	expectStmtError := func(source string, msg string) {
@@ -162,6 +164,7 @@ func TestParseStmtBlock(t *testing.T) {
 		loadGrammar(parser)
 		block, err := parseStmtBlock(parser)
 		expectNoErrors(t, ast, block, err)
+		expectStart(t, block, 1, 1)
 	}
 
 	expectStmtBlockError := func(source string, msg string) {
@@ -182,6 +185,7 @@ func TestParseDeclarationStmt(t *testing.T) {
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err := parseDeclarationStmt(p)
 	expectNoErrors(t, "(let a 123)", stmt, err)
+	expectStart(t, stmt, 1, 1)
 
 	p = makeParser("a := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
@@ -213,6 +217,7 @@ func TestParseReturnStmt(t *testing.T) {
 	p := makeParser("return;")
 	stmt, err := parseReturnStmt(p)
 	expectNoErrors(t, "(return)", stmt, err)
+	expectStart(t, stmt, 1, 1)
 
 	p = makeParser("return 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
@@ -432,6 +437,7 @@ func TestParseFunctionParam(t *testing.T) {
 	p := makeParser("a:Int")
 	param, err := parseFunctionParam(p)
 	expectNoErrors(t, "a:Int", param, err)
+	expectStart(t, param, 1, 1)
 
 	p = makeParser("0:Int")
 	param, err = parseFunctionParam(p)
@@ -467,6 +473,7 @@ func TestParseInfix(t *testing.T) {
 
 	expr, err = parseInfix(parser, left)
 	expectNoErrors(t, "(+ a b)", expr, err)
+	expectStart(t, expr, 1, 1)
 
 	parser = makeParser("a +")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
@@ -495,6 +502,7 @@ func TestParsePostfix(t *testing.T) {
 
 	expr, err = parsePostfix(parser, left)
 	expectNoErrors(t, "(+ a)", expr, err)
+	expectStart(t, expr, 1, 1)
 }
 
 func TestParsePrefix(t *testing.T) {
@@ -504,6 +512,7 @@ func TestParsePrefix(t *testing.T) {
 
 	expr, err := parsePrefix(parser)
 	expectNoErrors(t, "(+ a)", expr, err)
+	expectStart(t, expr, 1, 1)
 
 	parser = makeParser("+")
 	parser.registerPrefix(lexer.Plus, parsePrefix)
@@ -520,6 +529,7 @@ func TestParseGroup(t *testing.T) {
 
 	expr, err := parseGroup(parser)
 	expectNoErrors(t, "a", expr, err)
+	expectStart(t, expr, 1, 2)
 
 	parser = makeParser("a)")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
@@ -548,6 +558,7 @@ func TestParseIdent(t *testing.T) {
 
 	expr, err := parseIdent(parser)
 	expectNoErrors(t, "abc", expr, err)
+	expectStart(t, expr, 1, 1)
 
 	parser = makeParser("123")
 
@@ -560,6 +571,7 @@ func TestParseNumber(t *testing.T) {
 
 	expr, err := parseNumber(parser)
 	expectNoErrors(t, "123", expr, err)
+	expectStart(t, expr, 1, 1)
 
 	parser = makeParser("abc")
 
@@ -578,6 +590,7 @@ func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
 	loadGrammar(p)
 	sig, err := fn(p)
 	expectNoErrors(t, ast, sig, err)
+	expectStart(t, sig, 1, 1)
 }
 
 func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg string) {
@@ -606,5 +619,14 @@ func expectAnError(t *testing.T, msg string, node Node, err error) {
 func expectAST(t *testing.T, ast string, got Node) {
 	if ast != got.String() {
 		t.Errorf("Expected '%s', got '%s'\n", ast, got)
+	}
+}
+
+func expectStart(t *testing.T, node Node, line int, col int) {
+	got := node.Start()
+	exp := lexer.Loc{Line: line, Col: col}
+
+	if exp.String() != got.String() {
+		t.Errorf("Expected %s, got %s\n", exp, got)
 	}
 }

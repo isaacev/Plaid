@@ -250,7 +250,7 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 	case AssignExpr:
 		return ExprStmt{expr}, nil
 	default:
-		return nil, makeSyntaxError(p.lexer.Peek(), "expected start of statement", false)
+		return nil, SyntaxError{expr.Start(), "expected start of statement"}
 	}
 }
 
