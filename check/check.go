@@ -91,6 +91,15 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 	}
 }
 
+func checkIdentExpr(scope *Scope, expr parser.IdentExpr) Type {
+	if scope.hasVariable(expr.Name) {
+		return scope.getVariable(expr.Name)
+	}
+
+	scope.addError(fmt.Errorf("variable '%s' was used before it was declared", expr.Name))
+	return TypeError{}
+}
+
 func checkNumberExpr(scope *Scope, expr parser.NumberExpr) Type {
 	return BuiltinInt
 }

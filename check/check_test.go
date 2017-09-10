@@ -81,6 +81,21 @@ func TestCheckProgram(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckIdentExpr(t *testing.T) {
+	scope := makeScope(nil)
+	scope.registerVariable("x", BuiltinInt)
+	expr := parser.IdentExpr{Tok: lexer.Token{}, Name: "x"}
+	typ := checkIdentExpr(scope, expr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinInt)
+
+	scope = makeScope(nil)
+	expr = parser.IdentExpr{Tok: lexer.Token{}, Name: "x"}
+	typ = checkIdentExpr(scope, expr)
+	expectAnError(t, scope.Errs[0], "variable 'x' was used before it was declared")
+	expectBool(t, typ.IsError(), true)
+}
+
 func TestCheckNumberExpr(t *testing.T) {
 	scope := makeScope(nil)
 	expr := parser.NumberExpr{Tok: lexer.Token{}, Val: 123}
