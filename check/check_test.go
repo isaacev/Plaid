@@ -193,6 +193,16 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
+	scope = makeScope(nil, nil)
+	scope.registerLocalVariable("a", BuiltinInt)
+	scope.registerLocalVariable("b", BuiltinInt)
+	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
+	expr = parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(scope, expr)
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, typ, BuiltinInt)
+
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr)
 	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
