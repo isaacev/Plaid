@@ -200,8 +200,10 @@ func checkAssignExpr(scope *Scope, expr parser.AssignExpr) Type {
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
 	switch expr.Oper {
 	case "+":
-		return expectBinaryTypes(scope, expr.Left, BuiltinInt, expr.Right, BuiltinInt, BuiltinInt)
+		fallthrough
 	case "-":
+		fallthrough
+	case "*":
 		return expectBinaryTypes(scope, expr.Left, BuiltinInt, expr.Right, BuiltinInt, BuiltinInt)
 	default:
 		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
