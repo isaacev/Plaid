@@ -327,7 +327,7 @@ func TestConvertTypeSig(t *testing.T) {
 	expectEquivalentType(t, convertTypeSig(sig), TypeIdent{"Int"})
 
 	sig = nil
-	expectBool(t, convertTypeSig(sig).IsError(), true)
+	expectBool(t, convertTypeSig(sig) == nil, true)
 }
 
 func expectNoErrors(t *testing.T, errs []error) {

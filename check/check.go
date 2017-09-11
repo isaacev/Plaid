@@ -240,6 +240,6 @@ func convertTypeSig(sig parser.TypeSig) Type {
 	case parser.TypeIdent:
 		return TypeIdent{sig.Name}
 	default:
-		return TypeError{}
+		return nil
 	}
 }
