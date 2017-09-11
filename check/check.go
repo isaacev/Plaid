@@ -105,6 +105,11 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 		scope.addError(fmt.Errorf("unknown expression type"))
 	}
 
+	if typ.Equals(TypeVoid{}) {
+		scope.addError(fmt.Errorf("cannot use void types in an expression"))
+		return TypeError{}
+	}
+
 	return typ
 }
 

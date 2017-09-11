@@ -74,6 +74,11 @@ func TestCheckExpr(t *testing.T) {
 	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
 	expectBool(t, scope.values["a"].IsError(), true)
 
+	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
+	scope = Check(prog)
+	expectAnError(t, scope.errs[0], "cannot use void types in an expression")
+	expectBool(t, scope.values["a"].IsError(), true)
+
 	prog, _ = parser.Parse("let a := -5;")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "unknown expression type")
