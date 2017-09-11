@@ -162,6 +162,26 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 }
 
+func TestCheckAssignExpr(t *testing.T) {
+	prog, _ := parser.Parse("a := 456;")
+	scope := makeScope(nil, nil)
+	scope.registerLocalVariable("a", BuiltinInt)
+	checkProgram(scope, prog)
+	expectNoErrors(t, scope.Errors())
+
+	prog, _ = parser.Parse("a := 456;")
+	scope = makeScope(nil, nil)
+	scope.registerLocalVariable("a", BuiltinStr)
+	checkProgram(scope, prog)
+	expectAnError(t, scope.Errors()[0], "'Str' cannot be assigned type 'Int'")
+
+	prog, _ = parser.Parse("a := \"a\" + 45;")
+	scope = makeScope(nil, nil)
+	scope.registerLocalVariable("a", BuiltinStr)
+	checkProgram(scope, prog)
+	expectAnError(t, scope.Errors()[0], "left side must have type Int, got Str")
+}
+
 func TestCheckBinaryExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
 	scope.registerLocalVariable("a", BuiltinInt)

@@ -34,6 +34,9 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 	case parser.ReturnStmt:
 		checkReturnStmt(scope, stmt)
 		break
+	case parser.ExprStmt:
+		checkExpr(scope, stmt.Expr)
+		break
 	}
 
 	if scope.hasBodyQueue() {
@@ -92,6 +95,8 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 		return checkFunctionExpr(scope, expr)
 	case parser.DispatchExpr:
 		return checkDispatchExpr(scope, expr)
+	case parser.AssignExpr:
+		return checkAssignExpr(scope, expr)
 	case parser.BinaryExpr:
 		return checkBinaryExpr(scope, expr)
 	case parser.IdentExpr:
@@ -171,6 +176,23 @@ func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {
 	}
 
 	return retType
+}
+
+func checkAssignExpr(scope *Scope, expr parser.AssignExpr) Type {
+	name := expr.Left.Name
+	leftType := scope.getVariable(name)
+	rightType := checkExpr(scope, expr.Right)
+
+	if leftType.IsError() || rightType.IsError() {
+		return TypeError{}
+	}
+
+	if leftType.Equals(rightType) == false {
+		scope.addError(fmt.Errorf("'%s' cannot be assigned type '%s'", leftType, rightType))
+		return TypeError{}
+	}
+
+	return leftType
 }
 
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
