@@ -114,24 +114,24 @@ func (es ExprStmt) String() string   { return es.Expr.String() }
 func (es ExprStmt) isNode()          {}
 func (es ExprStmt) isStmt()          {}
 
-// TypeSig describes a syntax type annotation
-type TypeSig interface {
+// TypeNote describes a syntax type annotation
+type TypeNote interface {
 	Start() lexer.Loc
 	String() string
 	isNode()
 	isType()
 }
 
-// TypeTuple describes a set of 0 or more types wrapped in parentheses
-type TypeTuple struct {
+// TypeNoteTuple describes a set of 0 or more types wrapped in parentheses
+type TypeNoteTuple struct {
 	Tok   lexer.Token
-	Elems []TypeSig
+	Elems []TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (tt TypeTuple) Start() lexer.Loc { return tt.Tok.Loc }
+func (tt TypeNoteTuple) Start() lexer.Loc { return tt.Tok.Loc }
 
-func (tt TypeTuple) String() string {
+func (tt TypeNoteTuple) String() string {
 	out := "("
 	for i, elem := range tt.Elems {
 		if i > 0 {
@@ -143,63 +143,63 @@ func (tt TypeTuple) String() string {
 	return out
 }
 
-func (tt TypeTuple) isNode() {}
-func (tt TypeTuple) isType() {}
+func (tt TypeNoteTuple) isNode() {}
+func (tt TypeNoteTuple) isType() {}
 
-// TypeFunction describes a function type annotation
-type TypeFunction struct {
-	Params TypeTuple
-	Ret    TypeSig
+// TypeNoteFunction describes a function type annotation
+type TypeNoteFunction struct {
+	Params TypeNoteTuple
+	Ret    TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (tf TypeFunction) Start() lexer.Loc { return tf.Params.Start() }
+func (tf TypeNoteFunction) Start() lexer.Loc { return tf.Params.Start() }
 
-func (tf TypeFunction) String() string {
+func (tf TypeNoteFunction) String() string {
 	out := tf.Params.String()
 	out += " => "
 	out += tf.Ret.String()
 	return out
 }
 
-func (tf TypeFunction) isNode() {}
-func (tf TypeFunction) isType() {}
+func (tf TypeNoteFunction) isNode() {}
+func (tf TypeNoteFunction) isType() {}
 
-// TypeIdent describes a named reference to a type
-type TypeIdent struct {
+// TypeNoteIdent describes a named reference to a type
+type TypeNoteIdent struct {
 	Tok  lexer.Token
 	Name string
 }
 
 // Start returns a location that this node can be considered to start at
-func (ti TypeIdent) Start() lexer.Loc { return ti.Tok.Loc }
-func (ti TypeIdent) String() string   { return ti.Name }
-func (ti TypeIdent) isNode()          {}
-func (ti TypeIdent) isType()          {}
+func (ti TypeNoteIdent) Start() lexer.Loc { return ti.Tok.Loc }
+func (ti TypeNoteIdent) String() string   { return ti.Name }
+func (ti TypeNoteIdent) isNode()          {}
+func (ti TypeNoteIdent) isType()          {}
 
-// TypeList describes a list type
-type TypeList struct {
+// TypeNoteList describes a list type
+type TypeNoteList struct {
 	Tok   lexer.Token
-	Child TypeSig
+	Child TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (tl TypeList) Start() lexer.Loc { return tl.Tok.Loc }
-func (tl TypeList) String() string   { return fmt.Sprintf("[%s]", tl.Child) }
-func (tl TypeList) isNode()          {}
-func (tl TypeList) isType()          {}
+func (tl TypeNoteList) Start() lexer.Loc { return tl.Tok.Loc }
+func (tl TypeNoteList) String() string   { return fmt.Sprintf("[%s]", tl.Child) }
+func (tl TypeNoteList) isNode()          {}
+func (tl TypeNoteList) isType()          {}
 
-// TypeOptional describes a list type
-type TypeOptional struct {
+// TypeNoteOptional describes a list type
+type TypeNoteOptional struct {
 	Tok   lexer.Token
-	Child TypeSig
+	Child TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (to TypeOptional) Start() lexer.Loc { return to.Child.Start() }
-func (to TypeOptional) String() string   { return fmt.Sprintf("%s?", to.Child) }
-func (to TypeOptional) isNode()          {}
-func (to TypeOptional) isType()          {}
+func (to TypeNoteOptional) Start() lexer.Loc { return to.Child.Start() }
+func (to TypeNoteOptional) String() string   { return fmt.Sprintf("%s?", to.Child) }
+func (to TypeNoteOptional) isNode()          {}
+func (to TypeNoteOptional) isType()          {}
 
 // Expr describes all constructs that resolve to a value
 type Expr interface {
@@ -213,7 +213,7 @@ type Expr interface {
 type FunctionExpr struct {
 	Tok    lexer.Token
 	Params []FunctionParam
-	Ret    TypeSig
+	Ret    TypeNote
 	Block  StmtBlock
 }
 
@@ -239,18 +239,18 @@ func (fe FunctionExpr) String() string {
 func (fe FunctionExpr) isExpr() {}
 func (fe FunctionExpr) isNode() {}
 
-// FunctionParam describes a single function argument's name and type signature
+// FunctionParam describes a single function argument's name and type annotation
 type FunctionParam struct {
 	Name IdentExpr
-	Sig  TypeSig
+	Note TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
 func (fp FunctionParam) Start() lexer.Loc { return fp.Name.Start() }
 
 func (fp FunctionParam) String() string {
-	if fp.Sig != nil {
-		return fmt.Sprintf("%s:%s", fp.Name, fp.Sig)
+	if fp.Note != nil {
+		return fmt.Sprintf("%s:%s", fp.Name, fp.Note)
 	}
 
 	return fp.Name.String()

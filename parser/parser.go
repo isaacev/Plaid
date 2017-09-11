@@ -268,17 +268,17 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 	return stmt, nil
 }
 
-func parseTypeSig(p *Parser) (TypeSig, error) {
-	var child TypeSig
+func parseTypeNote(p *Parser) (TypeNote, error) {
+	var child TypeNote
 	var err error
 
 	switch p.lexer.Peek().Type {
 	case lexer.Ident:
-		child, err = parseTypeIdent(p)
+		child, err = parseTypeNoteIdent(p)
 	case lexer.BracketL:
-		child, err = parseTypeList(p)
+		child, err = parseTypeNoteList(p)
 	case lexer.ParenL:
-		child, err = parseTypeTuple(p)
+		child, err = parseTypeNoteTuple(p)
 	default:
 		return nil, makeSyntaxError(p.lexer.Peek(), "unexpected symbol", true)
 	}
@@ -288,29 +288,29 @@ func parseTypeSig(p *Parser) (TypeSig, error) {
 	}
 
 	for p.lexer.Peek().Type == lexer.Question {
-		child, _ = parseTypeOptional(p, child)
+		child, _ = parseTypeNoteOptional(p, child)
 	}
 
 	return child, nil
 }
 
-func parseTypeIdent(p *Parser) (TypeSig, error) {
+func parseTypeNoteIdent(p *Parser) (TypeNote, error) {
 	var tok lexer.Token
 	var err error
 	if tok, err = p.expectNextToken(lexer.Ident, "expected identifier"); err != nil {
 		return nil, err
 	}
 
-	return TypeIdent{tok, tok.Lexeme}, nil
+	return TypeNoteIdent{tok, tok.Lexeme}, nil
 }
 
-func parseTypeList(p *Parser) (TypeSig, error) {
+func parseTypeNoteList(p *Parser) (TypeNote, error) {
 	tok, err := p.expectNextToken(lexer.BracketL, "expected left bracket")
 	if err != nil {
 		return nil, err
 	}
 
-	child, err := parseTypeSig(p)
+	child, err := parseTypeNote(p)
 	if err != nil {
 		return nil, err
 	}
@@ -320,28 +320,28 @@ func parseTypeList(p *Parser) (TypeSig, error) {
 		return nil, err
 	}
 
-	return TypeList{tok, child}, nil
+	return TypeNoteList{tok, child}, nil
 }
 
-func parseTypeOptional(p *Parser, child TypeSig) (TypeSig, error) {
+func parseTypeNoteOptional(p *Parser, child TypeNote) (TypeNote, error) {
 	tok, err := p.expectNextToken(lexer.Question, "expected question mark")
 	if err != nil {
 		return nil, err
 	}
 
-	return TypeOptional{tok, child}, nil
+	return TypeNoteOptional{tok, child}, nil
 }
 
-func parseTypeTuple(p *Parser) (TypeSig, error) {
+func parseTypeNoteTuple(p *Parser) (TypeNote, error) {
 	tok, err := p.expectNextToken(lexer.ParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
 
-	params := []TypeSig{}
+	params := []TypeNote{}
 	for p.peekTokenIsNot(lexer.ParenR, lexer.Error, lexer.EOF) {
-		var sig TypeSig
-		sig, err = parseTypeSig(p)
+		var sig TypeNote
+		sig, err = parseTypeNote(p)
 		if err != nil {
 			return nil, err
 		}
@@ -360,26 +360,26 @@ func parseTypeTuple(p *Parser) (TypeSig, error) {
 		return nil, err
 	}
 
-	tuple := TypeTuple{tok, params}
+	tuple := TypeNoteTuple{tok, params}
 	if p.peekTokenIsNot(lexer.Arrow) {
 		return tuple, nil
 	}
 
-	return parseTypeFunction(p, tuple)
+	return parseTypeNoteFunction(p, tuple)
 }
 
-func parseTypeFunction(p *Parser, tuple TypeTuple) (TypeSig, error) {
+func parseTypeNoteFunction(p *Parser, tuple TypeNoteTuple) (TypeNote, error) {
 	_, err := p.expectNextToken(lexer.Arrow, "expected arrow")
 	if err != nil {
 		return nil, err
 	}
 
-	ret, err := parseTypeSig(p)
+	ret, err := parseTypeNote(p)
 	if err != nil {
 		return nil, err
 	}
 
-	return TypeFunction{tuple, ret}, nil
+	return TypeNoteFunction{tuple, ret}, nil
 }
 
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
@@ -424,9 +424,9 @@ func parseFunction(p *Parser) (Expr, error) {
 	return FunctionExpr{tok, params, ret, block}, nil
 }
 
-func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeSig, error) {
+func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeNote, error) {
 	var params []FunctionParam
-	var ret TypeSig
+	var ret TypeNote
 	var err error
 
 	if params, err = parseFunctionParams(p); err != nil {
@@ -477,10 +477,10 @@ func parseFunctionParam(p *Parser) (FunctionParam, error) {
 		return FunctionParam{}, err
 	}
 
-	var sig TypeSig
+	var sig TypeNote
 	if p.lexer.Peek().Type == lexer.Colon {
 		p.lexer.Next()
-		sig, err = parseTypeSig(p)
+		sig, err = parseTypeNote(p)
 		if err != nil {
 			return FunctionParam{}, err
 		}
@@ -489,10 +489,10 @@ func parseFunctionParam(p *Parser) (FunctionParam, error) {
 	return FunctionParam{ident.(IdentExpr), sig}, nil
 }
 
-func parseFunctionReturnSig(p *Parser) (sig TypeSig, err error) {
+func parseFunctionReturnSig(p *Parser) (sig TypeNote, err error) {
 	if p.lexer.Peek().Type == lexer.Colon {
 		p.lexer.Next()
-		sig, err = parseTypeSig(p)
+		sig, err = parseTypeNote(p)
 		if err != nil {
 			return nil, err
 		}

@@ -52,45 +52,45 @@ func TestExprStmt(t *testing.T) {
 	expectString(t, ExprStmt{IdentExpr{nop, "abc"}}, "abc")
 }
 
-func TestTypeTuple(t *testing.T) {
-	(TypeTuple{}).isNode()
-	(TypeTuple{}).isType()
+func TestTypeNoteTuple(t *testing.T) {
+	(TypeNoteTuple{}).isNode()
+	(TypeNoteTuple{}).isType()
 
-	expectString(t, TypeTuple{}, "()")
-	tuple := TypeTuple{nop, []TypeSig{TypeIdent{nop, "Bool"}, TypeOptional{nop, TypeIdent{nop, "Str"}}}}
+	expectString(t, TypeNoteTuple{}, "()")
+	tuple := TypeNoteTuple{nop, []TypeNote{TypeNoteIdent{nop, "Bool"}, TypeNoteOptional{nop, TypeNoteIdent{nop, "Str"}}}}
 	expectString(t, tuple, "(Bool Str?)")
 }
 
-func TestTypeFunction(t *testing.T) {
-	(TypeFunction{}).isNode()
-	(TypeFunction{}).isType()
+func TestTypeNoteFunction(t *testing.T) {
+	(TypeNoteFunction{}).isNode()
+	(TypeNoteFunction{}).isType()
 
-	args := TypeTuple{}
-	expectString(t, TypeFunction{args, TypeIdent{nop, "Int"}}, "() => Int")
+	args := TypeNoteTuple{}
+	expectString(t, TypeNoteFunction{args, TypeNoteIdent{nop, "Int"}}, "() => Int")
 
-	args = TypeTuple{nop, []TypeSig{TypeIdent{nop, "Bool"}, TypeOptional{nop, TypeIdent{nop, "Str"}}}}
-	expectString(t, TypeFunction{args, TypeIdent{nop, "Int"}}, "(Bool Str?) => Int")
+	args = TypeNoteTuple{nop, []TypeNote{TypeNoteIdent{nop, "Bool"}, TypeNoteOptional{nop, TypeNoteIdent{nop, "Str"}}}}
+	expectString(t, TypeNoteFunction{args, TypeNoteIdent{nop, "Int"}}, "(Bool Str?) => Int")
 }
 
-func TestTypeIdent(t *testing.T) {
-	(TypeIdent{}).isNode()
-	(TypeIdent{}).isType()
+func TestTypeNoteIdent(t *testing.T) {
+	(TypeNoteIdent{}).isNode()
+	(TypeNoteIdent{}).isType()
 
-	expectString(t, TypeIdent{nop, "Int"}, "Int")
+	expectString(t, TypeNoteIdent{nop, "Int"}, "Int")
 }
 
-func TestTypeList(t *testing.T) {
-	(TypeList{}).isNode()
-	(TypeList{}).isType()
+func TestTypeNoteList(t *testing.T) {
+	(TypeNoteList{}).isNode()
+	(TypeNoteList{}).isType()
 
-	expectString(t, TypeList{nop, TypeIdent{nop, "Int"}}, "[Int]")
+	expectString(t, TypeNoteList{nop, TypeNoteIdent{nop, "Int"}}, "[Int]")
 }
 
-func TestTypeOptional(t *testing.T) {
-	(TypeOptional{}).isNode()
-	(TypeOptional{}).isType()
+func TestTypeNoteOptional(t *testing.T) {
+	(TypeNoteOptional{}).isNode()
+	(TypeNoteOptional{}).isType()
 
-	expectString(t, TypeOptional{nop, TypeIdent{nop, "Int"}}, "Int?")
+	expectString(t, TypeNoteOptional{nop, TypeNoteIdent{nop, "Int"}}, "Int?")
 }
 
 func TestFunctionExpr(t *testing.T) {
@@ -99,10 +99,10 @@ func TestFunctionExpr(t *testing.T) {
 	(FunctionParam{}).isNode()
 
 	params := []FunctionParam{
-		FunctionParam{IdentExpr{nop, "x"}, TypeIdent{nop, "Int"}},
+		FunctionParam{IdentExpr{nop, "x"}, TypeNoteIdent{nop, "Int"}},
 		FunctionParam{IdentExpr{nop, "y"}, nil},
 	}
-	ret := TypeIdent{nop, "Str"}
+	ret := TypeNoteIdent{nop, "Str"}
 	block := StmtBlock{nop, []Stmt{
 		DeclarationStmt{nop, IdentExpr{nop, "z"}, NumberExpr{nop, 123}},
 	}, nop}

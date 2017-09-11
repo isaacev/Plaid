@@ -245,16 +245,16 @@ func TestCheckStringExpr(t *testing.T) {
 }
 
 func TestConvertTypeSig(t *testing.T) {
-	var sig parser.TypeSig
+	var note parser.TypeNote
 
-	sig = parser.TypeFunction{
-		Params: parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
-			parser.TypeIdent{Tok: nop, Name: "Int"},
-			parser.TypeIdent{Tok: nop, Name: "Bool"},
+	note = parser.TypeNoteFunction{
+		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
+			parser.TypeNoteIdent{Tok: nop, Name: "Int"},
+			parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 		}},
-		Ret: parser.TypeIdent{Tok: nop, Name: "Str"},
+		Ret: parser.TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, convertTypeSig(sig), TypeFunction{
+	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Bool"},
@@ -262,14 +262,14 @@ func TestConvertTypeSig(t *testing.T) {
 		TypeIdent{"Str"},
 	})
 
-	sig = parser.TypeFunction{
-		Params: parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
-			parser.TypeIdent{Tok: nop, Name: "Int"},
-			parser.TypeIdent{Tok: nop, Name: "Bool"},
+	note = parser.TypeNoteFunction{
+		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
+			parser.TypeNoteIdent{Tok: nop, Name: "Int"},
+			parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 		}},
 		Ret: nil,
 	}
-	expectEquivalentType(t, convertTypeSig(sig), TypeFunction{
+	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Bool"},
@@ -277,26 +277,26 @@ func TestConvertTypeSig(t *testing.T) {
 		nil,
 	})
 
-	sig = parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
-		parser.TypeIdent{Tok: nop, Name: "Int"},
-		parser.TypeIdent{Tok: nop, Name: "Bool"},
+	note = parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
+		parser.TypeNoteIdent{Tok: nop, Name: "Int"},
+		parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, convertTypeSig(sig), TypeTuple{[]Type{
+	expectEquivalentType(t, convertTypeNote(note), TypeTuple{[]Type{
 		TypeIdent{"Int"},
 		TypeIdent{"Bool"},
 	}})
 
-	sig = parser.TypeList{Tok: nop, Child: parser.TypeIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeSig(sig), TypeList{TypeIdent{"Int"}})
+	note = parser.TypeNoteList{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
+	expectEquivalentType(t, convertTypeNote(note), TypeList{TypeIdent{"Int"}})
 
-	sig = parser.TypeOptional{Tok: nop, Child: parser.TypeIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeSig(sig), TypeOptional{TypeIdent{"Int"}})
+	note = parser.TypeNoteOptional{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
+	expectEquivalentType(t, convertTypeNote(note), TypeOptional{TypeIdent{"Int"}})
 
-	sig = parser.TypeIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, convertTypeSig(sig), TypeIdent{"Int"})
+	note = parser.TypeNoteIdent{Tok: nop, Name: "Int"}
+	expectEquivalentType(t, convertTypeNote(note), TypeIdent{"Int"})
 
-	sig = nil
-	expectBool(t, convertTypeSig(sig) == nil, true)
+	note = nil
+	expectBool(t, convertTypeNote(note) == nil, true)
 }
 
 func expectNoErrors(t *testing.T, errs []error) {

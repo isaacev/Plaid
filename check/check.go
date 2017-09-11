@@ -101,10 +101,10 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 }
 
 func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
-	ret := convertTypeSig(expr.Ret)
+	ret := convertTypeNote(expr.Ret)
 	params := []Type{}
 	for _, param := range expr.Params {
-		params = append(params, convertTypeSig(param.Sig))
+		params = append(params, convertTypeNote(param.Note))
 	}
 	tuple := TypeTuple{params}
 
@@ -210,22 +210,22 @@ func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
 	return BuiltinStr
 }
 
-func convertTypeSig(sig parser.TypeSig) Type {
-	switch sig := sig.(type) {
-	case parser.TypeFunction:
-		return TypeFunction{convertTypeSig(sig.Params).(TypeTuple), convertTypeSig(sig.Ret)}
-	case parser.TypeTuple:
+func convertTypeNote(note parser.TypeNote) Type {
+	switch note := note.(type) {
+	case parser.TypeNoteFunction:
+		return TypeFunction{convertTypeNote(note.Params).(TypeTuple), convertTypeNote(note.Ret)}
+	case parser.TypeNoteTuple:
 		elems := []Type{}
-		for _, elem := range sig.Elems {
-			elems = append(elems, convertTypeSig(elem))
+		for _, elem := range note.Elems {
+			elems = append(elems, convertTypeNote(elem))
 		}
 		return TypeTuple{elems}
-	case parser.TypeList:
-		return TypeList{convertTypeSig(sig.Child)}
-	case parser.TypeOptional:
-		return TypeOptional{convertTypeSig(sig.Child)}
-	case parser.TypeIdent:
-		return TypeIdent{sig.Name}
+	case parser.TypeNoteList:
+		return TypeList{convertTypeNote(note.Child)}
+	case parser.TypeNoteOptional:
+		return TypeOptional{convertTypeNote(note.Child)}
+	case parser.TypeNoteIdent:
+		return TypeIdent{note.Name}
 	default:
 		return nil
 	}

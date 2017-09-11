@@ -275,77 +275,77 @@ func TestParseExprStmt(t *testing.T) {
 }
 
 func TestParseTypeSig(t *testing.T) {
-	expectTypeSig(t, parseTypeSig, "Int", "Int")
-	expectTypeSig(t, parseTypeSig, "[Int]", "[Int]")
-	expectTypeSig(t, parseTypeSig, "Int?", "Int?")
-	expectTypeSig(t, parseTypeSig, "Int??", "Int??")
-	expectTypeSig(t, parseTypeSig, "Int???", "Int???")
-	expectTypeSig(t, parseTypeSig, "[Int?]", "[Int?]")
-	expectTypeSig(t, parseTypeSig, "[Int?]?", "[Int?]?")
-	expectTypeSig(t, parseTypeSig, "[Int]?", "[Int]?")
-	expectTypeSig(t, parseTypeSig, "([Int]?, Bool)", "([Int]? Bool)")
-	expectTypeSig(t, parseTypeSig, "() => [Int]?", "() => [Int]?")
+	expectTypeNote(t, parseTypeNote, "Int", "Int")
+	expectTypeNote(t, parseTypeNote, "[Int]", "[Int]")
+	expectTypeNote(t, parseTypeNote, "Int?", "Int?")
+	expectTypeNote(t, parseTypeNote, "Int??", "Int??")
+	expectTypeNote(t, parseTypeNote, "Int???", "Int???")
+	expectTypeNote(t, parseTypeNote, "[Int?]", "[Int?]")
+	expectTypeNote(t, parseTypeNote, "[Int?]?", "[Int?]?")
+	expectTypeNote(t, parseTypeNote, "[Int]?", "[Int]?")
+	expectTypeNote(t, parseTypeNote, "([Int]?, Bool)", "([Int]? Bool)")
+	expectTypeNote(t, parseTypeNote, "() => [Int]?", "() => [Int]?")
 
-	expectTypeSigError(t, parseTypeSig, "[?]", "(1:2) unexpected symbol")
-	expectTypeSigError(t, parseTypeSig, "[Int", "(1:4) expected right bracket")
-	expectTypeSigError(t, parseTypeSig, "?", "(1:1) unexpected symbol")
+	expectTypeNoteError(t, parseTypeNote, "[?]", "(1:2) unexpected symbol")
+	expectTypeNoteError(t, parseTypeNote, "[Int", "(1:4) expected right bracket")
+	expectTypeNoteError(t, parseTypeNote, "?", "(1:1) unexpected symbol")
 }
 
 func TestParseTypeIdent(t *testing.T) {
-	expectTypeSig(t, parseTypeIdent, "Int", "Int")
-	expectTypeSigError(t, parseTypeIdent, "123", "(1:1) expected identifier")
+	expectTypeNote(t, parseTypeNoteIdent, "Int", "Int")
+	expectTypeNoteError(t, parseTypeNoteIdent, "123", "(1:1) expected identifier")
 }
 
 func TestParseTypeList(t *testing.T) {
-	expectTypeSig(t, parseTypeList, "[Int]", "[Int]")
-	expectTypeSigError(t, parseTypeList, "Int]", "(1:1) expected left bracket")
-	expectTypeSigError(t, parseTypeList, "[?]", "(1:2) unexpected symbol")
+	expectTypeNote(t, parseTypeNoteList, "[Int]", "[Int]")
+	expectTypeNoteError(t, parseTypeNoteList, "Int]", "(1:1) expected left bracket")
+	expectTypeNoteError(t, parseTypeNoteList, "[?]", "(1:2) unexpected symbol")
 }
 
 func TestParseTypeOptional(t *testing.T) {
-	expectTypeOpt := func(fn typeSigParser, source string, ast string) {
+	expectTypeOpt := func(fn typeNoteParser, source string, ast string) {
 		p := makeParser(source)
 		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
-		sig, err = parseTypeOptional(p, sig)
+		sig, err = parseTypeNoteOptional(p, sig)
 		expectNoErrors(t, ast, sig, err)
 	}
 
-	expectTypeOptError := func(fn typeSigParser, source string, msg string) {
+	expectTypeOptError := func(fn typeNoteParser, source string, msg string) {
 		p := makeParser(source)
 		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
-		sig, err = parseTypeOptional(p, sig)
+		sig, err = parseTypeNoteOptional(p, sig)
 		expectAnError(t, msg, sig, err)
 	}
 
-	expectTypeOpt(parseTypeIdent, "Int?", "Int?")
-	expectTypeOpt(parseTypeList, "[Int]?", "[Int]?")
+	expectTypeOpt(parseTypeNoteIdent, "Int?", "Int?")
+	expectTypeOpt(parseTypeNoteList, "[Int]?", "[Int]?")
 
-	expectTypeOptError(parseTypeIdent, "Int", "(1:3) expected question mark")
+	expectTypeOptError(parseTypeNoteIdent, "Int", "(1:3) expected question mark")
 }
 
 func TestParseTypeTuple(t *testing.T) {
-	expectTypeSig(t, parseTypeTuple, "()", "()")
-	expectTypeSig(t, parseTypeTuple, "(Int)", "(Int)")
-	expectTypeSig(t, parseTypeTuple, "(Int, Int)", "(Int Int)")
-	expectTypeSig(t, parseTypeTuple, "(Int, Int,)", "(Int Int)")
-	expectTypeSigError(t, parseTypeTuple, "Int)", "(1:1) expected left paren")
-	expectTypeSigError(t, parseTypeTuple, "(123)", "(1:2) unexpected symbol")
-	expectTypeSigError(t, parseTypeTuple, "(Int", "(1:4) expected right paren")
+	expectTypeNote(t, parseTypeNoteTuple, "()", "()")
+	expectTypeNote(t, parseTypeNoteTuple, "(Int)", "(Int)")
+	expectTypeNote(t, parseTypeNoteTuple, "(Int, Int)", "(Int Int)")
+	expectTypeNote(t, parseTypeNoteTuple, "(Int, Int,)", "(Int Int)")
+	expectTypeNoteError(t, parseTypeNoteTuple, "Int)", "(1:1) expected left paren")
+	expectTypeNoteError(t, parseTypeNoteTuple, "(123)", "(1:2) unexpected symbol")
+	expectTypeNoteError(t, parseTypeNoteTuple, "(Int", "(1:4) expected right paren")
 }
 
 func TestParseTypeFunction(t *testing.T) {
-	expectTypeSig(t, parseTypeTuple, "()=>Nil", "() => Nil")
-	expectTypeSig(t, parseTypeTuple, "(a, b, c)=>[Int]", "(a b c) => [Int]")
-	expectTypeSig(t, parseTypeTuple, "(a, b, c,)=>[Int]", "(a b c) => [Int]")
-	expectTypeSigError(t, parseTypeTuple, "() => 123", "(1:7) unexpected symbol")
+	expectTypeNote(t, parseTypeNoteTuple, "()=>Nil", "() => Nil")
+	expectTypeNote(t, parseTypeNoteTuple, "(a, b, c)=>[Int]", "(a b c) => [Int]")
+	expectTypeNote(t, parseTypeNoteTuple, "(a, b, c,)=>[Int]", "(a b c) => [Int]")
+	expectTypeNoteError(t, parseTypeNoteTuple, "() => 123", "(1:7) unexpected symbol")
 
 	p := makeParser("= > Int")
-	tuple := TypeTuple{nop, []TypeSig{}}
-	sig, err := parseTypeFunction(p, tuple)
+	tuple := TypeNoteTuple{nop, []TypeNote{}}
+	sig, err := parseTypeNoteFunction(p, tuple)
 	expectAnError(t, "(1:1) expected arrow", sig, err)
 }
 
@@ -684,9 +684,9 @@ func TestParseString(t *testing.T) {
 	expectAnError(t, "(1:4) unclosed string", expr, err)
 }
 
-type typeSigParser func(p *Parser) (TypeSig, error)
+type typeNoteParser func(p *Parser) (TypeNote, error)
 
-func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
+func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) {
 	p := makeParser(source)
 	loadGrammar(p)
 	sig, err := fn(p)
@@ -694,7 +694,7 @@ func expectTypeSig(t *testing.T, fn typeSigParser, source string, ast string) {
 	expectStart(t, sig, 1, 1)
 }
 
-func expectTypeSigError(t *testing.T, fn typeSigParser, source string, msg string) {
+func expectTypeNoteError(t *testing.T, fn typeNoteParser, source string, msg string) {
 	p := makeParser(source)
 	loadGrammar(p)
 	sig, err := fn(p)
