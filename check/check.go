@@ -85,25 +85,27 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 }
 
 func checkExpr(scope *Scope, expr parser.Expr) Type {
+	var typ Type = TypeError{}
 	switch expr := expr.(type) {
 	case parser.FunctionExpr:
-		return checkFunctionExpr(scope, expr)
+		typ = checkFunctionExpr(scope, expr)
 	case parser.DispatchExpr:
-		return checkDispatchExpr(scope, expr)
+		typ = checkDispatchExpr(scope, expr)
 	case parser.AssignExpr:
-		return checkAssignExpr(scope, expr)
+		typ = checkAssignExpr(scope, expr)
 	case parser.BinaryExpr:
-		return checkBinaryExpr(scope, expr)
+		typ = checkBinaryExpr(scope, expr)
 	case parser.IdentExpr:
-		return checkIdentExpr(scope, expr)
+		typ = checkIdentExpr(scope, expr)
 	case parser.NumberExpr:
-		return checkNumberExpr(scope, expr)
+		typ = checkNumberExpr(scope, expr)
 	case parser.StringExpr:
-		return checkStringExpr(scope, expr)
+		typ = checkStringExpr(scope, expr)
 	default:
 		scope.addError(fmt.Errorf("unknown expression type"))
-		return TypeError{}
 	}
+
+	return typ
 }
 
 func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
