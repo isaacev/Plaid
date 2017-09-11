@@ -304,14 +304,14 @@ func TestConvertTypeSig(t *testing.T) {
 			parser.TypeNoteIdent{Tok: nop, Name: "Int"},
 			parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 		}},
-		Ret: nil,
+		Ret: parser.TypeNoteVoid{},
 	}
 	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Bool"},
 		}},
-		nil,
+		TypeVoid{},
 	})
 
 	note = parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{

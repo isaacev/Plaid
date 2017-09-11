@@ -58,7 +58,7 @@ func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 }
 
 func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
-	var ret Type
+	var ret Type = TypeVoid{}
 	if stmt.Expr != nil {
 		ret = checkExpr(scope, stmt.Expr)
 	}
