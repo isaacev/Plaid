@@ -121,6 +121,13 @@ func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
 
 func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
 	pushed := makeScope(scope, ret)
+
+	for _, param := range expr.Params {
+		paramName := param.Name.Name
+		paramType := convertTypeNote(param.Note)
+		pushed.registerVariable(paramName, paramType)
+	}
+
 	checkStmtBlock(pushed, expr.Block)
 }
 
