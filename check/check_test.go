@@ -107,6 +107,10 @@ func TestCheckExpr(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 	expectEquivalentType(t, scope.variables["a"], BuiltinStr)
 
+	prog, _ = parser.Parse("let a := fn () {};")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errs)
+
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	scope = Check(prog)
 	expectAnError(t, scope.Errs[0], "variable 'add' was used before it was declared")
@@ -116,6 +120,16 @@ func TestCheckExpr(t *testing.T) {
 	scope = Check(prog)
 	expectAnError(t, scope.Errs[0], "unknown expression type")
 	expectBool(t, scope.variables["a"].IsError(), true)
+}
+
+func TestCheckFunctionExpr(t *testing.T) {
+	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
+	scope := Check(prog)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, scope.variables["f"], TypeFunction{
+		TypeTuple{[]Type{TypeIdent{"Int"}}},
+		TypeIdent{"Int"},
+	})
 }
 
 func TestCheckDispatchExpr(t *testing.T) {

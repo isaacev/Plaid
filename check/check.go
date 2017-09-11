@@ -102,6 +102,8 @@ func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 
 func checkExpr(scope *Scope, expr parser.Expr) Type {
 	switch expr := expr.(type) {
+	case parser.FunctionExpr:
+		return checkFunctionExpr(scope, expr)
 	case parser.DispatchExpr:
 		return checkDispatchExpr(scope, expr)
 	case parser.BinaryExpr:
@@ -116,6 +118,17 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 		scope.addError(fmt.Errorf("unknown expression type"))
 		return TypeError{}
 	}
+}
+
+func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
+	ret := convertTypeSig(expr.Ret)
+	params := []Type{}
+	for _, param := range expr.Params {
+		params = append(params, convertTypeSig(param.Sig))
+	}
+	tuple := TypeTuple{params}
+
+	return TypeFunction{tuple, ret}
 }
 
 func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {
