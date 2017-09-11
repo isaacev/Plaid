@@ -26,6 +26,23 @@ func (te TypeError) IsError() bool  { return true }
 func (te TypeError) String() string { return "ERROR" }
 func (te TypeError) isType()        {}
 
+// TypeVoid descirbes the return type of a function that returns no value
+type TypeVoid struct{}
+
+// Equals returns true if another type has an identical structure and identical names
+func (tn TypeVoid) Equals(other Type) bool {
+	if _, ok := other.(TypeVoid); ok {
+		return true
+	}
+
+	return false
+}
+
+// IsError returns false because this is a properly resolved type
+func (tv TypeVoid) IsError() bool  { return false }
+func (tv TypeVoid) String() string { return "Void" }
+func (tv TypeVoid) isType()        {}
+
 // TypeFunction describes mappings of 0+ parameter types to a return type
 type TypeFunction struct {
 	params TypeTuple
