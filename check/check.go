@@ -249,6 +249,8 @@ func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
 
 func convertTypeNote(note parser.TypeNote) Type {
 	switch note := note.(type) {
+	case parser.TypeNoteVoid:
+		return TypeVoid{}
 	case parser.TypeNoteFunction:
 		return TypeFunction{convertTypeNote(note.Params).(TypeTuple), convertTypeNote(note.Ret)}
 	case parser.TypeNoteTuple:

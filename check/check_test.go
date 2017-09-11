@@ -281,6 +281,9 @@ func TestCheckStringExpr(t *testing.T) {
 func TestConvertTypeSig(t *testing.T) {
 	var note parser.TypeNote
 
+	note = parser.TypeNoteVoid{Tok: nop}
+	expectEquivalentType(t, convertTypeNote(note), TypeVoid{})
+
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
 			parser.TypeNoteIdent{Tok: nop, Name: "Int"},
