@@ -383,10 +383,14 @@ func TestParseExpr(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	p := makeParser("fn () {}")
+	p := makeParser("fn ():Void {}")
 	expr, err := parseFunction(p)
-	expectNoErrors(t, "(fn () {})", expr, err)
+	expectNoErrors(t, "(fn ():Void {})", expr, err)
 	expectStart(t, expr, 1, 1)
+
+	p = makeParser("fn ():Void {}")
+	expr, err = parseFunction(p)
+	expectNoErrors(t, "(fn ():Void {})", expr, err)
 
 	p = makeParser("fn ():Int {}")
 	expr, err = parseFunction(p)
@@ -396,10 +400,10 @@ func TestParseFunction(t *testing.T) {
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn ():[Int?]? {})", expr, err)
 
-	p = makeParser("fn (a:Int) { let x := 123; }")
+	p = makeParser("fn (a:Int):Void { let x := 123; }")
 	loadGrammar(p)
 	expr, err = parseFunction(p)
-	expectNoErrors(t, "(fn (a:Int) {\n  (let x 123)})", expr, err)
+	expectNoErrors(t, "(fn (a:Int):Void {\n  (let x 123)})", expr, err)
 
 	p = makeParser("func (a) { let x := 123; }")
 	expr, err = parseFunction(p)
@@ -413,9 +417,9 @@ func TestParseFunction(t *testing.T) {
 	expr, err = parseFunction(p)
 	expectAnError(t, "(1:8) unexpected symbol", expr, err)
 
-	p = makeParser("fn () { let x = 123; }")
+	p = makeParser("fn ():Void { let x = 123; }")
 	expr, err = parseFunction(p)
-	expectAnError(t, "(1:15) expected :=", expr, err)
+	expectAnError(t, "(1:20) expected :=", expr, err)
 }
 
 func TestParseFunctionParams(t *testing.T) {

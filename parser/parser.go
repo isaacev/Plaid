@@ -491,16 +491,18 @@ func parseFunctionParam(p *Parser) (FunctionParam, error) {
 	return FunctionParam{ident.(IdentExpr), sig}, nil
 }
 
-func parseFunctionReturnSig(p *Parser) (sig TypeNote, err error) {
-	if p.lexer.Peek().Type == lexer.Colon {
-		p.lexer.Next()
-		sig, err = parseTypeNote(p)
-		if err != nil {
-			return nil, err
-		}
+func parseFunctionReturnSig(p *Parser) (TypeNote, error) {
+	_, err := p.expectNextToken(lexer.Colon, "expected colon between parameters and return type")
+	if err != nil {
+		return nil, err
 	}
 
-	return sig, nil
+	ret, err := parseTypeNote(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, err
 }
 
 func parseInfix(p *Parser, left Expr) (Expr, error) {
