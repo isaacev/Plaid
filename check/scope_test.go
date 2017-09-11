@@ -12,19 +12,20 @@ func TestScopeHasParent(t *testing.T) {
 	expectBool(t, child.hasParent(), true)
 }
 
+func TestScopeErrors(t *testing.T) {
+	root := makeScope(nil, nil)
+	child := makeScope(root, nil)
+	child.addError(fmt.Errorf("foo bar baz"))
+	expectNoErrors(t, child.errs)
+	expectAnError(t, root.errs[0], "foo bar baz")
+	expectAnError(t, child.Errors()[0], "foo bar baz")
+}
+
 func TestScopeAddError(t *testing.T) {
 	scope := makeScope(nil, nil)
 	expectNoErrors(t, scope.Errors())
 	scope.addError(fmt.Errorf("a semantic analysis error"))
-	expectAnError(t, scope.errs[0], "a semantic analysis error")
-
-	root := makeScope(nil, nil)
-	child := makeScope(root, nil)
-	expectNoErrors(t, root.Errors())
-	expectNoErrors(t, child.Errors())
-	child.addError(fmt.Errorf("a semantic analysis error"))
-	expectNoErrors(t, child.Errors())
-	expectAnError(t, root.errs[0], "a semantic analysis error")
+	expectAnError(t, scope.Errors()[0], "a semantic analysis error")
 }
 
 func TestScopeHasVariable(t *testing.T) {

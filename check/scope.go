@@ -24,6 +24,10 @@ func (s *Scope) hasParent() bool {
 
 // Errors returns a list of errors detected during the check
 func (s *Scope) Errors() []error {
+	if s.hasParent() {
+		return s.parent.Errors()
+	}
+
 	return s.errs
 }
 
