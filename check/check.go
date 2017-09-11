@@ -248,7 +248,7 @@ func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {
 			}
 		}
 	} else {
-		scope.addError(fmt.Errorf("expected %d arguments, got %d", len(calleeFunc.params.children), len(argTypes)))
+		scope.addError(fmt.Errorf("expected %d arguments, got %d", totalParams, totalArgs))
 		retType = TypeError{}
 	}
 
