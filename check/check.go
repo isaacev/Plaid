@@ -63,30 +63,25 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 		ret = checkExpr(scope, stmt.Expr)
 	}
 
-	expectedReturnValue := scope.pendingReturn != nil
-	gotReturnValue := ret != nil
-
-	if scope.hasParent() == false {
+	if scope.pendingReturn == nil {
 		scope.addError(fmt.Errorf("return statements must be inside a function"))
 		return
 	}
 
-	if gotReturnValue && ret.IsError() {
+	if scope.pendingReturn.Equals(ret) || ret.IsError() {
 		return
 	}
 
-	if expectedReturnValue && gotReturnValue == false {
-		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
-		return
-	}
-
-	if expectedReturnValue && scope.pendingReturn.Equals(ret) == false {
-		scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
-	}
-
-	if expectedReturnValue == false && gotReturnValue {
+	if scope.pendingReturn.Equals(TypeVoid{}) {
 		scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
+		return
 	}
+
+	if ret.Equals(TypeVoid{}) {
+		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
+	}
+
+	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
 }
 
 func checkExpr(scope *Scope, expr parser.Expr) Type {
