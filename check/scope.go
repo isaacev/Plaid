@@ -39,14 +39,19 @@ func (s *Scope) addError(err error) {
 	}
 }
 
-func (s *Scope) hasVariable(name string) bool {
+func (s *Scope) hasLocalVariable(name string) bool {
 	_, exists := s.values[name]
-
-	if exists == false && s.hasParent() {
-		return s.parent.hasVariable(name)
-	}
-
 	return exists
+}
+
+func (s *Scope) existingVariable(name string) bool {
+	if s.hasLocalVariable(name) {
+		return true
+	} else if s.hasParent() {
+		return s.parent.existingVariable(name)
+	} else {
+		return false
+	}
 }
 
 func (s *Scope) registerLocalVariable(name string, typ Type) {
@@ -55,7 +60,13 @@ func (s *Scope) registerLocalVariable(name string, typ Type) {
 }
 
 func (s *Scope) getVariable(name string) Type {
-	return s.values[name]
+	if s.hasLocalVariable(name) {
+		return s.values[name]
+	} else if s.hasParent() {
+		return s.parent.getVariable(name)
+	} else {
+		return nil
+	}
 }
 
 func (s *Scope) hasPendingReturnType() bool {

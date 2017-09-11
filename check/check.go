@@ -207,7 +207,7 @@ func checkAddition(scope *Scope, left parser.Expr, right parser.Expr) Type {
 }
 
 func checkIdentExpr(scope *Scope, expr parser.IdentExpr) Type {
-	if scope.hasVariable(expr.Name) {
+	if scope.existingVariable(expr.Name) {
 		return scope.getVariable(expr.Name)
 	}
 

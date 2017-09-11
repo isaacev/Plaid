@@ -28,11 +28,11 @@ func TestScopeAddError(t *testing.T) {
 	expectAnError(t, scope.Errors()[0], "a semantic analysis error")
 }
 
-func TestScopeHasVariable(t *testing.T) {
+func TestScopeHasLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	expectBool(t, scope.hasVariable("foo"), true)
-	expectBool(t, scope.hasVariable("baz"), false)
 	scope.registerLocalVariable("foo", TypeIdent{"Bar"})
+	expectBool(t, scope.hasLocalVariable("foo"), true)
+	expectBool(t, scope.hasLocalVariable("baz"), false)
 }
 
 func TestScopeRegisterLocalVariable(t *testing.T) {
@@ -47,10 +47,11 @@ func TestScopeRegisterLocalVariable(t *testing.T) {
 }
 
 func TestScopeGetVariable(t *testing.T) {
-	scope := makeScope(nil, nil)
-	expectEquivalentType(t, scope.getVariable("foo"), TypeIdent{"Bar"})
-	expectNil(t, scope.getVariable("baz"))
+	parent := makeScope(nil, nil)
+	child := makeScope(parent, nil)
 	parent.registerLocalVariable("foo", TypeIdent{"Bar"})
+	expectEquivalentType(t, child.getVariable("foo"), TypeIdent{"Bar"})
+	expectNil(t, child.getVariable("baz"))
 }
 
 func TestScopeHasPendingReturnType(t *testing.T) {
