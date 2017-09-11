@@ -494,6 +494,10 @@ func TestParseFunctionReturnSig(t *testing.T) {
 	sig, err := parseFunctionReturnSig(p)
 	expectNoErrors(t, "Int", sig, err)
 
+	p = makeParser("Void")
+	sig, err = parseFunctionReturnSig(p)
+	expectAnError(t, "(1:1) expected colon between parameters and return type", sig, err)
+
 	p = makeParser(": 456")
 	sig, err = parseFunctionReturnSig(p)
 	expectAnError(t, "(1:3) unexpected symbol", sig, err)
