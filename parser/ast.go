@@ -287,7 +287,7 @@ func (de DispatchExpr) isExpr() {}
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
 	Tok   lexer.Token
-	Left  Expr
+	Left  IdentExpr
 	Right Expr
 }
 

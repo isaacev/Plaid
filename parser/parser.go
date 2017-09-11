@@ -544,6 +544,11 @@ func parseDispatch(p *Parser, left Expr) (Expr, error) {
 }
 
 func parseAssign(p *Parser, left Expr) (Expr, error) {
+	leftIdent, ok := left.(IdentExpr)
+	if ok == false {
+		return nil, SyntaxError{left.Start(), "left hand must be an identifier"}
+	}
+
 	level := p.peekPrecedence()
 	tok := p.lexer.Next()
 	right, err := parseExpr(p, level-1)
@@ -551,7 +556,7 @@ func parseAssign(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return AssignExpr{tok, left, right}, nil
+	return AssignExpr{tok, leftIdent, right}, nil
 }
 
 func parsePostfix(p *Parser, left Expr) (Expr, error) {

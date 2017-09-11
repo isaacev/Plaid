@@ -563,6 +563,11 @@ func TestParseAssignExpr(t *testing.T) {
 	expectNoErrors(t, "(= a 123)", expr, err)
 	expectStart(t, expr, 1, 1)
 
+	p = makeParser("foo() := 123")
+	loadGrammar(p)
+	expr, err = parseExpr(p, Lowest)
+	expectAnError(t, "(1:1) left hand must be an identifier", expr, err)
+
 	p = makeParser("a :=")
 	loadGrammar(p)
 	expr, err = parseExpr(p, Lowest)
