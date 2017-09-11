@@ -30,7 +30,7 @@ func (te TypeError) isType()        {}
 type TypeVoid struct{}
 
 // Equals returns true if another type has an identical structure and identical names
-func (tn TypeVoid) Equals(other Type) bool {
+func (tv TypeVoid) Equals(other Type) bool {
 	if _, ok := other.(TypeVoid); ok {
 		return true
 	}
