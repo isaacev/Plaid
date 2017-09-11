@@ -3,7 +3,6 @@ package check
 import (
 	"fmt"
 	"plaid/parser"
-	"sort"
 )
 
 // A collection of types native to the execution environment
@@ -16,7 +15,7 @@ var (
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
 func Check(prog parser.Program) *Scope {
-	global := makeScope(nil)
+	global := makeScope(nil, nil)
 	checkProgram(global, prog)
 	return global
 }
@@ -24,95 +23,97 @@ func Check(prog parser.Program) *Scope {
 // Scope tracks the symbol table and other data used during the check
 type Scope struct {
 	parent        *Scope
+	errs          []error
+	variables     []string
+	values        map[string]Type
 	pendingReturn Type
-	variables     map[string]Type
-	Errs          []error
-	queue         []queuedFunctionBody
+	queue         []struct {
+		ret  Type
+		expr parser.FunctionExpr
+	}
 }
 
 func (s *Scope) hasParent() bool {
 	return (s.parent != nil)
 }
 
-func (s *Scope) registerVariable(name string, typ Type) {
-	s.variables[name] = typ
-}
-
-func (s *Scope) hasVariable(name string) bool {
-	_, exists := s.variables[name]
-	return exists
-}
-
-func (s *Scope) getVariable(name string) Type {
-	return s.variables[name]
-}
-
 func (s *Scope) addError(err error) {
 	if s.hasParent() {
 		s.parent.addError(err)
 	} else {
-		s.Errs = append(s.Errs, err)
+		s.errs = append(s.errs, err)
 	}
 }
 
-func (s *Scope) String() string {
-	names := []string{}
-	for name := range s.variables {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	out := "+----------+--------------+\n"
-	out += "| Var      | Type         |\n"
-	out += "| -------- | ------------ |\n"
-	for _, name := range names {
-		out += fmt.Sprintf("| %-8s | %-12s |\n", name, s.variables[name])
-	}
-	out += "+----------+--------------+\n"
-	return out
+// Errors returns a list of errors detected during the check
+func (s *Scope) Errors() []error {
+	return s.errs
 }
 
-type queuedFunctionBody struct {
-	ret  Type
-	expr parser.FunctionExpr
+func (s *Scope) hasVariable(name string) bool {
+	_, exists := s.values[name]
+	return exists
 }
 
-func (s *Scope) hasFunctionBodyQueue() bool {
+func (s *Scope) registerVariable(name string, typ Type) {
+	s.variables = append(s.variables, name)
+	s.values[name] = typ
+}
+
+func (s *Scope) getVariable(name string) Type {
+	return s.values[name]
+}
+
+func (s *Scope) hasPendingReturnType() bool {
+	return (s.pendingReturn != nil)
+}
+
+func (s *Scope) getPendingReturnType() Type {
+	return s.pendingReturn
+}
+
+func (s *Scope) setPendingReturnType(typ Type) {
+	s.pendingReturn = typ
+}
+
+func (s *Scope) hasBodyQueue() bool {
 	return len(s.queue) > 0
 }
 
-func (s *Scope) enqueueFunctionBody(ret Type, expr parser.FunctionExpr) {
-	s.queue = append(s.queue, queuedFunctionBody{ret, expr})
+func (s *Scope) enqueueBody(ret Type, expr parser.FunctionExpr) {
+	body := struct {
+		ret  Type
+		expr parser.FunctionExpr
+	}{ret, expr}
+	s.queue = append(s.queue, body)
 }
 
-func (s *Scope) dequeueFunctionBody() (Type, parser.FunctionExpr) {
-	dequeued := s.queue[0]
+func (s *Scope) dequeueBody() (Type, parser.FunctionExpr) {
+	body := s.queue[0]
 	s.queue = s.queue[1:]
-	return dequeued.ret, dequeued.expr
+	return body.ret, body.expr
 }
 
-func makeScope(parent *Scope) *Scope {
-	scope := &Scope{
-		parent,
-		nil,
-		make(map[string]Type),
-		[]error{},
-		[]queuedFunctionBody{},
+func (s *Scope) String() string {
+	var out string
+	for _, name := range s.variables {
+		out += fmt.Sprintf("%s : %s\n", name, s.values[name])
 	}
-
-	return scope
+	return out
 }
 
-func makeScopePendingReturn(parent *Scope, ret Type) *Scope {
-	scope := &Scope{
+func makeScope(parent *Scope, ret Type) *Scope {
+	return &Scope{
 		parent,
+		[]error{},
+		[]string{},
+		make(map[string]Type),
 		ret,
-		make(map[string]Type),
-		[]error{},
-		[]queuedFunctionBody{},
+		[]struct {
+			ret  Type
+			expr parser.FunctionExpr
+		}{},
 	}
-
-	return scope
 }
 
 func checkProgram(scope *Scope, prog parser.Program) {
@@ -131,8 +132,8 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 		break
 	}
 
-	if scope.hasFunctionBodyQueue() {
-		sig, expr := scope.dequeueFunctionBody()
+	if scope.hasBodyQueue() {
+		sig, expr := scope.dequeueBody()
 		checkFunctionBody(scope, sig, expr)
 	}
 }
@@ -204,12 +205,12 @@ func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
 	tuple := TypeTuple{params}
 
 	sig := TypeFunction{tuple, ret}
-	scope.enqueueFunctionBody(ret, expr)
+	scope.enqueueBody(ret, expr)
 	return sig
 }
 
 func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
-	pushed := makeScopePendingReturn(scope, ret)
+	pushed := makeScope(scope, ret)
 	checkStmtBlock(pushed, expr.Block)
 }
 

@@ -11,20 +11,20 @@ var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
 	scope := Check(parser.Program{})
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 }
 
 func TestScopeHasParent(t *testing.T) {
-	root := makeScope(nil)
-	child := makeScope(root)
+	root := makeScope(nil, nil)
+	child := makeScope(root, nil)
 	expectBool(t, root.hasParent(), false)
 	expectBool(t, child.hasParent(), true)
 }
 
 func TestScopeRegisterVariable(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("foo", TypeIdent{"Bar"})
-	typ, exists := scope.variables["foo"]
+	typ, exists := scope.values["foo"]
 	if exists {
 		expectEquivalentType(t, typ, TypeIdent{"Bar"})
 	} else {
@@ -33,125 +33,143 @@ func TestScopeRegisterVariable(t *testing.T) {
 }
 
 func TestScopeHasVariable(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("foo", TypeIdent{"Bar"})
 	expectBool(t, scope.hasVariable("foo"), true)
 	expectBool(t, scope.hasVariable("baz"), false)
 }
 
 func TestScopeGetVariable(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("foo", TypeIdent{"Bar"})
 	expectEquivalentType(t, scope.getVariable("foo"), TypeIdent{"Bar"})
 	expectNil(t, scope.getVariable("baz"))
 }
 
 func TestScopeAddError(t *testing.T) {
-	scope := makeScope(nil)
-	expectNoErrors(t, scope.Errs)
+	scope := makeScope(nil, nil)
+	expectNoErrors(t, scope.Errors())
 	scope.addError(fmt.Errorf("a semantic analysis error"))
-	expectAnError(t, scope.Errs[0], "a semantic analysis error")
+	expectAnError(t, scope.errs[0], "a semantic analysis error")
 
-	root := makeScope(nil)
-	child := makeScope(root)
-	expectNoErrors(t, root.Errs)
-	expectNoErrors(t, child.Errs)
+	root := makeScope(nil, nil)
+	child := makeScope(root, nil)
+	expectNoErrors(t, root.Errors())
+	expectNoErrors(t, child.Errors())
 	child.addError(fmt.Errorf("a semantic analysis error"))
-	expectNoErrors(t, child.Errs)
-	expectAnError(t, root.Errs[0], "a semantic analysis error")
+	expectNoErrors(t, child.Errors())
+	expectAnError(t, root.errs[0], "a semantic analysis error")
 }
 
 func TestScopeString(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("num", TypeIdent{"Int"})
 	scope.registerVariable("test", TypeIdent{"Bool"})
 	scope.registerVariable("coord", TypeTuple{[]Type{TypeIdent{"Int"}, TypeIdent{"Int"}}})
 
-	expectString(t, scope.String(), `+----------+--------------+
-| Var      | Type         |
-| -------- | ------------ |
-| coord    | (Int Int)    |
-| num      | Int          |
-| test     | Bool         |
-+----------+--------------+
-`)
+	expectString(t, scope.String(), "num : Int\ntest : Bool\ncoord : (Int Int)\n")
+}
+
+func TestScopeHasPendingReturnType(t *testing.T) {
+	scope := makeScope(nil, nil)
+	expectBool(t, scope.hasPendingReturnType(), false)
+
+	scope = makeScope(nil, TypeIdent{"Int"})
+	expectBool(t, scope.hasPendingReturnType(), true)
+}
+
+func TestScopeGetPendingReturnType(t *testing.T) {
+	scope := makeScope(nil, nil)
+	expectBool(t, scope.getPendingReturnType() == nil, true)
+
+	scope = makeScope(nil, TypeIdent{"Int"})
+	expectEquivalentType(t, scope.getPendingReturnType(), TypeIdent{"Int"})
+}
+
+func TestScopeSetPendingReturnType(t *testing.T) {
+	scope := makeScope(nil, nil)
+	expectBool(t, scope.hasPendingReturnType(), false)
+
+	scope.setPendingReturnType(TypeIdent{"Int"})
+	expectBool(t, scope.pendingReturn.Equals(TypeIdent{"Int"}), true)
+	expectBool(t, scope.hasPendingReturnType(), true)
 }
 
 func TestCheckProgram(t *testing.T) {
 	prog, _ := parser.Parse("let a := 123;")
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	checkProgram(scope, prog)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 }
 
 func TestCheckStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := 123;")
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	checkStmt(scope, prog.Stmts[0])
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 }
 
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
 	scope := Check(prog)
-	expectAnError(t, scope.Errs[0], "expected to return 'Int', got 'Str'")
+	expectAnError(t, scope.errs[0], "expected to return 'Int', got 'Str'")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return; };")
 	scope = Check(prog)
-	expectAnError(t, scope.Errs[0], "expected a return type of 'Int', got nothing")
+	expectAnError(t, scope.errs[0], "expected a return type of 'Int', got nothing")
 
 	prog, _ = parser.Parse("let a := fn () { return 123; };")
 	scope = Check(prog)
-	expectAnError(t, scope.Errs[0], "expected to return nothing, got 'Int'")
+	expectAnError(t, scope.errs[0], "expected to return nothing, got 'Int'")
 
 	prog, _ = parser.Parse("return;")
 	scope = Check(prog)
-	expectAnError(t, scope.Errs[0], "return statements must be inside a function")
+	expectAnError(t, scope.errs[0], "return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
 	scope := Check(prog)
-	expectNoErrors(t, scope.Errs)
-	expectEquivalentType(t, scope.variables["a"], BuiltinInt)
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, scope.values["a"], BuiltinInt)
 
 	prog, _ = parser.Parse("let a := 1;")
 	scope = Check(prog)
-	expectNoErrors(t, scope.Errs)
-	expectEquivalentType(t, scope.variables["a"], BuiltinInt)
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, scope.values["a"], BuiltinInt)
 
 	prog, _ = parser.Parse("let a := \"abc\";")
 	scope = Check(prog)
-	expectNoErrors(t, scope.Errs)
-	expectEquivalentType(t, scope.variables["a"], BuiltinStr)
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, scope.values["a"], BuiltinStr)
 
 	prog, _ = parser.Parse("let a := fn () {};")
 	scope = Check(prog)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	scope = Check(prog)
-	expectAnError(t, scope.Errs[0], "variable 'add' was used before it was declared")
-	expectBool(t, scope.variables["a"].IsError(), true)
+	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
+	expectBool(t, scope.values["a"].IsError(), true)
 
 	prog, _ = parser.Parse("let a := -5;")
 	scope = Check(prog)
-	expectAnError(t, scope.Errs[0], "unknown expression type")
-	expectBool(t, scope.variables["a"].IsError(), true)
+	expectAnError(t, scope.errs[0], "unknown expression type")
+	expectBool(t, scope.values["a"].IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
 	scope := Check(prog)
-	expectNoErrors(t, scope.Errs)
-	expectEquivalentType(t, scope.variables["f"], TypeFunction{
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, scope.values["f"], TypeFunction{
 		TypeTuple{[]Type{TypeIdent{"Int"}}},
 		TypeIdent{"Int"},
 	})
 }
 
 func TestCheckDispatchExpr(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
@@ -167,10 +185,10 @@ func TestCheckDispatchExpr(t *testing.T) {
 		},
 	}
 	typ := checkDispatchExpr(scope, expr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("add", BuiltinInt)
 	expr = parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
@@ -180,10 +198,10 @@ func TestCheckDispatchExpr(t *testing.T) {
 		},
 	}
 	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.Errs[0], "cannot call function on type 'Int'")
+	expectAnError(t, scope.errs[0], "cannot call function on type 'Int'")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
@@ -198,10 +216,10 @@ func TestCheckDispatchExpr(t *testing.T) {
 		},
 	}
 	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.Errs[0], "expected 2 arguments, got 1")
+	expectAnError(t, scope.errs[0], "expected 2 arguments, got 1")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
@@ -217,94 +235,94 @@ func TestCheckDispatchExpr(t *testing.T) {
 		},
 	}
 	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.Errs[0], "expected 'Int', got 'Str'")
-	expectAnError(t, scope.Errs[1], "expected 'Int', got 'Str'")
+	expectAnError(t, scope.errs[0], "expected 'Int', got 'Str'")
+	expectAnError(t, scope.errs[1], "expected 'Int', got 'Str'")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("a", BuiltinInt)
 	scope.registerVariable("b", BuiltinInt)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
 	typ := checkBinaryExpr(scope, expr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr)
-	expectAnError(t, scope.Errs[0], "unknown infix operator '@'")
+	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckAddition(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("a", BuiltinInt)
 	scope.registerVariable("b", BuiltinInt)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	typ := checkAddition(scope, leftExpr, rightExpr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("a", BuiltinStr)
 	scope.registerVariable("b", BuiltinInt)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
-	expectAnError(t, scope.Errs[0], "left side must have type Int, got Str")
+	expectAnError(t, scope.errs[0], "left side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("a", BuiltinInt)
 	scope.registerVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
-	expectAnError(t, scope.Errs[0], "right side must have type Int, got Str")
+	expectAnError(t, scope.errs[0], "right side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	scope.registerVariable("a", TypeError{})
 	scope.registerVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckIdentExpr(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	scope.registerVariable("x", BuiltinInt)
 	expr := parser.IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(scope, expr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
-	scope = makeScope(nil)
+	scope = makeScope(nil, nil)
 	expr = parser.IdentExpr{Tok: nop, Name: "x"}
 	typ = checkIdentExpr(scope, expr)
-	expectAnError(t, scope.Errs[0], "variable 'x' was used before it was declared")
+	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckNumberExpr(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	expr := parser.NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(scope, expr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 }
 
 func TestCheckStringExpr(t *testing.T) {
-	scope := makeScope(nil)
+	scope := makeScope(nil, nil)
 	expr := parser.StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(scope, expr)
-	expectNoErrors(t, scope.Errs)
+	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinStr)
 }
 
