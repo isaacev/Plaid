@@ -199,13 +199,13 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 }
 
-func TestCheckAddition(t *testing.T) {
+func TestExpectBinaryTypes(t *testing.T) {
 	scope := makeScope(nil, nil)
 	scope.registerLocalVariable("a", BuiltinInt)
 	scope.registerLocalVariable("b", BuiltinInt)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
-	typ := checkAddition(scope, leftExpr, rightExpr)
+	typ := expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, BuiltinInt)
 
@@ -214,7 +214,7 @@ func TestCheckAddition(t *testing.T) {
 	scope.registerLocalVariable("b", BuiltinInt)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = checkAddition(scope, leftExpr, rightExpr)
+	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
 	expectAnError(t, scope.errs[0], "left side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
@@ -223,7 +223,7 @@ func TestCheckAddition(t *testing.T) {
 	scope.registerLocalVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = checkAddition(scope, leftExpr, rightExpr)
+	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
 	expectAnError(t, scope.errs[0], "right side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
@@ -232,7 +232,7 @@ func TestCheckAddition(t *testing.T) {
 	scope.registerLocalVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = checkAddition(scope, leftExpr, rightExpr)
+	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
 	expectNoErrors(t, scope.Errors())
 	expectBool(t, typ.IsError(), true)
 }

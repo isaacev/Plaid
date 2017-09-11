@@ -198,14 +198,14 @@ func checkAssignExpr(scope *Scope, expr parser.AssignExpr) Type {
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
 	switch expr.Oper {
 	case "+":
-		return checkAddition(scope, expr.Left, expr.Right)
+		return expectBinaryTypes(scope, expr.Left, BuiltinInt, expr.Right, BuiltinInt, BuiltinInt)
 	default:
 		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
 		return TypeError{}
 	}
 }
 
-func checkAddition(scope *Scope, left parser.Expr, right parser.Expr) Type {
+func expectBinaryTypes(scope *Scope, left parser.Expr, expLeftType Type, right parser.Expr, expRightType Type, retType Type) Type {
 	leftType := checkExpr(scope, left)
 	rightType := checkExpr(scope, right)
 
@@ -213,15 +213,15 @@ func checkAddition(scope *Scope, left parser.Expr, right parser.Expr) Type {
 		return TypeError{}
 	}
 
-	typ := BuiltinInt
+	typ := retType
 
-	if leftType.Equals(BuiltinInt) == false {
-		scope.addError(fmt.Errorf("left side must have type %s, got %s", BuiltinInt, leftType))
+	if leftType.Equals(expLeftType) == false {
+		scope.addError(fmt.Errorf("left side must have type %s, got %s", expLeftType, leftType))
 		typ = TypeError{}
 	}
 
-	if rightType.Equals(BuiltinInt) == false {
-		scope.addError(fmt.Errorf("right side must have type %s, got %s", BuiltinInt, rightType))
+	if rightType.Equals(expRightType) == false {
+		scope.addError(fmt.Errorf("right side must have type %s, got %s", expRightType, rightType))
 		typ = TypeError{}
 	}
 
