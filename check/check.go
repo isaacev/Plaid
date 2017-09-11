@@ -23,9 +23,11 @@ func Check(prog parser.Program) *Scope {
 
 // Scope tracks the symbol table and other data used during the check
 type Scope struct {
-	parent    *Scope
-	variables map[string]Type
-	Errs      []error
+	parent        *Scope
+	pendingReturn Type
+	variables     map[string]Type
+	Errs          []error
+	queue         []queuedFunctionBody
 }
 
 func (s *Scope) hasParent() bool {
@@ -70,11 +72,44 @@ func (s *Scope) String() string {
 	return out
 }
 
+type queuedFunctionBody struct {
+	ret  Type
+	expr parser.FunctionExpr
+}
+
+func (s *Scope) hasFunctionBodyQueue() bool {
+	return len(s.queue) > 0
+}
+
+func (s *Scope) enqueueFunctionBody(ret Type, expr parser.FunctionExpr) {
+	s.queue = append(s.queue, queuedFunctionBody{ret, expr})
+}
+
+func (s *Scope) dequeueFunctionBody() (Type, parser.FunctionExpr) {
+	dequeued := s.queue[0]
+	s.queue = s.queue[1:]
+	return dequeued.ret, dequeued.expr
+}
+
 func makeScope(parent *Scope) *Scope {
 	scope := &Scope{
 		parent,
+		nil,
 		make(map[string]Type),
 		[]error{},
+		[]queuedFunctionBody{},
+	}
+
+	return scope
+}
+
+func makeScopePendingReturn(parent *Scope, ret Type) *Scope {
+	scope := &Scope{
+		parent,
+		ret,
+		make(map[string]Type),
+		[]error{},
+		[]queuedFunctionBody{},
 	}
 
 	return scope
@@ -91,6 +126,20 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 	case parser.DeclarationStmt:
 		checkDeclarationStmt(scope, stmt)
 		break
+	case parser.ReturnStmt:
+		checkReturnStmt(scope, stmt)
+		break
+	}
+
+	if scope.hasFunctionBodyQueue() {
+		sig, expr := scope.dequeueFunctionBody()
+		checkFunctionBody(scope, sig, expr)
+	}
+}
+
+func checkStmtBlock(scope *Scope, block parser.StmtBlock) {
+	for _, stmt := range block.Stmts {
+		checkStmt(scope, stmt)
 	}
 }
 
@@ -98,6 +147,32 @@ func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(scope, stmt.Expr)
 	scope.registerVariable(name, typ)
+}
+
+func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
+	var ret Type
+	if stmt.Expr != nil {
+		ret = checkExpr(scope, stmt.Expr)
+	}
+
+	expectedReturnValue := scope.pendingReturn != nil
+	gotReturnValue := ret != nil
+
+	if scope.hasParent() {
+		if expectedReturnValue {
+			if gotReturnValue == false {
+				scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
+			} else if scope.pendingReturn.Equals(ret) == false {
+				scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
+			}
+		} else {
+			if gotReturnValue {
+				scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
+			}
+		}
+	} else {
+		scope.addError(fmt.Errorf("return statements must be inside a function"))
+	}
 }
 
 func checkExpr(scope *Scope, expr parser.Expr) Type {
@@ -128,7 +203,14 @@ func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
 	}
 	tuple := TypeTuple{params}
 
-	return TypeFunction{tuple, ret}
+	sig := TypeFunction{tuple, ret}
+	scope.enqueueFunctionBody(ret, expr)
+	return sig
+}
+
+func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
+	pushed := makeScopePendingReturn(scope, ret)
+	checkStmtBlock(pushed, expr.Block)
 }
 
 func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {

@@ -91,6 +91,24 @@ func TestCheckStmt(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 }
 
+func TestCheckReturnStmt(t *testing.T) {
+	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
+	scope := Check(prog)
+	expectAnError(t, scope.Errs[0], "expected to return 'Int', got 'Str'")
+
+	prog, _ = parser.Parse("let a := fn (): Int { return; };")
+	scope = Check(prog)
+	expectAnError(t, scope.Errs[0], "expected a return type of 'Int', got nothing")
+
+	prog, _ = parser.Parse("let a := fn () { return 123; };")
+	scope = Check(prog)
+	expectAnError(t, scope.Errs[0], "expected to return nothing, got 'Int'")
+
+	prog, _ = parser.Parse("return;")
+	scope = Check(prog)
+	expectAnError(t, scope.Errs[0], "return statements must be inside a function")
+}
+
 func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
 	scope := Check(prog)
@@ -306,6 +324,21 @@ func TestConvertTypeSig(t *testing.T) {
 			TypeIdent{"Bool"},
 		}},
 		TypeIdent{"Str"},
+	})
+
+	sig = parser.TypeFunction{
+		Params: parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
+			parser.TypeIdent{Tok: nop, Name: "Int"},
+			parser.TypeIdent{Tok: nop, Name: "Bool"},
+		}},
+		Ret: nil,
+	}
+	expectEquivalentType(t, convertTypeSig(sig), TypeFunction{
+		TypeTuple{[]Type{
+			TypeIdent{"Int"},
+			TypeIdent{"Bool"},
+		}},
+		nil,
 	})
 
 	sig = parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
