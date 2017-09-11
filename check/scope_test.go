@@ -30,14 +30,14 @@ func TestScopeAddError(t *testing.T) {
 
 func TestScopeHasVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("foo", TypeIdent{"Bar"})
 	expectBool(t, scope.hasVariable("foo"), true)
 	expectBool(t, scope.hasVariable("baz"), false)
+	scope.registerLocalVariable("foo", TypeIdent{"Bar"})
 }
 
-func TestScopeRegisterVariable(t *testing.T) {
+func TestScopeRegisterLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("foo", TypeIdent{"Bar"})
+	scope.registerLocalVariable("foo", TypeIdent{"Bar"})
 	typ, exists := scope.values["foo"]
 	if exists {
 		expectEquivalentType(t, typ, TypeIdent{"Bar"})
@@ -48,9 +48,9 @@ func TestScopeRegisterVariable(t *testing.T) {
 
 func TestScopeGetVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("foo", TypeIdent{"Bar"})
 	expectEquivalentType(t, scope.getVariable("foo"), TypeIdent{"Bar"})
 	expectNil(t, scope.getVariable("baz"))
+	parent.registerLocalVariable("foo", TypeIdent{"Bar"})
 }
 
 func TestScopeHasPendingReturnType(t *testing.T) {
@@ -80,9 +80,9 @@ func TestScopeSetPendingReturnType(t *testing.T) {
 
 func TestScopeString(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("num", TypeIdent{"Int"})
-	scope.registerVariable("test", TypeIdent{"Bool"})
-	scope.registerVariable("coord", TypeTuple{[]Type{TypeIdent{"Int"}, TypeIdent{"Int"}}})
+	scope.registerLocalVariable("num", TypeIdent{"Int"})
+	scope.registerLocalVariable("test", TypeIdent{"Bool"})
+	scope.registerLocalVariable("coord", TypeTuple{[]Type{TypeIdent{"Int"}, TypeIdent{"Int"}}})
 
 	expectString(t, scope.String(), "num : Int\ntest : Bool\ncoord : (Int Int)\n")
 }

@@ -49,7 +49,7 @@ func (s *Scope) hasVariable(name string) bool {
 	return exists
 }
 
-func (s *Scope) registerVariable(name string, typ Type) {
+func (s *Scope) registerLocalVariable(name string, typ Type) {
 	s.variables = append(s.variables, name)
 	s.values[name] = typ
 }

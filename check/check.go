@@ -51,7 +51,7 @@ func checkStmtBlock(scope *Scope, block parser.StmtBlock) {
 func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(scope, stmt.Expr)
-	scope.registerVariable(name, typ)
+	scope.registerLocalVariable(name, typ)
 }
 
 func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
@@ -125,7 +125,7 @@ func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
 		paramType := convertTypeNote(param.Note)
-		pushed.registerVariable(paramName, paramType)
+		pushed.registerLocalVariable(paramName, paramType)
 	}
 
 	checkStmtBlock(pushed, expr.Block)

@@ -92,7 +92,7 @@ func TestCheckFunctionExpr(t *testing.T) {
 
 func TestCheckDispatchExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("add", TypeFunction{
+	scope.registerLocalVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Int"},
@@ -111,7 +111,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectEquivalentType(t, typ, BuiltinInt)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("add", BuiltinInt)
+	scope.registerLocalVariable("add", BuiltinInt)
 	expr = parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
@@ -124,7 +124,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("add", TypeFunction{
+	scope.registerLocalVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Int"},
@@ -142,7 +142,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("add", TypeFunction{
+	scope.registerLocalVariable("add", TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Int"},
@@ -164,8 +164,8 @@ func TestCheckDispatchExpr(t *testing.T) {
 
 func TestCheckBinaryExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("a", BuiltinInt)
-	scope.registerVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", BuiltinInt)
+	scope.registerLocalVariable("b", BuiltinInt)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
@@ -181,8 +181,8 @@ func TestCheckBinaryExpr(t *testing.T) {
 
 func TestCheckAddition(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("a", BuiltinInt)
-	scope.registerVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", BuiltinInt)
+	scope.registerLocalVariable("b", BuiltinInt)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	typ := checkAddition(scope, leftExpr, rightExpr)
@@ -190,8 +190,8 @@ func TestCheckAddition(t *testing.T) {
 	expectEquivalentType(t, typ, BuiltinInt)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("a", BuiltinStr)
-	scope.registerVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", BuiltinStr)
+	scope.registerLocalVariable("b", BuiltinInt)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
@@ -199,8 +199,8 @@ func TestCheckAddition(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("a", BuiltinInt)
-	scope.registerVariable("b", BuiltinStr)
+	scope.registerLocalVariable("a", BuiltinInt)
+	scope.registerLocalVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
@@ -208,8 +208,8 @@ func TestCheckAddition(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerVariable("a", TypeError{})
-	scope.registerVariable("b", BuiltinStr)
+	scope.registerLocalVariable("a", TypeError{})
+	scope.registerLocalVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	typ = checkAddition(scope, leftExpr, rightExpr)
@@ -219,7 +219,7 @@ func TestCheckAddition(t *testing.T) {
 
 func TestCheckIdentExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerVariable("x", BuiltinInt)
+	scope.registerLocalVariable("x", BuiltinInt)
 	expr := parser.IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
