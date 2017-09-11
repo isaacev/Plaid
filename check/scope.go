@@ -41,6 +41,11 @@ func (s *Scope) addError(err error) {
 
 func (s *Scope) hasVariable(name string) bool {
 	_, exists := s.values[name]
+
+	if exists == false && s.hasParent() {
+		return s.parent.hasVariable(name)
+	}
+
 	return exists
 }
 
