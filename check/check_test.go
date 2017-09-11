@@ -107,10 +107,87 @@ func TestCheckExpr(t *testing.T) {
 	expectNoErrors(t, scope.Errs)
 	expectEquivalentType(t, scope.variables["a"], BuiltinStr)
 
+	prog, _ = parser.Parse("let a := add(2, 2);")
+	scope = Check(prog)
+	expectAnError(t, scope.Errs[0], "variable 'add' was used before it was declared")
+	expectBool(t, scope.variables["a"].IsError(), true)
+
 	prog, _ = parser.Parse("let a := -5;")
 	scope = Check(prog)
 	expectAnError(t, scope.Errs[0], "unknown expression type")
 	expectBool(t, scope.variables["a"].IsError(), true)
+}
+
+func TestCheckDispatchExpr(t *testing.T) {
+	scope := makeScope(nil)
+	scope.registerVariable("add", TypeFunction{
+		TypeTuple{[]Type{
+			TypeIdent{"Int"},
+			TypeIdent{"Int"},
+		}},
+		TypeIdent{"Int"},
+	})
+	expr := parser.DispatchExpr{
+		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+		Args: []parser.Expr{
+			parser.NumberExpr{Tok: nop, Val: 2},
+			parser.NumberExpr{Tok: nop, Val: 5},
+		},
+	}
+	typ := checkDispatchExpr(scope, expr)
+	expectNoErrors(t, scope.Errs)
+	expectEquivalentType(t, typ, BuiltinInt)
+
+	scope = makeScope(nil)
+	scope.registerVariable("add", BuiltinInt)
+	expr = parser.DispatchExpr{
+		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+		Args: []parser.Expr{
+			parser.NumberExpr{Tok: nop, Val: 2},
+			parser.NumberExpr{Tok: nop, Val: 5},
+		},
+	}
+	typ = checkDispatchExpr(scope, expr)
+	expectAnError(t, scope.Errs[0], "cannot call function on type 'Int'")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil)
+	scope.registerVariable("add", TypeFunction{
+		TypeTuple{[]Type{
+			TypeIdent{"Int"},
+			TypeIdent{"Int"},
+		}},
+		TypeIdent{"Int"},
+	})
+	expr = parser.DispatchExpr{
+		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+		Args: []parser.Expr{
+			parser.NumberExpr{Tok: nop, Val: 2},
+		},
+	}
+	typ = checkDispatchExpr(scope, expr)
+	expectAnError(t, scope.Errs[0], "expected 2 arguments, got 1")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil)
+	scope.registerVariable("add", TypeFunction{
+		TypeTuple{[]Type{
+			TypeIdent{"Int"},
+			TypeIdent{"Int"},
+		}},
+		TypeIdent{"Int"},
+	})
+	expr = parser.DispatchExpr{
+		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+		Args: []parser.Expr{
+			parser.StringExpr{Tok: nop, Val: "2"},
+			parser.StringExpr{Tok: nop, Val: "4"},
+		},
+	}
+	typ = checkDispatchExpr(scope, expr)
+	expectAnError(t, scope.Errs[0], "expected 'Int', got 'Str'")
+	expectAnError(t, scope.Errs[1], "expected 'Int', got 'Str'")
+	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckBinaryExpr(t *testing.T) {

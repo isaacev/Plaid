@@ -102,6 +102,8 @@ func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 
 func checkExpr(scope *Scope, expr parser.Expr) Type {
 	switch expr := expr.(type) {
+	case parser.DispatchExpr:
+		return checkDispatchExpr(scope, expr)
 	case parser.BinaryExpr:
 		return checkBinaryExpr(scope, expr)
 	case parser.IdentExpr:
@@ -114,6 +116,48 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 		scope.addError(fmt.Errorf("unknown expression type"))
 		return TypeError{}
 	}
+}
+
+func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {
+	// Resolve arguments to types
+	argTypes := []Type{}
+	for _, argExpr := range expr.Args {
+		argTypes = append(argTypes, checkExpr(scope, argExpr))
+	}
+
+	// Resolve callee to type
+	calleeType := checkExpr(scope, expr.Callee)
+	calleeFunc, ok := calleeType.(TypeFunction)
+	if ok == false {
+		if calleeType.IsError() == false {
+			scope.addError(fmt.Errorf("cannot call function on type '%s'", calleeType))
+		}
+
+		return TypeError{}
+	}
+
+	// Resolve return type
+	retType := calleeFunc.ret
+
+	// Check that the given argument types match the expected parameter types
+	totalArgs := len(argTypes)
+	totalParams := len(calleeFunc.params.children)
+	if totalArgs == totalParams {
+		for i := 0; i < totalArgs; i++ {
+			argType := argTypes[i]
+			paramType := calleeFunc.params.children[i]
+
+			if argType.Equals(paramType) == false {
+				scope.addError(fmt.Errorf("expected '%s', got '%s'", paramType, argType))
+				retType = TypeError{}
+			}
+		}
+	} else {
+		scope.addError(fmt.Errorf("expected %d arguments, got %d", len(calleeFunc.params.children), len(argTypes)))
+		retType = TypeError{}
+	}
+
+	return retType
 }
 
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
