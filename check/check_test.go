@@ -40,7 +40,7 @@ func TestCheckReturnStmt(t *testing.T) {
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "expected a return type of 'Int', got nothing")
 
-	prog, _ = parser.Parse("let a := fn () { return 123; };")
+	prog, _ = parser.Parse("let a := fn ():Void { return 123; };")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "expected to return nothing, got 'Int'")
 
