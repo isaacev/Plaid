@@ -12,13 +12,6 @@ func TestScopeHasParent(t *testing.T) {
 	expectBool(t, child.hasParent(), true)
 }
 
-func TestScopeHasVariable(t *testing.T) {
-	scope := makeScope(nil, nil)
-	scope.registerVariable("foo", TypeIdent{"Bar"})
-	expectBool(t, scope.hasVariable("foo"), true)
-	expectBool(t, scope.hasVariable("baz"), false)
-}
-
 func TestScopeAddError(t *testing.T) {
 	scope := makeScope(nil, nil)
 	expectNoErrors(t, scope.Errors())
@@ -32,6 +25,13 @@ func TestScopeAddError(t *testing.T) {
 	child.addError(fmt.Errorf("a semantic analysis error"))
 	expectNoErrors(t, child.Errors())
 	expectAnError(t, root.errs[0], "a semantic analysis error")
+}
+
+func TestScopeHasVariable(t *testing.T) {
+	scope := makeScope(nil, nil)
+	scope.registerVariable("foo", TypeIdent{"Bar"})
+	expectBool(t, scope.hasVariable("foo"), true)
+	expectBool(t, scope.hasVariable("baz"), false)
 }
 
 func TestScopeRegisterVariable(t *testing.T) {
