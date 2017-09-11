@@ -122,6 +122,17 @@ type TypeNote interface {
 	isType()
 }
 
+// TypeNoteVoid describes a missing type annotation
+type TypeNoteVoid struct {
+	Tok lexer.Token
+}
+
+// Start returns a location that this node can be considered to start at
+func (tv TypeNoteVoid) Start() lexer.Loc { return tv.Tok.Loc }
+func (tv TypeNoteVoid) String() string   { return "Void" }
+func (tv TypeNoteVoid) isNode()          {}
+func (tv TypeNoteVoid) isType()          {}
+
 // TypeNoteTuple describes a set of 0 or more types wrapped in parentheses
 type TypeNoteTuple struct {
 	Tok   lexer.Token

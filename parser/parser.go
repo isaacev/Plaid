@@ -301,7 +301,12 @@ func parseTypeNoteIdent(p *Parser) (TypeNote, error) {
 		return nil, err
 	}
 
-	return TypeNoteIdent{tok, tok.Lexeme}, nil
+	switch tok.Lexeme {
+	case "Void":
+		return TypeNoteVoid{tok}, nil
+	default:
+		return TypeNoteIdent{tok, tok.Lexeme}, nil
+	}
 }
 
 func parseTypeNoteList(p *Parser) (TypeNote, error) {

@@ -52,6 +52,13 @@ func TestExprStmt(t *testing.T) {
 	expectString(t, ExprStmt{IdentExpr{nop, "abc"}}, "abc")
 }
 
+func TestTypeNoteVoid(t *testing.T) {
+	expectStart(t, TypeNoteVoid{}, 0, 0)
+	expectString(t, TypeNoteVoid{}, "Void")
+	(TypeNoteVoid{}).isNode()
+	(TypeNoteVoid{}).isType()
+}
+
 func TestTypeNoteTuple(t *testing.T) {
 	(TypeNoteTuple{}).isNode()
 	(TypeNoteTuple{}).isType()
