@@ -199,6 +199,46 @@ func TestCheckStringExpr(t *testing.T) {
 	expectEquivalentType(t, typ, BuiltinStr)
 }
 
+func TestConvertTypeSig(t *testing.T) {
+	var sig parser.TypeSig
+
+	sig = parser.TypeFunction{
+		Params: parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
+			parser.TypeIdent{Tok: nop, Name: "Int"},
+			parser.TypeIdent{Tok: nop, Name: "Bool"},
+		}},
+		Ret: parser.TypeIdent{Tok: nop, Name: "Str"},
+	}
+	expectEquivalentType(t, convertTypeSig(sig), TypeFunction{
+		TypeTuple{[]Type{
+			TypeIdent{"Int"},
+			TypeIdent{"Bool"},
+		}},
+		TypeIdent{"Str"},
+	})
+
+	sig = parser.TypeTuple{Tok: nop, Elems: []parser.TypeSig{
+		parser.TypeIdent{Tok: nop, Name: "Int"},
+		parser.TypeIdent{Tok: nop, Name: "Bool"},
+	}}
+	expectEquivalentType(t, convertTypeSig(sig), TypeTuple{[]Type{
+		TypeIdent{"Int"},
+		TypeIdent{"Bool"},
+	}})
+
+	sig = parser.TypeList{Tok: nop, Child: parser.TypeIdent{Tok: nop, Name: "Int"}}
+	expectEquivalentType(t, convertTypeSig(sig), TypeList{TypeIdent{"Int"}})
+
+	sig = parser.TypeOptional{Tok: nop, Child: parser.TypeIdent{Tok: nop, Name: "Int"}}
+	expectEquivalentType(t, convertTypeSig(sig), TypeOptional{TypeIdent{"Int"}})
+
+	sig = parser.TypeIdent{Tok: nop, Name: "Int"}
+	expectEquivalentType(t, convertTypeSig(sig), TypeIdent{"Int"})
+
+	sig = nil
+	expectBool(t, convertTypeSig(sig).IsError(), true)
+}
+
 func expectNoErrors(t *testing.T, errs []error) {
 	if len(errs) > 0 {
 		for i, err := range errs {

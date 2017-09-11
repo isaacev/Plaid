@@ -165,3 +165,24 @@ func checkNumberExpr(scope *Scope, expr parser.NumberExpr) Type {
 func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
 	return BuiltinStr
 }
+
+func convertTypeSig(sig parser.TypeSig) Type {
+	switch sig := sig.(type) {
+	case parser.TypeFunction:
+		return TypeFunction{convertTypeSig(sig.Params).(TypeTuple), convertTypeSig(sig.Ret)}
+	case parser.TypeTuple:
+		elems := []Type{}
+		for _, elem := range sig.Elems {
+			elems = append(elems, convertTypeSig(elem))
+		}
+		return TypeTuple{elems}
+	case parser.TypeList:
+		return TypeList{convertTypeSig(sig.Child)}
+	case parser.TypeOptional:
+		return TypeOptional{convertTypeSig(sig.Child)}
+	case parser.TypeIdent:
+		return TypeIdent{sig.Name}
+	default:
+		return TypeError{}
+	}
+}
