@@ -32,6 +32,10 @@ func TestCheckReturnStmt(t *testing.T) {
 	scope := Check(prog)
 	expectAnError(t, scope.errs[0], "expected to return 'Int', got 'Str'")
 
+	prog, _ = parser.Parse("let a := fn (): Int { return x; };")
+	scope = Check(prog)
+	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
+
 	prog, _ = parser.Parse("let a := fn (): Int { return; };")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "expected a return type of 'Int', got nothing")
