@@ -35,6 +35,10 @@ type TypeFunction struct {
 // Equals returns true if another type has an identical structure and identical names
 func (tf TypeFunction) Equals(other Type) bool {
 	if tf2, ok := other.(TypeFunction); ok {
+		if tf.ret == nil {
+			return tf.params.Equals(tf2.params) && tf.ret == tf2.ret
+		}
+
 		return tf.params.Equals(tf2.params) && tf.ret.Equals(tf2.ret)
 	}
 
