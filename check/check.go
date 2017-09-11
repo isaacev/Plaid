@@ -63,20 +63,26 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 	expectedReturnValue := scope.pendingReturn != nil
 	gotReturnValue := ret != nil
 
-	if scope.hasParent() {
-		if expectedReturnValue {
-			if gotReturnValue == false {
-				scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
-			} else if scope.pendingReturn.Equals(ret) == false {
-				scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
-			}
-		} else {
-			if gotReturnValue {
-				scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
-			}
-		}
-	} else {
+	if scope.hasParent() == false {
 		scope.addError(fmt.Errorf("return statements must be inside a function"))
+		return
+	}
+
+	if gotReturnValue && ret.IsError() {
+		return
+	}
+
+	if expectedReturnValue && gotReturnValue == false {
+		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
+		return
+	}
+
+	if expectedReturnValue && scope.pendingReturn.Equals(ret) == false {
+		scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
+	}
+
+	if expectedReturnValue == false && gotReturnValue {
+		scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
 	}
 }
 
