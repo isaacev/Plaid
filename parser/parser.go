@@ -477,13 +477,15 @@ func parseFunctionParam(p *Parser) (FunctionParam, error) {
 		return FunctionParam{}, err
 	}
 
+	_, err = p.expectNextToken(lexer.Colon, "expected colon between parameter name and type")
+	if err != nil {
+		return FunctionParam{}, err
+	}
+
 	var sig TypeNote
-	if p.lexer.Peek().Type == lexer.Colon {
-		p.lexer.Next()
-		sig, err = parseTypeNote(p)
-		if err != nil {
-			return FunctionParam{}, err
-		}
+	sig, err = parseTypeNote(p)
+	if err != nil {
+		return FunctionParam{}, err
 	}
 
 	return FunctionParam{ident.(IdentExpr), sig}, nil

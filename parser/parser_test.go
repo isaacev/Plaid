@@ -396,10 +396,10 @@ func TestParseFunction(t *testing.T) {
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn ():[Int?]? {})", expr, err)
 
-	p = makeParser("fn (a) { let x := 123; }")
+	p = makeParser("fn (a:Int) { let x := 123; }")
 	loadGrammar(p)
 	expr, err = parseFunction(p)
-	expectNoErrors(t, "(fn (a) {\n  (let x 123)})", expr, err)
+	expectNoErrors(t, "(fn (a:Int) {\n  (let x 123)})", expr, err)
 
 	p = makeParser("func (a) { let x := 123; }")
 	expr, err = parseFunction(p)
@@ -454,18 +454,17 @@ func TestParseFunctionParams(t *testing.T) {
 	}
 
 	expectParams("()", "( )")
-	expectParams("(a)", "( a )")
-	expectParams("(a,)", "( a )")
 	expectParams("(a : Int)", "( a:Int )")
 	expectParams("(a : Int,)", "( a:Int )")
-	expectParams("(a : Int,b)", "( a:Int b )")
+	expectParams("(a : Int,b:Bool)", "( a:Int b:Bool )")
 	expectParams("(a : Int, b:Bool)", "( a:Int b:Bool )")
 	expectParams("(a : Int, b:Bool?)", "( a:Int b:Bool? )")
 	expectParams("(a : [Int]?, b:Bool?)", "( a:[Int]? b:Bool? )")
 
 	expectParamError("(,)", "(1:2) expected identifier")
 	expectParamError("(123)", "(1:2) expected identifier")
-	expectParamError("(a,,)", "(1:4) expected identifier")
+	expectParamError("(a:Int,,)", "(1:8) expected identifier")
+	expectParamError("(a)", "(1:3) expected colon between parameter name and type")
 	expectParamError("a:Int)", "(1:1) expected left paren")
 	expectParamError("(a:Int", "(1:6) expected right paren")
 }
