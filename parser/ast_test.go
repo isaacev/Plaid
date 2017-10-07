@@ -37,6 +37,13 @@ func TestDeclarationStmt(t *testing.T) {
 	expectString(t, DeclarationStmt{nop, IdentExpr{nop, "a"}, NumberExpr{nop, 123}}, "(let a 123)")
 }
 
+func TestPrintStmt(t *testing.T) {
+	(PrintStmt{}).isNode()
+	(PrintStmt{}).isStmt()
+
+	expectString(t, PrintStmt{nop, IdentExpr{nop, "a"}}, "(print a)")
+}
+
 func TestReturnStmt(t *testing.T) {
 	(ReturnStmt{}).isNode()
 	(ReturnStmt{}).isStmt()

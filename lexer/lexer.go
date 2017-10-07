@@ -27,6 +27,7 @@ const (
 	If            = "if"
 	Let           = "let"
 	Return        = "return"
+	Print         = "print"
 	Ident         = "Ident"
 	Number        = "Number"
 	String        = "String"
@@ -282,6 +283,8 @@ func eatWordToken(scanner *Scanner) Token {
 		return Token{Let, "let", loc}
 	case "return":
 		return Token{Return, "return", loc}
+	case "print":
+		return Token{Print, "print", loc}
 	default:
 		return Token{Ident, lexeme, loc}
 	}
