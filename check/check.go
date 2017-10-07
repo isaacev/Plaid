@@ -31,6 +31,9 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 	case parser.DeclarationStmt:
 		checkDeclarationStmt(scope, stmt)
 		break
+	case parser.PrintStmt:
+		checkPrintStmt(scope, stmt)
+		break
 	case parser.ReturnStmt:
 		checkReturnStmt(scope, stmt)
 		break
@@ -55,6 +58,15 @@ func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(scope, stmt.Expr)
 	scope.registerLocalVariable(name, typ)
+}
+
+func checkPrintStmt(scope *Scope, stmt parser.PrintStmt) {
+	if stmt.Expr == nil {
+		scope.addError(fmt.Errorf("expected an expression to print"))
+		return
+	}
+
+	checkExpr(scope, stmt.Expr)
 }
 
 func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {

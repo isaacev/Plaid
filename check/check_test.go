@@ -27,6 +27,17 @@ func TestCheckStmt(t *testing.T) {
 	expectNoErrors(t, scope.Errors())
 }
 
+func TestCheckPrintStmt(t *testing.T) {
+	prog, _ := parser.Parse("print 123;")
+	scope := Check(prog)
+	expectNoErrors(t, scope.errs)
+
+	stmt := parser.PrintStmt{Tok: nop, Expr: nil}
+	scope = makeScope(nil, nil)
+	checkPrintStmt(scope, stmt)
+	expectAnError(t, scope.errs[0], "expected an expression to print")
+}
+
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
 	scope := Check(prog)
