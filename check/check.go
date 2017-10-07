@@ -185,6 +185,11 @@ func checkAssignExpr(scope *Scope, expr parser.AssignExpr) Type {
 	leftType := scope.getVariable(name)
 	rightType := checkExpr(scope, expr.Right)
 
+	if leftType == nil {
+		scope.addError(fmt.Errorf("'%s' cannot be assigned before it is declared", name))
+		return TypeError{}
+	}
+
 	if leftType.IsError() || rightType.IsError() {
 		return TypeError{}
 	}

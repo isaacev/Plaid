@@ -185,6 +185,11 @@ func TestCheckAssignExpr(t *testing.T) {
 	scope.registerLocalVariable("a", BuiltinStr)
 	checkProgram(scope, prog)
 	expectAnError(t, scope.Errors()[0], "left side must have type Int, got Str")
+
+	prog, _ = parser.Parse("a := 123;")
+	scope = makeScope(nil, nil)
+	checkProgram(scope, prog)
+	expectAnError(t, scope.Errors()[0], "'a' cannot be assigned before it is declared")
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
