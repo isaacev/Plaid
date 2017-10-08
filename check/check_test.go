@@ -3,6 +3,7 @@ package check
 import (
 	"plaid/lexer"
 	"plaid/parser"
+	"plaid/types"
 	"testing"
 )
 
@@ -100,20 +101,20 @@ func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
 	scope := Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["f"], TypeFunction{
-		TypeTuple{[]Type{TypeIdent{"Int"}}},
-		TypeIdent{"Int"},
+	expectEquivalentType(t, scope.values["f"], types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
+		Ret:    types.TypeIdent{Name: "Int"},
 	})
 }
 
 func TestCheckDispatchExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("add", TypeFunction{
-		TypeTuple{[]Type{
-			TypeIdent{"Int"},
-			TypeIdent{"Int"},
+	scope.registerLocalVariable("add", types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+			types.TypeIdent{Name: "Int"},
 		}},
-		TypeIdent{"Int"},
+		Ret: types.TypeIdent{Name: "Int"},
 	})
 	expr := parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
@@ -140,12 +141,12 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", TypeFunction{
-		TypeTuple{[]Type{
-			TypeIdent{"Int"},
-			TypeIdent{"Int"},
+	scope.registerLocalVariable("add", types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+			types.TypeIdent{Name: "Int"},
 		}},
-		TypeIdent{"Int"},
+		Ret: types.TypeIdent{Name: "Int"},
 	})
 	expr = parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
@@ -158,12 +159,12 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", TypeFunction{
-		TypeTuple{[]Type{
-			TypeIdent{"Int"},
-			TypeIdent{"Int"},
+	scope.registerLocalVariable("add", types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+			types.TypeIdent{Name: "Int"},
 		}},
-		TypeIdent{"Int"},
+		Ret: types.TypeIdent{Name: "Int"},
 	})
 	expr = parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
@@ -259,7 +260,7 @@ func TestExpectBinaryTypes(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", TypeError{})
+	scope.registerLocalVariable("a", types.TypeError{})
 	scope.registerLocalVariable("b", BuiltinStr)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
@@ -303,7 +304,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note parser.TypeNote
 
 	note = parser.TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeVoid{})
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeVoid{})
 
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
@@ -312,12 +313,12 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
-		TypeTuple{[]Type{
-			TypeIdent{"Int"},
-			TypeIdent{"Bool"},
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+			types.TypeIdent{Name: "Bool"},
 		}},
-		TypeIdent{"Str"},
+		Ret: types.TypeIdent{Name: "Str"},
 	})
 
 	note = parser.TypeNoteFunction{
@@ -327,34 +328,34 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteVoid{},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
-		TypeTuple{[]Type{
-			TypeIdent{"Int"},
-			TypeIdent{"Bool"},
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+			types.TypeIdent{Name: "Bool"},
 		}},
-		TypeVoid{},
+		Ret: types.TypeVoid{},
 	})
 
 	note = parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
 		parser.TypeNoteIdent{Tok: nop, Name: "Int"},
 		parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeTuple{[]Type{
-		TypeIdent{"Int"},
-		TypeIdent{"Bool"},
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeTuple{Children: []types.Type{
+		types.TypeIdent{Name: "Int"},
+		types.TypeIdent{Name: "Bool"},
 	}})
 
 	note = parser.TypeNoteList{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeList{TypeIdent{"Int"}})
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeList{Child: types.TypeIdent{Name: "Int"}})
 
 	note = parser.TypeNoteOptional{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeOptional{TypeIdent{"Int"}})
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeOptional{Child: types.TypeIdent{Name: "Int"}})
 
 	note = parser.TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeIdent{"Int"})
+	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeIdent{Name: "Int"})
 
 	note = nil
-	expectBool(t, ConvertTypeNote(note) == nil, true)
+	expectBool(t, types.ConvertTypeNote(note) == nil, true)
 }
 
 func expectNoErrors(t *testing.T, errs []error) {
@@ -378,5 +379,34 @@ func expectAnError(t *testing.T, err error, msg string) {
 func expectNil(t *testing.T, got interface{}) {
 	if got != nil {
 		t.Errorf("Expected nil, got '%v'", got)
+	}
+}
+
+func expectEquivalentType(t *testing.T, t1 types.Type, t2 types.Type) {
+	same := t1.Equals(t2)
+	commutative := t1.Equals(t2) == t2.Equals(t1)
+
+	if commutative == false {
+		if same {
+			t.Errorf("%s == %s, but %s != %s", t1, t2, t2, t1)
+		} else {
+			t.Errorf("%s == %s, but %s != %s", t2, t1, t1, t2)
+		}
+	}
+
+	if same == false {
+		t.Errorf("Expected %s == %s, got %t", t1, t2, same)
+	}
+}
+
+func expectString(t *testing.T, got string, exp string) {
+	if exp != got {
+		t.Errorf("Expected '%s', got '%s'", exp, got)
+	}
+}
+
+func expectBool(t *testing.T, got bool, exp bool) {
+	if exp != got {
+		t.Errorf("Expected %t, got %t", exp, got)
 	}
 }

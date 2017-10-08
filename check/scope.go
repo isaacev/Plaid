@@ -3,6 +3,7 @@ package check
 import (
 	"fmt"
 	"plaid/parser"
+	"plaid/types"
 )
 
 // Scope tracks the symbol table and other data used during the check
@@ -10,10 +11,10 @@ type Scope struct {
 	parent        *Scope
 	errs          []error
 	variables     []string
-	values        map[string]Type
-	pendingReturn Type
+	values        map[string]types.Type
+	pendingReturn types.Type
 	queue         []struct {
-		ret  Type
+		ret  types.Type
 		expr parser.FunctionExpr
 	}
 }
@@ -54,12 +55,12 @@ func (s *Scope) existingVariable(name string) bool {
 	}
 }
 
-func (s *Scope) registerLocalVariable(name string, typ Type) {
+func (s *Scope) registerLocalVariable(name string, typ types.Type) {
 	s.variables = append(s.variables, name)
 	s.values[name] = typ
 }
 
-func (s *Scope) getVariable(name string) Type {
+func (s *Scope) getVariable(name string) types.Type {
 	if s.hasLocalVariable(name) {
 		return s.values[name]
 	} else if s.hasParent() {
@@ -73,11 +74,11 @@ func (s *Scope) hasPendingReturnType() bool {
 	return (s.pendingReturn != nil)
 }
 
-func (s *Scope) getPendingReturnType() Type {
+func (s *Scope) getPendingReturnType() types.Type {
 	return s.pendingReturn
 }
 
-func (s *Scope) setPendingReturnType(typ Type) {
+func (s *Scope) setPendingReturnType(typ types.Type) {
 	s.pendingReturn = typ
 }
 
@@ -85,15 +86,15 @@ func (s *Scope) hasBodyQueue() bool {
 	return len(s.queue) > 0
 }
 
-func (s *Scope) enqueueBody(ret Type, expr parser.FunctionExpr) {
+func (s *Scope) enqueueBody(ret types.Type, expr parser.FunctionExpr) {
 	body := struct {
-		ret  Type
+		ret  types.Type
 		expr parser.FunctionExpr
 	}{ret, expr}
 	s.queue = append(s.queue, body)
 }
 
-func (s *Scope) dequeueBody() (Type, parser.FunctionExpr) {
+func (s *Scope) dequeueBody() (types.Type, parser.FunctionExpr) {
 	body := s.queue[0]
 	s.queue = s.queue[1:]
 	return body.ret, body.expr
@@ -107,15 +108,15 @@ func (s *Scope) String() string {
 	return out
 }
 
-func makeScope(parent *Scope, ret Type) *Scope {
+func makeScope(parent *Scope, ret types.Type) *Scope {
 	return &Scope{
 		parent,
 		[]error{},
 		[]string{},
-		make(map[string]Type),
+		make(map[string]types.Type),
 		ret,
 		[]struct {
-			ret  Type
+			ret  types.Type
 			expr parser.FunctionExpr
 		}{},
 	}

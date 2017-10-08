@@ -3,12 +3,13 @@ package check
 import (
 	"fmt"
 	"plaid/parser"
+	"plaid/types"
 )
 
 // A collection of types native to the execution environment
 var (
-	BuiltinInt Type = TypeIdent{"Int"}
-	BuiltinStr      = TypeIdent{"Str"}
+	BuiltinInt types.Type = types.TypeIdent{Name: "Int"}
+	BuiltinStr            = types.TypeIdent{Name: "Str"}
 )
 
 // Check takes an existing abstract syntax tree and performs type checks and
@@ -70,7 +71,7 @@ func checkPrintStmt(scope *Scope, stmt parser.PrintStmt) {
 }
 
 func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
-	var ret Type = TypeVoid{}
+	var ret types.Type = types.TypeVoid{}
 	if stmt.Expr != nil {
 		ret = checkExpr(scope, stmt.Expr)
 	}
@@ -84,20 +85,20 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 		return
 	}
 
-	if scope.pendingReturn.Equals(TypeVoid{}) {
+	if scope.pendingReturn.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
 		return
 	}
 
-	if ret.Equals(TypeVoid{}) {
+	if ret.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
 	}
 
 	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
 }
 
-func checkExpr(scope *Scope, expr parser.Expr) Type {
-	var typ Type = TypeError{}
+func checkExpr(scope *Scope, expr parser.Expr) types.Type {
+	var typ types.Type = types.TypeError{}
 	switch expr := expr.(type) {
 	case parser.FunctionExpr:
 		typ = checkFunctionExpr(scope, expr)
@@ -117,104 +118,104 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 		scope.addError(fmt.Errorf("unknown expression type"))
 	}
 
-	if typ.Equals(TypeVoid{}) {
+	if typ.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("cannot use void types in an expression"))
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	return typ
 }
 
-func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
-	ret := ConvertTypeNote(expr.Ret)
-	params := []Type{}
+func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) types.Type {
+	ret := types.ConvertTypeNote(expr.Ret)
+	params := []types.Type{}
 	for _, param := range expr.Params {
-		params = append(params, ConvertTypeNote(param.Note))
+		params = append(params, types.ConvertTypeNote(param.Note))
 	}
-	tuple := TypeTuple{params}
+	tuple := types.TypeTuple{Children: params}
 
-	sig := TypeFunction{tuple, ret}
+	sig := types.TypeFunction{Params: tuple, Ret: ret}
 	scope.enqueueBody(ret, expr)
 	return sig
 }
 
-func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
+func checkFunctionBody(scope *Scope, ret types.Type, expr parser.FunctionExpr) {
 	pushed := makeScope(scope, ret)
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
-		paramType := ConvertTypeNote(param.Note)
+		paramType := types.ConvertTypeNote(param.Note)
 		pushed.registerLocalVariable(paramName, paramType)
 	}
 
 	checkStmtBlock(pushed, expr.Block)
 }
 
-func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) Type {
+func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) types.Type {
 	// Resolve arguments to types
-	argTypes := []Type{}
+	argTypes := []types.Type{}
 	for _, argExpr := range expr.Args {
 		argTypes = append(argTypes, checkExpr(scope, argExpr))
 	}
 
 	// Resolve callee to type
 	calleeType := checkExpr(scope, expr.Callee)
-	calleeFunc, ok := calleeType.(TypeFunction)
+	calleeFunc, ok := calleeType.(types.TypeFunction)
 	if ok == false {
 		if calleeType.IsError() == false {
 			scope.addError(fmt.Errorf("cannot call function on type '%s'", calleeType))
 		}
 
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	// Resolve return type
-	retType := calleeFunc.ret
+	retType := calleeFunc.Ret
 
 	// Check that the given argument types match the expected parameter types
 	totalArgs := len(argTypes)
-	totalParams := len(calleeFunc.params.children)
+	totalParams := len(calleeFunc.Params.Children)
 	if totalArgs == totalParams {
 		for i := 0; i < totalArgs; i++ {
 			argType := argTypes[i]
-			paramType := calleeFunc.params.children[i]
+			paramType := calleeFunc.Params.Children[i]
 
 			if argType.Equals(paramType) == false {
 				scope.addError(fmt.Errorf("expected '%s', got '%s'", paramType, argType))
-				retType = TypeError{}
+				retType = types.TypeError{}
 			}
 		}
 	} else {
 		scope.addError(fmt.Errorf("expected %d arguments, got %d", totalParams, totalArgs))
-		retType = TypeError{}
+		retType = types.TypeError{}
 	}
 
 	return retType
 }
 
-func checkAssignExpr(scope *Scope, expr parser.AssignExpr) Type {
+func checkAssignExpr(scope *Scope, expr parser.AssignExpr) types.Type {
 	name := expr.Left.Name
 	leftType := scope.getVariable(name)
 	rightType := checkExpr(scope, expr.Right)
 
 	if leftType == nil {
 		scope.addError(fmt.Errorf("'%s' cannot be assigned before it is declared", name))
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	if leftType.IsError() || rightType.IsError() {
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	if leftType.Equals(rightType) == false {
 		scope.addError(fmt.Errorf("'%s' cannot be assigned type '%s'", leftType, rightType))
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	return leftType
 }
 
-func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
+func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
 	switch expr.Oper {
 	case "+":
 		fallthrough
@@ -224,71 +225,46 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) Type {
 		return expectBinaryTypes(scope, expr.Left, BuiltinInt, expr.Right, BuiltinInt, BuiltinInt)
 	default:
 		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
-		return TypeError{}
+		return types.TypeError{}
 	}
 }
 
-func expectBinaryTypes(scope *Scope, left parser.Expr, expLeftType Type, right parser.Expr, expRightType Type, retType Type) Type {
+func expectBinaryTypes(scope *Scope, left parser.Expr, expLeftType types.Type, right parser.Expr, expRightType types.Type, retType types.Type) types.Type {
 	leftType := checkExpr(scope, left)
 	rightType := checkExpr(scope, right)
 
 	if leftType.IsError() || rightType.IsError() {
-		return TypeError{}
+		return types.TypeError{}
 	}
 
 	typ := retType
 
 	if leftType.Equals(expLeftType) == false {
 		scope.addError(fmt.Errorf("left side must have type %s, got %s", expLeftType, leftType))
-		typ = TypeError{}
+		typ = types.TypeError{}
 	}
 
 	if rightType.Equals(expRightType) == false {
 		scope.addError(fmt.Errorf("right side must have type %s, got %s", expRightType, rightType))
-		typ = TypeError{}
+		typ = types.TypeError{}
 	}
 
 	return typ
 }
 
-func checkIdentExpr(scope *Scope, expr parser.IdentExpr) Type {
+func checkIdentExpr(scope *Scope, expr parser.IdentExpr) types.Type {
 	if scope.existingVariable(expr.Name) {
 		return scope.getVariable(expr.Name)
 	}
 
 	scope.addError(fmt.Errorf("variable '%s' was used before it was declared", expr.Name))
-	return TypeError{}
+	return types.TypeError{}
 }
 
-func checkNumberExpr(scope *Scope, expr parser.NumberExpr) Type {
+func checkNumberExpr(scope *Scope, expr parser.NumberExpr) types.Type {
 	return BuiltinInt
 }
 
-func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
+func checkStringExpr(scope *Scope, expr parser.StringExpr) types.Type {
 	return BuiltinStr
-}
-
-// ConvertTypeNote transforms a TypeNote struct (used to represent a syntax
-// type notation) into a Type struct (used internally to represent a type)
-func ConvertTypeNote(note parser.TypeNote) Type {
-	switch note := note.(type) {
-	case parser.TypeNoteVoid:
-		return TypeVoid{}
-	case parser.TypeNoteFunction:
-		return TypeFunction{ConvertTypeNote(note.Params).(TypeTuple), ConvertTypeNote(note.Ret)}
-	case parser.TypeNoteTuple:
-		elems := []Type{}
-		for _, elem := range note.Elems {
-			elems = append(elems, ConvertTypeNote(elem))
-		}
-		return TypeTuple{elems}
-	case parser.TypeNoteList:
-		return TypeList{ConvertTypeNote(note.Child)}
-	case parser.TypeNoteOptional:
-		return TypeOptional{ConvertTypeNote(note.Child)}
-	case parser.TypeNoteIdent:
-		return TypeIdent{note.Name}
-	default:
-		return nil
-	}
 }

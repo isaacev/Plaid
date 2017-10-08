@@ -2,6 +2,7 @@ package check
 
 import (
 	"fmt"
+	"plaid/types"
 	"testing"
 )
 
@@ -30,17 +31,17 @@ func TestScopeAddError(t *testing.T) {
 
 func TestScopeHasLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("foo", TypeIdent{"Bar"})
+	scope.registerLocalVariable("foo", types.TypeIdent{Name: "Bar"})
 	expectBool(t, scope.hasLocalVariable("foo"), true)
 	expectBool(t, scope.hasLocalVariable("baz"), false)
 }
 
 func TestScopeRegisterLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("foo", TypeIdent{"Bar"})
+	scope.registerLocalVariable("foo", types.TypeIdent{Name: "Bar"})
 	typ, exists := scope.values["foo"]
 	if exists {
-		expectEquivalentType(t, typ, TypeIdent{"Bar"})
+		expectEquivalentType(t, typ, types.TypeIdent{Name: "Bar"})
 	} else {
 		t.Errorf("Expected key '%s' in Scope#variables, none found", "foo")
 	}
@@ -49,8 +50,8 @@ func TestScopeRegisterLocalVariable(t *testing.T) {
 func TestScopeGetVariable(t *testing.T) {
 	parent := makeScope(nil, nil)
 	child := makeScope(parent, nil)
-	parent.registerLocalVariable("foo", TypeIdent{"Bar"})
-	expectEquivalentType(t, child.getVariable("foo"), TypeIdent{"Bar"})
+	parent.registerLocalVariable("foo", types.TypeIdent{Name: "Bar"})
+	expectEquivalentType(t, child.getVariable("foo"), types.TypeIdent{Name: "Bar"})
 	expectNil(t, child.getVariable("baz"))
 }
 
@@ -58,7 +59,7 @@ func TestScopeHasPendingReturnType(t *testing.T) {
 	scope := makeScope(nil, nil)
 	expectBool(t, scope.hasPendingReturnType(), false)
 
-	scope = makeScope(nil, TypeIdent{"Int"})
+	scope = makeScope(nil, types.TypeIdent{Name: "Int"})
 	expectBool(t, scope.hasPendingReturnType(), true)
 }
 
@@ -66,24 +67,24 @@ func TestScopeGetPendingReturnType(t *testing.T) {
 	scope := makeScope(nil, nil)
 	expectBool(t, scope.getPendingReturnType() == nil, true)
 
-	scope = makeScope(nil, TypeIdent{"Int"})
-	expectEquivalentType(t, scope.getPendingReturnType(), TypeIdent{"Int"})
+	scope = makeScope(nil, types.TypeIdent{Name: "Int"})
+	expectEquivalentType(t, scope.getPendingReturnType(), types.TypeIdent{Name: "Int"})
 }
 
 func TestScopeSetPendingReturnType(t *testing.T) {
 	scope := makeScope(nil, nil)
 	expectBool(t, scope.hasPendingReturnType(), false)
 
-	scope.setPendingReturnType(TypeIdent{"Int"})
-	expectBool(t, scope.pendingReturn.Equals(TypeIdent{"Int"}), true)
+	scope.setPendingReturnType(types.TypeIdent{Name: "Int"})
+	expectBool(t, scope.pendingReturn.Equals(types.TypeIdent{Name: "Int"}), true)
 	expectBool(t, scope.hasPendingReturnType(), true)
 }
 
 func TestScopeString(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("num", TypeIdent{"Int"})
-	scope.registerLocalVariable("test", TypeIdent{"Bool"})
-	scope.registerLocalVariable("coord", TypeTuple{[]Type{TypeIdent{"Int"}, TypeIdent{"Int"}}})
+	scope.registerLocalVariable("num", types.TypeIdent{Name: "Int"})
+	scope.registerLocalVariable("test", types.TypeIdent{Name: "Bool"})
+	scope.registerLocalVariable("coord", types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}, types.TypeIdent{Name: "Int"}}})
 
 	expectString(t, scope.String(), "num : Int\ntest : Bool\ncoord : (Int Int)\n")
 }
