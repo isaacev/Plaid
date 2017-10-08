@@ -2,7 +2,7 @@ package codegen
 
 import (
 	"fmt"
-	"plaid/check"
+	"plaid/types"
 )
 
 // LexicalScope represents a region of the program where all local variables
@@ -21,7 +21,7 @@ func (ls *LexicalScope) hasLocalVariable(name string) bool {
 	return exists
 }
 
-func (ls *LexicalScope) addLocalVariable(name string, typ check.Type) *VarRecord {
+func (ls *LexicalScope) addLocalVariable(name string, typ types.Type) *VarRecord {
 	if ls.hasLocalVariable(name) {
 		panic(fmt.Sprintf("variable '%s' redeclared locally", name))
 	}

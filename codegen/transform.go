@@ -2,8 +2,8 @@ package codegen
 
 import (
 	"fmt"
-	"plaid/check"
 	"plaid/parser"
+	"plaid/types"
 )
 
 // Transform converts an AST to the intermediate representation (IR) which is a
@@ -87,12 +87,12 @@ func transformFunctionExpr(scope *LexicalScope, expr parser.FunctionExpr) IRType
 	var params []*VarRecord
 	for _, param := range expr.Params {
 		name := param.Name.Name
-		typ := check.ConvertTypeNote(param.Note)
+		typ := types.ConvertTypeNote(param.Note)
 		record := local.addLocalVariable(name, typ)
 		params = append(params, record)
 	}
 
-	ret := check.ConvertTypeNote(expr.Ret)
+	ret := types.ConvertTypeNote(expr.Ret)
 	block := transformStmts(local, expr.Block.Stmts)
 	return IRFunctionNode{local, params, ret, block}
 }

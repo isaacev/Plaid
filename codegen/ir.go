@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 	"plaid/check"
+	"plaid/types"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ var varRecordID uint
 type VarRecord struct {
 	ID   uint
 	Name string
-	typ  check.Type
+	typ  types.Type
 }
 
 func (vr *VarRecord) String() string { return fmt.Sprintf("%s<%d>", vr.Name, vr.ID) }
@@ -43,7 +44,7 @@ type IRVoidNode interface {
 
 // IRTypedNode represents IR nodes that are resolved to a value in the VM
 type IRTypedNode interface {
-	Type() check.Type
+	Type() types.Type
 	String() string
 	isTypedNode()
 }
@@ -83,12 +84,12 @@ func (vn IRVoidedNode) isVoidNode()    {}
 type IRFunctionNode struct {
 	Scope  *LexicalScope
 	Params []*VarRecord
-	Ret    check.Type
+	Ret    types.Type
 	Body   []IRVoidNode
 }
 
 // Type returns the value type that this node resolves to
-func (fn IRFunctionNode) Type() check.Type { return fn.Ret }
+func (fn IRFunctionNode) Type() types.Type { return fn.Ret }
 func (fn IRFunctionNode) String() string {
 	out := "(fn ("
 	for i, param := range fn.Params {
@@ -124,7 +125,7 @@ type IRDispatchNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (dn IRDispatchNode) Type() check.Type { return dn.Callee.Type() }
+func (dn IRDispatchNode) Type() types.Type { return dn.Callee.Type() }
 func (dn IRDispatchNode) String() string {
 	out := "("
 	out += dn.Callee.String()
@@ -147,7 +148,7 @@ type IRAssignNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (an IRAssignNode) Type() check.Type { return an.Child.Type() }
+func (an IRAssignNode) Type() types.Type { return an.Child.Type() }
 func (an IRAssignNode) String() string   { return fmt.Sprintf("(= %s %s)", an.Record, an.Child) }
 func (an IRAssignNode) isTypedNode()     {}
 
@@ -159,7 +160,7 @@ type IRBinaryNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (bn IRBinaryNode) Type() check.Type { return check.BuiltinInt }
+func (bn IRBinaryNode) Type() types.Type { return check.BuiltinInt }
 func (bn IRBinaryNode) String() string   { return fmt.Sprintf("(%s %s %s)", bn.Oper, bn.Left, bn.Right) }
 func (bn IRBinaryNode) isTypedNode()     {}
 
@@ -169,7 +170,7 @@ type IRReferenceNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (rn IRReferenceNode) Type() check.Type { return check.BuiltinInt }
+func (rn IRReferenceNode) Type() types.Type { return check.BuiltinInt }
 func (rn IRReferenceNode) String() string   { return rn.Record.String() }
 func (rn IRReferenceNode) isTypedNode()     {}
 
@@ -179,7 +180,7 @@ type IRIntegerLiteralNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (iln IRIntegerLiteralNode) Type() check.Type { return check.BuiltinInt }
+func (iln IRIntegerLiteralNode) Type() types.Type { return check.BuiltinInt }
 func (iln IRIntegerLiteralNode) String() string   { return fmt.Sprintf("%d", iln.Val) }
 func (iln IRIntegerLiteralNode) isTypedNode()     {}
 
