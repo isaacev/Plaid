@@ -1,0 +1,134 @@
+package codegen
+
+import (
+	"fmt"
+	"plaid/check"
+	"plaid/parser"
+)
+
+// Transform converts an AST to the intermediate representation (IR) which is a
+// precursor to the compiled bytecode
+func Transform(prog parser.Program) IR {
+	scope := makeLexicalScope(nil)
+	nodes := transformStmts(scope, prog.Stmts)
+	return IR{scope, nodes}
+}
+
+func transformStmts(scope *LexicalScope, stmts []parser.Stmt) []IRVoidNode {
+	var nodes []IRVoidNode
+	for _, stmt := range stmts {
+		node := transformStmt(scope, stmt)
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
+func transformStmt(scope *LexicalScope, stmt parser.Stmt) IRVoidNode {
+	switch stmt := stmt.(type) {
+	case parser.DeclarationStmt:
+		return transformDeclarationStmt(scope, stmt)
+	case parser.PrintStmt:
+		return transformPrintStmt(scope, stmt)
+	case parser.ReturnStmt:
+		return transformReturnStmt(scope, stmt)
+	case parser.ExprStmt:
+		return transformExprStmt(scope, stmt)
+	default:
+		panic(fmt.Sprintf("cannot transform %T", stmt))
+	}
+}
+
+func transformDeclarationStmt(scope *LexicalScope, stmt parser.DeclarationStmt) IRVoidNode {
+	name := stmt.Name.Name
+	child := transformExpr(scope, stmt.Expr)
+	record := scope.addLocalVariable(name, child.Type())
+	return IRVoidedNode{IRAssignNode{record, child}}
+}
+
+func transformPrintStmt(scope *LexicalScope, stmt parser.PrintStmt) IRVoidNode {
+	child := transformExpr(scope, stmt.Expr)
+	return IRPrintNode{child}
+}
+
+func transformReturnStmt(scope *LexicalScope, stmt parser.ReturnStmt) IRVoidNode {
+	if stmt.Expr != nil {
+		return IRReturnNode{transformExpr(scope, stmt.Expr)}
+	}
+
+	return IRReturnNode{nil}
+}
+
+func transformExprStmt(scope *LexicalScope, stmt parser.ExprStmt) IRVoidNode {
+	return IRVoidedNode{transformExpr(scope, stmt.Expr)}
+}
+
+func transformExpr(scope *LexicalScope, expr parser.Expr) IRTypedNode {
+	switch expr := expr.(type) {
+	case parser.FunctionExpr:
+		return transformFunctionExpr(scope, expr)
+	case parser.DispatchExpr:
+		return transformDispatchExpr(scope, expr)
+	case parser.AssignExpr:
+		return transformAssignExpr(scope, expr)
+	case parser.BinaryExpr:
+		return transformBinaryExpr(scope, expr)
+	case parser.IdentExpr:
+		return transformIdentExpr(scope, expr)
+	case parser.NumberExpr:
+		return transformNumberExpr(scope, expr)
+	default:
+		panic(fmt.Sprintf("cannot transform %T", expr))
+	}
+}
+
+func transformFunctionExpr(scope *LexicalScope, expr parser.FunctionExpr) IRTypedNode {
+	local := makeLexicalScope(scope)
+
+	var params []*VarRecord
+	for _, param := range expr.Params {
+		name := param.Name.Name
+		typ := check.ConvertTypeNote(param.Note)
+		record := local.addLocalVariable(name, typ)
+		params = append(params, record)
+	}
+
+	ret := check.ConvertTypeNote(expr.Ret)
+	block := transformStmts(local, expr.Block.Stmts)
+	return IRFunctionNode{local, params, ret, block}
+}
+
+func transformDispatchExpr(scope *LexicalScope, expr parser.DispatchExpr) IRTypedNode {
+	callee := transformExpr(scope, expr.Callee)
+
+	var args []IRTypedNode
+	for _, expr := range expr.Args {
+		arg := transformExpr(scope, expr)
+		args = append(args, arg)
+	}
+
+	return IRDispatchNode{callee, args}
+}
+
+func transformAssignExpr(scope *LexicalScope, expr parser.AssignExpr) IRTypedNode {
+	name := expr.Left.Name
+	child := transformExpr(scope, expr.Right)
+	record := scope.getVariable(name)
+	return IRAssignNode{record, child}
+}
+
+func transformBinaryExpr(scope *LexicalScope, expr parser.BinaryExpr) IRTypedNode {
+	oper := expr.Oper
+	left := transformExpr(scope, expr.Left)
+	right := transformExpr(scope, expr.Right)
+	return IRBinaryNode{oper, left, right}
+}
+
+func transformIdentExpr(scope *LexicalScope, expr parser.IdentExpr) IRTypedNode {
+	name := expr.Name
+	record := scope.getVariable(name)
+	return IRReferenceNode{record}
+}
+
+func transformNumberExpr(scope *LexicalScope, expr parser.NumberExpr) IRTypedNode {
+	return IRIntegerLiteralNode{int64(expr.Val)}
+}
