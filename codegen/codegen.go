@@ -5,8 +5,14 @@ import (
 	"plaid/vm"
 )
 
-// Gen converts an AST to a Bytecode sequence
-func Gen(ir IR) *vm.Bytecode {
+// Generate converts an IR into a Module
+func Generate(ir IR) *vm.Module {
+	return &vm.Module{
+		Main: genProg(ir),
+	}
+}
+
+func genProg(ir IR) *vm.Bytecode {
 	bc := &vm.Bytecode{}
 
 	for _, record := range ir.Scope.Local {
