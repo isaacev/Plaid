@@ -184,6 +184,16 @@ func (iln IRIntegerLiteralNode) Type() types.Type { return check.BuiltinInt }
 func (iln IRIntegerLiteralNode) String() string   { return fmt.Sprintf("%d", iln.Val) }
 func (iln IRIntegerLiteralNode) isTypedNode()     {}
 
+// IRStringLiteralNode represents a string value
+type IRStringLiteralNode struct {
+	Val string
+}
+
+// Type returns the value type that this node resolves to
+func (sln IRStringLiteralNode) Type() types.Type { return check.BuiltinStr }
+func (sln IRStringLiteralNode) String() string   { return sln.Val }
+func (sln IRStringLiteralNode) isTypedNode()     {}
+
 func indentBlock(indent string, source string) string {
 	lines := strings.Split(source, "\n")
 	for i, line := range lines {

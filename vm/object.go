@@ -37,3 +37,11 @@ type ObjectInt struct {
 
 func (oi *ObjectInt) String() string { return fmt.Sprintf("%d", oi.Val) }
 func (oi *ObjectInt) isObject()      {}
+
+// ObjectStr represents any string object
+type ObjectStr struct {
+	Val string
+}
+
+func (os *ObjectStr) String() string { return os.Val }
+func (os *ObjectStr) isObject()      {}
