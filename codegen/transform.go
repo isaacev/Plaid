@@ -96,6 +96,7 @@ func transformFunctionExpr(scope *LexicalScope, expr parser.FunctionExpr) IRType
 
 	ret := types.ConvertTypeNote(expr.Ret)
 	block := transformStmts(local, expr.Block.Stmts)
+	block = append(block, IRReturnNode{})
 	return IRFunctionNode{local, params, ret, block}
 }
 

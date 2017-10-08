@@ -39,7 +39,7 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 		checkReturnStmt(scope, stmt)
 		break
 	case parser.ExprStmt:
-		checkExpr(scope, stmt.Expr)
+		checkExprAllowVoid(scope, stmt.Expr)
 		break
 	}
 
@@ -97,7 +97,7 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
 }
 
-func checkExpr(scope *Scope, expr parser.Expr) types.Type {
+func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 	var typ types.Type = types.TypeError{}
 	switch expr := expr.(type) {
 	case parser.FunctionExpr:
@@ -117,6 +117,12 @@ func checkExpr(scope *Scope, expr parser.Expr) types.Type {
 	default:
 		scope.addError(fmt.Errorf("unknown expression type"))
 	}
+
+	return typ
+}
+
+func checkExpr(scope *Scope, expr parser.Expr) types.Type {
+	typ := checkExprAllowVoid(scope, expr)
 
 	if typ.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("cannot use void types in an expression"))

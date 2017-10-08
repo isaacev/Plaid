@@ -69,6 +69,8 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 		env.push(obj)
 	case InstrDispatch:
 		runInstrDispatch(env, instr)
+	case InstrNone:
+		env.push(nil)
 	case InstrAdd:
 		runInstrAdd(env, instr)
 	case InstrSub:
