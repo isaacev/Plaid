@@ -126,10 +126,10 @@ func checkExpr(scope *Scope, expr parser.Expr) Type {
 }
 
 func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) Type {
-	ret := convertTypeNote(expr.Ret)
+	ret := ConvertTypeNote(expr.Ret)
 	params := []Type{}
 	for _, param := range expr.Params {
-		params = append(params, convertTypeNote(param.Note))
+		params = append(params, ConvertTypeNote(param.Note))
 	}
 	tuple := TypeTuple{params}
 
@@ -143,7 +143,7 @@ func checkFunctionBody(scope *Scope, ret Type, expr parser.FunctionExpr) {
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
-		paramType := convertTypeNote(param.Note)
+		paramType := ConvertTypeNote(param.Note)
 		pushed.registerLocalVariable(paramName, paramType)
 	}
 
@@ -268,22 +268,24 @@ func checkStringExpr(scope *Scope, expr parser.StringExpr) Type {
 	return BuiltinStr
 }
 
-func convertTypeNote(note parser.TypeNote) Type {
+// ConvertTypeNote transforms a TypeNote struct (used to represent a syntax
+// type notation) into a Type struct (used internally to represent a type)
+func ConvertTypeNote(note parser.TypeNote) Type {
 	switch note := note.(type) {
 	case parser.TypeNoteVoid:
 		return TypeVoid{}
 	case parser.TypeNoteFunction:
-		return TypeFunction{convertTypeNote(note.Params).(TypeTuple), convertTypeNote(note.Ret)}
+		return TypeFunction{ConvertTypeNote(note.Params).(TypeTuple), ConvertTypeNote(note.Ret)}
 	case parser.TypeNoteTuple:
 		elems := []Type{}
 		for _, elem := range note.Elems {
-			elems = append(elems, convertTypeNote(elem))
+			elems = append(elems, ConvertTypeNote(elem))
 		}
 		return TypeTuple{elems}
 	case parser.TypeNoteList:
-		return TypeList{convertTypeNote(note.Child)}
+		return TypeList{ConvertTypeNote(note.Child)}
 	case parser.TypeNoteOptional:
-		return TypeOptional{convertTypeNote(note.Child)}
+		return TypeOptional{ConvertTypeNote(note.Child)}
 	case parser.TypeNoteIdent:
 		return TypeIdent{note.Name}
 	default:

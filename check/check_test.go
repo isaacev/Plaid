@@ -303,7 +303,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note parser.TypeNote
 
 	note = parser.TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, convertTypeNote(note), TypeVoid{})
+	expectEquivalentType(t, ConvertTypeNote(note), TypeVoid{})
 
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
@@ -312,7 +312,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
+	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Bool"},
@@ -327,7 +327,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteVoid{},
 	}
-	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
+	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
 		TypeTuple{[]Type{
 			TypeIdent{"Int"},
 			TypeIdent{"Bool"},
@@ -339,22 +339,22 @@ func TestConvertTypeSig(t *testing.T) {
 		parser.TypeNoteIdent{Tok: nop, Name: "Int"},
 		parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, convertTypeNote(note), TypeTuple{[]Type{
+	expectEquivalentType(t, ConvertTypeNote(note), TypeTuple{[]Type{
 		TypeIdent{"Int"},
 		TypeIdent{"Bool"},
 	}})
 
 	note = parser.TypeNoteList{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeNote(note), TypeList{TypeIdent{"Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), TypeList{TypeIdent{"Int"}})
 
 	note = parser.TypeNoteOptional{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeNote(note), TypeOptional{TypeIdent{"Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), TypeOptional{TypeIdent{"Int"}})
 
 	note = parser.TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, convertTypeNote(note), TypeIdent{"Int"})
+	expectEquivalentType(t, ConvertTypeNote(note), TypeIdent{"Int"})
 
 	note = nil
-	expectBool(t, convertTypeNote(note) == nil, true)
+	expectBool(t, ConvertTypeNote(note) == nil, true)
 }
 
 func expectNoErrors(t *testing.T, errs []error) {
