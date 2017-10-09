@@ -104,6 +104,8 @@ func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 		typ = checkNumberExpr(scope, expr)
 	case parser.StringExpr:
 		typ = checkStringExpr(scope, expr)
+	case parser.BooleanExpr:
+		typ = checkBooleanExpr(scope, expr)
 	default:
 		scope.addError(fmt.Errorf("unknown expression type"))
 	}
@@ -263,4 +265,8 @@ func checkNumberExpr(scope *Scope, expr parser.NumberExpr) types.Type {
 
 func checkStringExpr(scope *Scope, expr parser.StringExpr) types.Type {
 	return types.Str
+}
+
+func checkBooleanExpr(scope *Scope, expr parser.BooleanExpr) types.Type {
+	return types.Bool
 }

@@ -70,6 +70,14 @@ func TestCheckExpr(t *testing.T) {
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
 
+	prog, _ = parser.Parse("let a := true;")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errors())
+
+	prog, _ = parser.Parse("let a := false;")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errors())
+
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
@@ -287,6 +295,14 @@ func TestCheckStringExpr(t *testing.T) {
 	typ := checkStringExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, types.Str)
+}
+
+func TestCheckBooleanExpr(t *testing.T) {
+	scope := makeScope(nil, nil)
+	expr := parser.BooleanExpr{Tok: nop, Val: true}
+	typ := checkBooleanExpr(scope, expr)
+	expectNoErrors(t, scope.Errors())
+	expectEquivalentType(t, typ, types.Bool)
 }
 
 func TestConvertTypeSig(t *testing.T) {
