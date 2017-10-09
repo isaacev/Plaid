@@ -264,6 +264,16 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, types.Int)
 
+	scope = makeScope(nil, nil)
+	expr = parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
+	expectAnError(t, scope.errs[0], "variable 'a' was used before it was declared")
+	expectAnError(t, scope.errs[1], "variable 'b' was used before it was declared")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil, nil)
+	scope.registerLocalVariable("a", types.Int)
+	scope.registerLocalVariable("b", types.Int)
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
