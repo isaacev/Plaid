@@ -10,6 +10,13 @@ type Object interface {
 	isObject()
 }
 
+// ObjectNone is used for builtin operations that require a value to push onto
+// the stack
+type ObjectNone struct{}
+
+func (on *ObjectNone) String() string { return "<none>" }
+func (on *ObjectNone) isObject()      {}
+
 // ClosureTemplate is generated in the codegen stage and encapsulates the scope
 // and bytecode data required to build a closure during execution
 type ClosureTemplate struct {

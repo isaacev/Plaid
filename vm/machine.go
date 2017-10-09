@@ -70,7 +70,7 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 	case InstrDispatch:
 		runInstrDispatch(env, instr)
 	case InstrNone:
-		env.push(nil)
+		env.push(&ObjectNone{})
 	case InstrAdd:
 		runInstrAdd(env, instr)
 	case InstrSub:
