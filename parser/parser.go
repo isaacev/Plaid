@@ -165,6 +165,8 @@ func parseProgram(p *Parser) (Program, error) {
 
 func parseStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
+	case lexer.If:
+		return parseIfStmt(p)
 	case lexer.Let:
 		return parseDeclarationStmt(p)
 	case lexer.Return:
@@ -197,6 +199,30 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 	}
 
 	return StmtBlock{left, stmts, right}, nil
+}
+
+func parseIfStmt(p *Parser) (Stmt, error) {
+	tok, err := p.expectNextToken(lexer.If, "expected IF keyword")
+	if err != nil {
+		return nil, err
+	}
+
+	var cond Expr
+	if cond, err = parseExpr(p, Lowest); err != nil {
+		return nil, err
+	}
+
+	var clause StmtBlock
+	if clause, err = parseStmtBlock(p); err != nil {
+		return nil, err
+	}
+
+	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
+	if err != nil {
+		return nil, err
+	}
+
+	return IfStmt{tok, cond, clause}, nil
 }
 
 func parseDeclarationStmt(p *Parser) (Stmt, error) {

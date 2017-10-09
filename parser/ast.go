@@ -70,6 +70,19 @@ func (sb StmtBlock) String() string {
 
 func (sb StmtBlock) isNode() {}
 
+// IfStmt describes a condition expression and an associated clause
+type IfStmt struct {
+	Tok    lexer.Token
+	Cond   Expr
+	Clause StmtBlock
+}
+
+// Start returns a location that this node can be considered to start at
+func (is IfStmt) Start() lexer.Loc { return is.Tok.Loc }
+func (is IfStmt) String() string   { return fmt.Sprintf("(if %s %s)", is.Cond, is.Clause) }
+func (is IfStmt) isNode()          {}
+func (is IfStmt) isStmt()          {}
+
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
 	Tok  lexer.Token
