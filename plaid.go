@@ -7,6 +7,7 @@ import (
 	"os"
 	"plaid/check"
 	"plaid/codegen"
+	"plaid/libs"
 	"plaid/parser"
 	"plaid/vm"
 )
@@ -41,7 +42,7 @@ func processFile(filename string, showAST bool, showIR bool, showBC bool, showOu
 		fmt.Println(ast.String())
 	}
 
-	scope := check.Check(ast, nil)
+	scope := check.Check(ast, libs.IO)
 	if len(scope.Errors()) > 0 {
 		for i, err := range scope.Errors() {
 			fmt.Printf("%4d %s\n", i, err)
@@ -49,7 +50,7 @@ func processFile(filename string, showAST bool, showIR bool, showBC bool, showOu
 		os.Exit(1)
 	}
 
-	ir := codegen.Transform(ast)
+	ir := codegen.Transform(ast, libs.IO)
 
 	if showIR {
 		fmt.Println(ir.String())

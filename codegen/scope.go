@@ -34,9 +34,9 @@ func (ls *LexicalScope) addGlobalVariable(name string, builtin *vm.Builtin) {
 func (ls *LexicalScope) getGlobalVariable(name string) *vm.Builtin {
 	if ls.hasGlobalVariable(name) {
 		return ls.Global[name]
-	} else {
-		panic(fmt.Sprintf("global variable '%s' is not in scope", name))
 	}
+
+	panic(fmt.Sprintf("global variable '%s' is not in scope", name))
 }
 
 func (ls *LexicalScope) hasLocalVariable(name string) bool {
