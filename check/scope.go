@@ -2,21 +2,16 @@ package check
 
 import (
 	"fmt"
-	"plaid/parser"
 	"plaid/types"
 )
 
 // Scope tracks the symbol table and other data used during the check
 type Scope struct {
-	parent        *Scope
-	errs          []error
-	variables     []string
-	values        map[string]types.Type
-	pendingReturn types.Type
-	queue         []struct {
-		ret  types.Type
-		expr parser.FunctionExpr
-	}
+	parent    *Scope
+	errs      []error
+	variables []string
+	values    map[string]types.Type
+	self      *types.TypeFunction
 }
 
 func (s *Scope) hasParent() bool {
@@ -70,36 +65,6 @@ func (s *Scope) getVariable(name string) types.Type {
 	}
 }
 
-func (s *Scope) hasPendingReturnType() bool {
-	return (s.pendingReturn != nil)
-}
-
-func (s *Scope) getPendingReturnType() types.Type {
-	return s.pendingReturn
-}
-
-func (s *Scope) setPendingReturnType(typ types.Type) {
-	s.pendingReturn = typ
-}
-
-func (s *Scope) hasBodyQueue() bool {
-	return len(s.queue) > 0
-}
-
-func (s *Scope) enqueueBody(ret types.Type, expr parser.FunctionExpr) {
-	body := struct {
-		ret  types.Type
-		expr parser.FunctionExpr
-	}{ret, expr}
-	s.queue = append(s.queue, body)
-}
-
-func (s *Scope) dequeueBody() (types.Type, parser.FunctionExpr) {
-	body := s.queue[0]
-	s.queue = s.queue[1:]
-	return body.ret, body.expr
-}
-
 func (s *Scope) String() string {
 	var out string
 	for i, name := range s.variables {
@@ -112,16 +77,12 @@ func (s *Scope) String() string {
 	return out
 }
 
-func makeScope(parent *Scope, ret types.Type) *Scope {
+func makeScope(parent *Scope, self *types.TypeFunction) *Scope {
 	return &Scope{
 		parent,
 		[]error{},
 		[]string{},
 		make(map[string]types.Type),
-		ret,
-		[]struct {
-			ret  types.Type
-			expr parser.FunctionExpr
-		}{},
+		self,
 	}
 }

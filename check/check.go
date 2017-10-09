@@ -72,11 +72,6 @@ func checkStmt(scope *Scope, stmt parser.Stmt) {
 		checkExprAllowVoid(scope, stmt.Expr)
 		break
 	}
-
-	if scope.hasBodyQueue() {
-		sig, expr := scope.dequeueBody()
-		checkFunctionBody(scope, sig, expr)
-	}
 }
 
 func checkStmtBlock(scope *Scope, block parser.StmtBlock) {
@@ -106,25 +101,25 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 		ret = checkExpr(scope, stmt.Expr)
 	}
 
-	if scope.pendingReturn == nil {
+	if scope.self == nil {
 		scope.addError(fmt.Errorf("return statements must be inside a function"))
 		return
 	}
 
-	if scope.pendingReturn.Equals(ret) || ret.IsError() {
+	if scope.self.Equals(ret) || ret.IsError() {
 		return
 	}
 
-	if scope.pendingReturn.Equals(types.TypeVoid{}) {
+	if scope.self.Ret.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
 		return
 	}
 
 	if ret.Equals(types.TypeVoid{}) {
-		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.pendingReturn))
+		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.self.Ret))
 	}
 
-	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.pendingReturn, ret))
+	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.self.Ret, ret))
 }
 
 func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
@@ -140,6 +135,8 @@ func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 		typ = checkBinaryExpr(scope, expr)
 	case parser.SubscriptExpr:
 		typ = checkSubscriptExpr(scope, expr)
+	case parser.SelfExpr:
+		typ = checkSelfExpr(scope, expr)
 	case parser.IdentExpr:
 		typ = checkIdentExpr(scope, expr)
 	case parser.NumberExpr:
@@ -173,22 +170,18 @@ func checkFunctionExpr(scope *Scope, expr parser.FunctionExpr) types.Type {
 		params = append(params, types.ConvertTypeNote(param.Note))
 	}
 	tuple := types.TypeTuple{Children: params}
+	self := types.TypeFunction{Params: tuple, Ret: ret}
 
-	sig := types.TypeFunction{Params: tuple, Ret: ret}
-	scope.enqueueBody(ret, expr)
-	return sig
-}
-
-func checkFunctionBody(scope *Scope, ret types.Type, expr parser.FunctionExpr) {
-	pushed := makeScope(scope, ret)
+	childScope := makeScope(scope, &self)
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
 		paramType := types.ConvertTypeNote(param.Note)
-		pushed.registerLocalVariable(paramName, paramType)
+		childScope.registerLocalVariable(paramName, paramType)
 	}
 
-	checkStmtBlock(pushed, expr.Block)
+	checkStmtBlock(childScope, expr.Block)
+	return self
 }
 
 func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) types.Type {
@@ -301,6 +294,15 @@ func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr) types.Type {
 
 	scope.addError(fmt.Errorf("unknown infix operator '['"))
 	return types.TypeError{}
+}
+
+func checkSelfExpr(scope *Scope, expr parser.SelfExpr) types.Type {
+	if scope.self == nil {
+		scope.addError(fmt.Errorf("self references must be inside a function"))
+		return types.TypeError{}
+	}
+
+	return *scope.self
 }
 
 func checkIdentExpr(scope *Scope, expr parser.IdentExpr) types.Type {
