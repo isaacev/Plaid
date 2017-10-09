@@ -130,6 +130,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.ParenL, parseGroup)
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Dash, parsePrefix)
+	p.registerPrefix(lexer.Self, parseSelf)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	p.registerPrefix(lexer.Number, parseNumber)
 	p.registerPrefix(lexer.String, parseString)
@@ -657,14 +658,19 @@ func parseGroup(p *Parser) (Expr, error) {
 	return expr, nil
 }
 
-func parseIdent(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.Ident, "expected identifier")
+func parseSelf(p *Parser) (Expr, error) {
+	tok, err := p.expectNextToken(lexer.Self, "expected self")
 	if err != nil {
 		return nil, err
 	}
 
-	if tok.Lexeme == "self" {
-		return SelfExpr{tok}, nil
+	return SelfExpr{tok}, nil
+}
+
+func parseIdent(p *Parser) (Expr, error) {
+	tok, err := p.expectNextToken(lexer.Ident, "expected identifier")
+	if err != nil {
+		return nil, err
 	}
 
 	return IdentExpr{tok, tok.Lexeme}, nil

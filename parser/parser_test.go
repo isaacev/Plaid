@@ -648,6 +648,19 @@ func TestParseGroup(t *testing.T) {
 	expectAnError(t, "(1:2) expected right paren", expr, err)
 }
 
+func TestParseSelf(t *testing.T) {
+	parser := makeParser("self")
+
+	expr, err := parseSelf(parser)
+	expectNoErrors(t, "self", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	parser = makeParser("selfx")
+
+	expr, err = parseSelf(parser)
+	expectAnError(t, "(1:1) expected self", expr, err)
+}
+
 func TestParseIdent(t *testing.T) {
 	parser := makeParser("abc")
 
