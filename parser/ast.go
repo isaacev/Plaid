@@ -360,6 +360,17 @@ func (ue UnaryExpr) String() string   { return fmt.Sprintf("(%s %s)", ue.Oper, u
 func (ue UnaryExpr) isNode()          {}
 func (ue UnaryExpr) isExpr()          {}
 
+// SelfExpr describes a reflexive reference to a function from within that function
+type SelfExpr struct {
+	Tok lexer.Token
+}
+
+// Start returns a location that this node can be considered to start at
+func (se SelfExpr) Start() lexer.Loc { return se.Tok.Loc }
+func (se SelfExpr) String() string   { return "self" }
+func (se SelfExpr) isNode()          {}
+func (se SelfExpr) isExpr()          {}
+
 // IdentExpr describes an identifier
 type IdentExpr struct {
 	Tok  lexer.Token

@@ -663,6 +663,10 @@ func parseIdent(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
+	if tok.Lexeme == "self" {
+		return SelfExpr{tok}, nil
+	}
+
 	return IdentExpr{tok, tok.Lexeme}, nil
 }
 
