@@ -47,6 +47,24 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 		return ip
 	case InstrNOP:
 		// do nothing
+	case InstrJump:
+		return instr.IP
+	case InstrJumpTrue:
+		if obj, ok := env.pop().(*ObjectBool); ok {
+			if obj.Val {
+				return instr.IP
+			}
+		} else {
+			panic(fmt.Sprintf("expected boolean, got %T", obj))
+		}
+	case InstrJumpFalse:
+		if obj, ok := env.pop().(*ObjectBool); ok {
+			if obj.Val == false {
+				return instr.IP
+			}
+		} else {
+			panic(fmt.Sprintf("expected boolean, got %T", obj))
+		}
 	case InstrPush:
 		if obj, ok := instr.Val.(*ClosureTemplate); ok {
 			env.push(buildClosureFromTemplate(env, obj))

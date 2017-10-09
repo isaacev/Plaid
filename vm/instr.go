@@ -22,6 +22,30 @@ type InstrNOP struct{}
 func (nop InstrNOP) String() string { return "NOP" }
 func (nop InstrNOP) isInstr()       {}
 
+// InstrJump is a non-conditional jump
+type InstrJump struct {
+	IP uint32
+}
+
+func (ij InstrJump) String() string { return fmt.Sprintf("Jump\t%d", ij.IP) }
+func (ij InstrJump) isInstr()       {}
+
+// InstrJumpTrue will jump if the top value on the stack is true
+type InstrJumpTrue struct {
+	IP uint32
+}
+
+func (ijc InstrJumpTrue) String() string { return fmt.Sprintf("JumpTrue\t%d", ijc.IP) }
+func (ijc InstrJumpTrue) isInstr()       {}
+
+// InstrJumpFalse will jump if the top value on the stack is false
+type InstrJumpFalse struct {
+	IP uint32
+}
+
+func (ijc InstrJumpFalse) String() string { return fmt.Sprintf("JumpFalse\t%d", ijc.IP) }
+func (ijc InstrJumpFalse) isInstr()       {}
+
 // InstrPush adds its argument to the top of the VM expression stack
 type InstrPush struct {
 	Val Object
