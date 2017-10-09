@@ -43,29 +43,35 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 		fmt.Println(ast.String())
 	}
 
-	scope := check.Check(ast, libs.IO, libs.Conv)
-	if len(scope.Errors()) > 0 {
-		for i, err := range scope.Errors() {
-			fmt.Printf("%4d %s\n", i, err)
+	if showCheck || showIR || showBC || showOut {
+		scope := check.Check(ast, libs.IO, libs.Conv)
+		if len(scope.Errors()) > 0 {
+			for i, err := range scope.Errors() {
+				fmt.Printf("%4d %s\n", i, err)
+			}
+			os.Exit(1)
+		} else if showCheck {
+			fmt.Println(scope)
 		}
-		os.Exit(1)
-	} else if showCheck {
-		fmt.Println(scope)
-	}
 
-	ir := codegen.Transform(ast, libs.IO, libs.Conv)
+		if showIR || showBC || showOut {
+			ir := codegen.Transform(ast, libs.IO, libs.Conv)
 
-	if showIR {
-		fmt.Println(ir.String())
-	}
+			if showIR {
+				fmt.Println(ir.String())
+			}
 
-	mod := codegen.Generate(ir)
+			if showBC || showOut {
+				mod := codegen.Generate(ir)
 
-	if showBC {
-		fmt.Println(mod.Main.String())
-	}
+				if showBC {
+					fmt.Println(mod.Main.String())
+				}
 
-	if showOut {
-		vm.Run(mod.Main)
+				if showOut {
+					vm.Run(mod.Main)
+				}
+			}
+		}
 	}
 }
