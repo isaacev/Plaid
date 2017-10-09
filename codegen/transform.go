@@ -27,8 +27,6 @@ func transformStmt(scope *LexicalScope, stmt parser.Stmt) IRVoidNode {
 	switch stmt := stmt.(type) {
 	case parser.DeclarationStmt:
 		return transformDeclarationStmt(scope, stmt)
-	case parser.PrintStmt:
-		return transformPrintStmt(scope, stmt)
 	case parser.ReturnStmt:
 		return transformReturnStmt(scope, stmt)
 	case parser.ExprStmt:
@@ -43,11 +41,6 @@ func transformDeclarationStmt(scope *LexicalScope, stmt parser.DeclarationStmt) 
 	child := transformExpr(scope, stmt.Expr)
 	record := scope.addLocalVariable(name, child.Type())
 	return IRVoidedNode{IRAssignNode{record, child}}
-}
-
-func transformPrintStmt(scope *LexicalScope, stmt parser.PrintStmt) IRVoidNode {
-	child := transformExpr(scope, stmt.Expr)
-	return IRPrintNode{child}
 }
 
 func transformReturnStmt(scope *LexicalScope, stmt parser.ReturnStmt) IRVoidNode {

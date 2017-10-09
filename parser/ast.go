@@ -83,18 +83,6 @@ func (ds DeclarationStmt) String() string   { return fmt.Sprintf("(let %s %s)", 
 func (ds DeclarationStmt) isNode()          {}
 func (ds DeclarationStmt) isStmt()          {}
 
-// PrintStmt describes an expression that should be output to stdout
-type PrintStmt struct {
-	Tok  lexer.Token
-	Expr Expr
-}
-
-// Start returns a location that this node can be considered to start at
-func (ps PrintStmt) Start() lexer.Loc { return ps.Tok.Loc }
-func (ps PrintStmt) String() string   { return fmt.Sprintf("(print %s)", ps.Expr) }
-func (ps PrintStmt) isNode()          {}
-func (ps PrintStmt) isStmt()          {}
-
 // ReturnStmt describes a return keyword and an optional returned expression.
 type ReturnStmt struct {
 	Tok  lexer.Token
