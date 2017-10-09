@@ -308,6 +308,18 @@ func (ae AssignExpr) String() string   { return fmt.Sprintf("(= %s %s)", ae.Left
 func (ae AssignExpr) isNode()          {}
 func (ae AssignExpr) isExpr()          {}
 
+// SubscriptExpr describes an index-access on a list-like expression
+type SubscriptExpr struct {
+	ListLike Expr
+	Index    Expr
+}
+
+// Start returns a location that this node can be considered to start at
+func (se SubscriptExpr) Start() lexer.Loc { return se.ListLike.Start() }
+func (se SubscriptExpr) String() string   { return fmt.Sprintf("%s[%s]", se.ListLike, se.Index) }
+func (se SubscriptExpr) isNode()          {}
+func (se SubscriptExpr) isExpr()          {}
+
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	Oper  string

@@ -30,6 +30,9 @@ var binops = map[string]map[types.Type]map[types.Type]types.Type{
 	">=": map[types.Type]map[types.Type]types.Type{
 		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
 	},
+	"[": map[types.Type]map[types.Type]types.Type{
+		types.Str: map[types.Type]types.Type{types.Int: types.Str},
+	},
 }
 
 // Check takes an existing abstract syntax tree and performs type checks and
@@ -123,6 +126,8 @@ func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 		typ = checkAssignExpr(scope, expr)
 	case parser.BinaryExpr:
 		typ = checkBinaryExpr(scope, expr)
+	case parser.SubscriptExpr:
+		typ = checkSubscriptExpr(scope, expr)
 	case parser.IdentExpr:
 		typ = checkIdentExpr(scope, expr)
 	case parser.NumberExpr:
@@ -258,6 +263,29 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
 	}
 
 	scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
+	return types.TypeError{}
+}
+
+func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr) types.Type {
+	listType := checkExpr(scope, expr.ListLike)
+	indexType := checkExpr(scope, expr.Index)
+
+	if listType.IsError() || indexType.IsError() {
+		return types.TypeError{}
+	}
+
+	if subscriptLUT, ok := binops["["]; ok {
+		if listLUT, ok := subscriptLUT[listType]; ok {
+			if retType, ok := listLUT[indexType]; ok {
+				return retType
+			}
+		}
+
+		scope.addError(fmt.Errorf("subscript operator does not support %s[%s]", listType, indexType))
+		return types.TypeError{}
+	}
+
+	scope.addError(fmt.Errorf("unknown infix operator '['"))
 	return types.TypeError{}
 }
 

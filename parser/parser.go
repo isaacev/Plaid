@@ -134,6 +134,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.String, parseString)
 	p.registerPrefix(lexer.Boolean, parseBoolean)
 
+	p.registerPostfix(lexer.BracketL, parseSubscript, Dispatch)
 	p.registerPostfix(lexer.ParenL, parseDispatch, Dispatch)
 	p.registerPostfix(lexer.Assign, parseAssign, Assign)
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
@@ -521,6 +522,25 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 	}
 
 	return BinaryExpr{oper, tok, left, right}, nil
+}
+
+func parseSubscript(p *Parser, left Expr) (Expr, error) {
+	_, err := p.expectNextToken(lexer.BracketL, "expect left bracket")
+	if err != nil {
+		return nil, err
+	}
+
+	index, err := parseExpr(p, Lowest)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.expectNextToken(lexer.BracketR, "expect right bracket")
+	if err != nil {
+		return nil, err
+	}
+
+	return SubscriptExpr{left, index}, nil
 }
 
 func parseDispatch(p *Parser, left Expr) (Expr, error) {
