@@ -204,7 +204,7 @@ func TestCheckAssignExpr(t *testing.T) {
 	scope = makeScope(nil, nil)
 	scope.registerLocalVariable("a", types.Str)
 	checkProgram(scope, prog)
-	expectAnError(t, scope.Errors()[0], "left side must have type Int, got Str")
+	expectAnError(t, scope.Errors()[0], "operator '+' does not support Str and Int")
 
 	prog, _ = parser.Parse("a := 123;")
 	scope = makeScope(nil, nil)
@@ -236,44 +236,6 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr)
 	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
-	expectBool(t, typ.IsError(), true)
-}
-
-func TestExpectBinaryTypes(t *testing.T) {
-	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	scope.registerLocalVariable("b", types.Int)
-	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
-	typ := expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
-	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, types.Int)
-
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Str)
-	scope.registerLocalVariable("b", types.Int)
-	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
-	expectAnError(t, scope.errs[0], "left side must have type Int, got Str")
-	expectBool(t, typ.IsError(), true)
-
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	scope.registerLocalVariable("b", types.Str)
-	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
-	expectAnError(t, scope.errs[0], "right side must have type Int, got Str")
-	expectBool(t, typ.IsError(), true)
-
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.TypeError{})
-	scope.registerLocalVariable("b", types.Str)
-	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
-	expectNoErrors(t, scope.Errors())
 	expectBool(t, typ.IsError(), true)
 }
 

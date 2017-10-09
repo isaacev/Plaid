@@ -7,6 +7,31 @@ import (
 	"plaid/vm"
 )
 
+var binops = map[string]map[types.Type]map[types.Type]types.Type{
+	"+": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Int},
+		types.Str: map[types.Type]types.Type{types.Str: types.Str},
+	},
+	"-": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Int},
+	},
+	"*": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Int},
+	},
+	"<": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	},
+	"<=": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	},
+	">": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	},
+	">=": map[types.Type]map[types.Type]types.Type{
+		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	},
+}
+
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
@@ -214,40 +239,26 @@ func checkAssignExpr(scope *Scope, expr parser.AssignExpr) types.Type {
 }
 
 func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
-	switch expr.Oper {
-	case "+":
-		fallthrough
-	case "-":
-		fallthrough
-	case "*":
-		return expectBinaryTypes(scope, expr.Left, types.Int, expr.Right, types.Int, types.Int)
-	default:
-		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
-		return types.TypeError{}
-	}
-}
-
-func expectBinaryTypes(scope *Scope, left parser.Expr, expLeftType types.Type, right parser.Expr, expRightType types.Type, retType types.Type) types.Type {
-	leftType := checkExpr(scope, left)
-	rightType := checkExpr(scope, right)
+	leftType := checkExpr(scope, expr.Left)
+	rightType := checkExpr(scope, expr.Right)
 
 	if leftType.IsError() || rightType.IsError() {
 		return types.TypeError{}
 	}
 
-	typ := retType
+	if operLUT, ok := binops[expr.Oper]; ok {
+		if leftLUT, ok := operLUT[leftType]; ok {
+			if retType, ok := leftLUT[rightType]; ok {
+				return retType
+			}
+		}
 
-	if leftType.Equals(expLeftType) == false {
-		scope.addError(fmt.Errorf("left side must have type %s, got %s", expLeftType, leftType))
-		typ = types.TypeError{}
+		scope.addError(fmt.Errorf("operator '%s' does not support %s and %s", expr.Oper, leftType, rightType))
+		return types.TypeError{}
 	}
 
-	if rightType.Equals(expRightType) == false {
-		scope.addError(fmt.Errorf("right side must have type %s, got %s", expRightType, rightType))
-		typ = types.TypeError{}
-	}
-
-	return typ
+	scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
+	return types.TypeError{}
 }
 
 func checkIdentExpr(scope *Scope, expr parser.IdentExpr) types.Type {
