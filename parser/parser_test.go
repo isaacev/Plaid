@@ -160,6 +160,7 @@ func TestParseStmt(t *testing.T) {
 		expectAnError(t, msg, stmt, err)
 	}
 
+	expectStmt("if a { let a := 456; };", "(if a {\n  (let a 456)})")
 	expectStmt("let a := 123;", "(let a 123)")
 	expectStmt("return 123;", "(return 123)")
 	expectStmtError("123 + 456", "(1:1) expected start of statement")
@@ -185,6 +186,30 @@ func TestParseStmtBlock(t *testing.T) {
 	expectStmtBlockError("let a := 123; }", "(1:1) expected left brace")
 	expectStmtBlockError("{ let a := 123 }", "(1:16) expected semicolon")
 	expectStmtBlockError("{ let a := 123;", "(1:15) expected right brace")
+}
+
+func TestParseIfStmt(t *testing.T) {
+	expectIf := func(source string, ast string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		stmt, err := parseIfStmt(p)
+		expectNoErrors(t, ast, stmt, err)
+		expectStart(t, stmt, 1, 1)
+	}
+
+	expectIfError := func(source string, msg string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		stmt, err := parseIfStmt(p)
+		expectAnError(t, msg, stmt, err)
+	}
+
+	expectIf("if true {};", "(if true {})")
+	expectIf("if true { let a := 123; };", "(if true {\n  (let a 123)})")
+	expectIfError("iff true { let a := 123; };", "(1:1) expected IF keyword")
+	expectIfError("if let { let a := 123; };", "(1:4) unexpected symbol")
+	expectIfError("if true { let a := 123 };", "(1:24) expected semicolon")
+	expectIfError("if true { let a := 123; }", "(1:25) expected semicolon")
 }
 
 func TestParseDeclarationStmt(t *testing.T) {

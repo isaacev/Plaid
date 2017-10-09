@@ -30,6 +30,14 @@ func TestStmtBlock(t *testing.T) {
 	expectString(t, block, "{\n  (let a 123)\n  (let b 456)}")
 }
 
+func TestIfStmt(t *testing.T) {
+	(IfStmt{}).isNode()
+	(IfStmt{}).isStmt()
+
+	block := StmtBlock{nop, []Stmt{}, nop}
+	expectString(t, IfStmt{nop, BooleanExpr{nop, true}, block}, "(if true {})")
+}
+
 func TestDeclarationStmt(t *testing.T) {
 	(DeclarationStmt{}).isNode()
 	(DeclarationStmt{}).isStmt()
