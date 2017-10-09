@@ -99,6 +99,10 @@ func TestCheckExpr(t *testing.T) {
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
 
+	prog, _ = parser.Parse("let a := \"abc\"[0];")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errors())
+
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
@@ -263,6 +267,39 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
+	expectBool(t, typ.IsError(), true)
+}
+
+func TestCheckSubscriptExpr(t *testing.T) {
+	scope := makeScope(nil, nil)
+	str := parser.StringExpr{Tok: nop, Val: "foo"}
+	index := parser.NumberExpr{Tok: nop, Val: 0}
+	expr := parser.SubscriptExpr{ListLike: str, Index: index}
+	typ := checkSubscriptExpr(scope, expr, defaultBinopsLUT)
+	expectNoErrors(t, scope.errs)
+	expectEquivalentType(t, typ, types.Str)
+
+	scope = makeScope(nil, nil)
+	str = parser.StringExpr{Tok: nop, Val: "foo"}
+	badRef := parser.IdentExpr{Tok: nop, Name: "x"}
+	expr = parser.SubscriptExpr{ListLike: str, Index: badRef}
+	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
+	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil, nil)
+	str = parser.StringExpr{Tok: nop, Val: "foo"}
+	badIndex := parser.StringExpr{Tok: nop, Val: "0"}
+	expr = parser.SubscriptExpr{ListLike: str, Index: badIndex}
+	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
+	expectAnError(t, scope.errs[0], "subscript operator does not support Str[Str]")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil, nil)
+	str = parser.StringExpr{Tok: nop, Val: "foo"}
+	expr = parser.SubscriptExpr{ListLike: str, Index: index}
+	typ = checkSubscriptExpr(scope, expr, make(binopsLUT))
+	expectAnError(t, scope.errs[0], "unknown infix operator '['")
 	expectBool(t, typ.IsError(), true)
 }
 
