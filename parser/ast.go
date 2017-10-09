@@ -371,6 +371,24 @@ func (ne NumberExpr) String() string   { return strconv.Itoa(ne.Val) }
 func (ne NumberExpr) isNode()          {}
 func (ne NumberExpr) isExpr()          {}
 
+// BooleanExpr describes a boolean constant
+type BooleanExpr struct {
+	Tok lexer.Token
+	Val bool
+}
+
+// Start returns a location that this node can be considered to start at
+func (be BooleanExpr) Start() lexer.Loc { return be.Tok.Loc }
+func (be BooleanExpr) String() string {
+	if be.Val {
+		return "true"
+	}
+
+	return "false"
+}
+func (be BooleanExpr) isNode() {}
+func (be BooleanExpr) isExpr() {}
+
 func indentBlock(indent string, source string) string {
 	lines := strings.Split(source, "\n")
 	for i, line := range lines {

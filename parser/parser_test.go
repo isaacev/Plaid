@@ -697,6 +697,26 @@ func TestParseString(t *testing.T) {
 	expectAnError(t, "(1:4) unclosed string", expr, err)
 }
 
+func TestParseBoolean(t *testing.T) {
+	p := makeParser("true")
+	expr, err := parseBoolean(p)
+	expectNoErrors(t, "true", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("false")
+	expr, err = parseBoolean(p)
+	expectNoErrors(t, "false", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("flase")
+	expr, err = parseBoolean(p)
+	expectAnError(t, "(1:1) expected boolean literal", expr, err)
+
+	loc := lexer.Loc{Line: 1, Col: 1}
+	expr, err = evalBoolean(lexer.Token{Type: lexer.Boolean, Lexeme: "ture", Loc: loc})
+	expectAnError(t, "(1:1) malformed boolean literal", expr, err)
+}
+
 type typeNoteParser func(p *Parser) (TypeNote, error)
 
 func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) {

@@ -173,6 +173,14 @@ func TestNumberExpr(t *testing.T) {
 	expectString(t, NumberExpr{nop, 123}, "123")
 }
 
+func TestBooleanExpr(t *testing.T) {
+	(BooleanExpr{}).isNode()
+	(BooleanExpr{}).isExpr()
+
+	expectString(t, BooleanExpr{nop, true}, "true")
+	expectString(t, BooleanExpr{nop, false}, "false")
+}
+
 func TestIndentBlock(t *testing.T) {
 	source := "foo\nbar\n  baz"
 	exp := "...foo\n...bar\n...  baz"

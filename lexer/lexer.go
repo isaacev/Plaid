@@ -30,6 +30,7 @@ const (
 	Ident         = "Ident"
 	Number        = "Number"
 	String        = "String"
+	Boolean       = "Boolean"
 )
 
 // Token is a basic syntactic unit
@@ -282,6 +283,10 @@ func eatWordToken(scanner *Scanner) Token {
 		return Token{Let, "let", loc}
 	case "return":
 		return Token{Return, "return", loc}
+	case "true":
+		return Token{Boolean, "true", loc}
+	case "false":
+		return Token{Boolean, "false", loc}
 	default:
 		return Token{Ident, lexeme, loc}
 	}

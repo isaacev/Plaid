@@ -92,6 +92,8 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "if", Token{If, "if", Loc{1, 1}})
 	expectLexer(t, eatToken, "let", Token{Let, "let", Loc{1, 1}})
 	expectLexer(t, eatToken, "return", Token{Return, "return", Loc{1, 1}})
+	expectLexer(t, eatToken, "true", Token{Boolean, "true", Loc{1, 1}})
+	expectLexer(t, eatToken, "false", Token{Boolean, "false", Loc{1, 1}})
 	expectLexer(t, eatToken, "123", Token{Number, "123", Loc{1, 1}})
 	expectLexer(t, eatToken, `"foo"`, Token{String, `"foo"`, Loc{1, 1}})
 

@@ -132,6 +132,7 @@ func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.Ident, parseIdent)
 	p.registerPrefix(lexer.Number, parseNumber)
 	p.registerPrefix(lexer.String, parseString)
+	p.registerPrefix(lexer.Boolean, parseBoolean)
 
 	p.registerPostfix(lexer.ParenL, parseDispatch, Dispatch)
 	p.registerPostfix(lexer.Assign, parseAssign, Assign)
@@ -647,4 +648,23 @@ func evalString(tok lexer.Token) (StringExpr, error) {
 	remBoth := strings.TrimPrefix(remSuffix, dblQuote)
 
 	return StringExpr{tok, remBoth}, nil
+}
+
+func parseBoolean(p *Parser) (Expr, error) {
+	tok, err := p.expectNextToken(lexer.Boolean, "expected boolean literal")
+	if err != nil {
+		return nil, err
+	}
+
+	return evalBoolean(tok)
+}
+
+func evalBoolean(tok lexer.Token) (BooleanExpr, error) {
+	if tok.Lexeme == "true" {
+		return BooleanExpr{tok, true}, nil
+	} else if tok.Lexeme == "false" {
+		return BooleanExpr{tok, false}, nil
+	}
+
+	return BooleanExpr{}, makeSyntaxError(tok, "malformed boolean literal", false)
 }
