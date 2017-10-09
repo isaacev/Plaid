@@ -7,31 +7,35 @@ import (
 	"plaid/vm"
 )
 
-var binops = map[string]map[types.Type]map[types.Type]types.Type{
-	"+": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Int},
-		types.Str: map[types.Type]types.Type{types.Str: types.Str},
+type binopsLUT map[string]map[types.Type]map[types.Type]types.Type
+type doubleLUT map[types.Type]map[types.Type]types.Type
+type singleLUT map[types.Type]types.Type
+
+var binops = binopsLUT{
+	"+": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Int},
+		types.Str: singleLUT{types.Str: types.Str},
 	},
-	"-": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Int},
+	"-": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Int},
 	},
-	"*": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Int},
+	"*": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Int},
 	},
-	"<": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	"<": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Bool},
 	},
-	"<=": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	"<=": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Bool},
 	},
-	">": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	">": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Bool},
 	},
-	">=": map[types.Type]map[types.Type]types.Type{
-		types.Int: map[types.Type]types.Type{types.Int: types.Bool},
+	">=": doubleLUT{
+		types.Int: singleLUT{types.Int: types.Bool},
 	},
-	"[": map[types.Type]map[types.Type]types.Type{
-		types.Str: map[types.Type]types.Type{types.Int: types.Str},
+	"[": doubleLUT{
+		types.Str: singleLUT{types.Int: types.Str},
 	},
 }
 
