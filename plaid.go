@@ -15,14 +15,15 @@ func main() {
 	showAST := flag.Bool("ast", false, "output abstract syntax tree")
 	showIR := flag.Bool("ir", false, "output intermediate representation")
 	showBC := flag.Bool("bytecode", false, "output bytecode")
+	showOut := flag.Bool("out", false, "run program and print output")
 	flag.Parse()
 
 	for _, filename := range flag.Args() {
-		processFile(filename, *showAST, *showIR, *showBC)
+		processFile(filename, *showAST, *showIR, *showBC, *showOut)
 	}
 }
 
-func processFile(filename string, showAST bool, showIR bool, showBC bool) {
+func processFile(filename string, showAST bool, showIR bool, showBC bool, showOut bool) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -40,7 +41,7 @@ func processFile(filename string, showAST bool, showIR bool, showBC bool) {
 		fmt.Println(ast.String())
 	}
 
-	scope := check.Check(ast)
+	scope := check.Check(ast, nil)
 	if len(scope.Errors()) > 0 {
 		for i, err := range scope.Errors() {
 			fmt.Printf("%4d %s\n", i, err)
@@ -60,5 +61,7 @@ func processFile(filename string, showAST bool, showIR bool, showBC bool) {
 		fmt.Println(mod.Main.String())
 	}
 
-	vm.Run(mod.Main)
+	if showOut {
+		vm.Run(mod.Main)
+	}
 }

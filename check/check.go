@@ -15,8 +15,10 @@ var (
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(prog parser.Program) *Scope {
-	global := makeScope(nil, nil)
+func Check(prog parser.Program, global *Scope) *Scope {
+	if global == nil {
+		global = makeScope(nil, nil)
+	}
 	checkProgram(global, prog)
 	return global
 }

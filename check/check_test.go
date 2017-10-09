@@ -10,7 +10,7 @@ import (
 var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
-	scope := Check(parser.Program{})
+	scope := Check(parser.Program{}, nil)
 	expectNoErrors(t, scope.Errors())
 }
 
@@ -30,7 +30,7 @@ func TestCheckStmt(t *testing.T) {
 
 func TestCheckPrintStmt(t *testing.T) {
 	prog, _ := parser.Parse("print 123;")
-	scope := Check(prog)
+	scope := Check(prog, nil)
 	expectNoErrors(t, scope.errs)
 
 	stmt := parser.PrintStmt{Tok: nop, Expr: nil}
@@ -41,65 +41,65 @@ func TestCheckPrintStmt(t *testing.T) {
 
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
-	scope := Check(prog)
+	scope := Check(prog, nil)
 	expectAnError(t, scope.errs[0], "expected to return 'Int', got 'Str'")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return x; };")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return; };")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "expected a return type of 'Int', got nothing")
 
 	prog, _ = parser.Parse("let a := fn ():Void { return 123; };")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "expected to return nothing, got 'Int'")
 
 	prog, _ = parser.Parse("return;")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
-	scope := Check(prog)
+	scope := Check(prog, nil)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, scope.values["a"], BuiltinInt)
 
 	prog, _ = parser.Parse("let a := 1;")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, scope.values["a"], BuiltinInt)
 
 	prog, _ = parser.Parse("let a := \"abc\";")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, scope.values["a"], BuiltinStr)
 
 	prog, _ = parser.Parse("let a := fn () {};")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectNoErrors(t, scope.Errors())
 
 	prog, _ = parser.Parse("let a := add(2, 2);")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
 	expectBool(t, scope.values["a"].IsError(), true)
 
 	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "cannot use void types in an expression")
 	expectBool(t, scope.values["a"].IsError(), true)
 
 	prog, _ = parser.Parse("let a := -5;")
-	scope = Check(prog)
+	scope = Check(prog, nil)
 	expectAnError(t, scope.errs[0], "unknown expression type")
 	expectBool(t, scope.values["a"].IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
-	scope := Check(prog)
+	scope := Check(prog, nil)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, scope.values["f"], types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
