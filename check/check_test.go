@@ -313,6 +313,16 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 }
 
+func TestCheckSelfExpr(t *testing.T) {
+	prog, _ := parser.Parse("let f := fn(): Void { self(); };")
+	scope := Check(prog)
+	expectNoErrors(t, scope.Errors())
+
+	prog, _ = parser.Parse("self();")
+	scope = Check(prog)
+	expectAnError(t, scope.errs[0], "self references must be inside a function")
+}
+
 func TestCheckIdentExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
 	scope.registerLocalVariable("x", types.Int)
