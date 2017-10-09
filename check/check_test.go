@@ -39,6 +39,16 @@ func TestCheckStmt(t *testing.T) {
 	expectNoErrors(t, scope.Errors())
 }
 
+func TestCheckIfStmt(t *testing.T) {
+	prog, _ := parser.Parse("if true {};")
+	scope := Check(prog)
+	expectNoErrors(t, scope.errs)
+
+	prog, _ = parser.Parse("if 123 {};")
+	scope = Check(prog)
+	expectAnError(t, scope.errs[0], "condition must resolve to a boolean")
+}
+
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
 	scope := Check(prog)
