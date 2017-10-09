@@ -562,6 +562,11 @@ func parseSubscript(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
+	if p.lexer.Peek().Type == lexer.BracketR {
+		err = makeSyntaxError(p.lexer.Peek(), "expected index expression", false)
+		return nil, err
+	}
+
 	index, err := parseExpr(p, Lowest)
 	if err != nil {
 		return nil, err
