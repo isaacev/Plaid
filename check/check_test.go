@@ -4,6 +4,7 @@ import (
 	"plaid/lexer"
 	"plaid/parser"
 	"plaid/types"
+	"plaid/vm"
 	"testing"
 )
 
@@ -11,6 +12,16 @@ var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
 	scope := Check(parser.Program{})
+	expectNoErrors(t, scope.Errors())
+
+	var lib1 vm.Library = map[string]*vm.Builtin{
+		"foo": &vm.Builtin{
+			Type: types.Bool,
+			Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
+		},
+	}
+	scope = Check(parser.Program{}, lib1)
+	expectBool(t, scope.getVariable("foo").Equals(types.Bool), true)
 	expectNoErrors(t, scope.Errors())
 }
 
