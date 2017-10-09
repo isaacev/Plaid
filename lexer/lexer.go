@@ -23,6 +23,10 @@ const (
 	Colon         = ":"
 	Assign        = ":="
 	Arrow         = "=>"
+	LT            = "<"
+	GT            = ">"
+	LTEquals      = "<="
+	GTEquals      = ">="
 	Fn            = "fn"
 	If            = "if"
 	Let           = "let"
@@ -96,6 +100,10 @@ func isOperator(r rune) bool {
 	case ':':
 		return true
 	case '=':
+		return true
+	case '<':
+		return true
+	case '>':
 		return true
 	default:
 		return false
@@ -208,6 +216,24 @@ func eatOperatorToken(scanner *Scanner) Token {
 		}
 
 		return Token{Error, "expected operator", equals.loc}
+	case '<':
+		lt := scanner.Next()
+
+		if scanner.Peek().char == '=' {
+			scanner.Next()
+			return Token{LTEquals, "<=", lt.loc}
+		}
+
+		return Token{LT, "<", lt.loc}
+	case '>':
+		gt := scanner.Next()
+
+		if scanner.Peek().char == '=' {
+			scanner.Next()
+			return Token{GTEquals, ">=", gt.loc}
+		}
+
+		return Token{GT, ">", gt.loc}
 	default:
 		return Token{Error, "expected operator", scanner.Next().loc}
 	}

@@ -32,6 +32,7 @@ type Precedence int
 const (
 	Lowest Precedence = iota * 10
 	Assign
+	Comparison
 	Sum
 	Product
 	Prefix
@@ -137,6 +138,10 @@ func loadGrammar(p *Parser) {
 	p.registerPostfix(lexer.BracketL, parseSubscript, Dispatch)
 	p.registerPostfix(lexer.ParenL, parseDispatch, Dispatch)
 	p.registerPostfix(lexer.Assign, parseAssign, Assign)
+	p.registerPostfix(lexer.LT, parseInfix, Comparison)
+	p.registerPostfix(lexer.LTEquals, parseInfix, Comparison)
+	p.registerPostfix(lexer.GT, parseInfix, Comparison)
+	p.registerPostfix(lexer.GTEquals, parseInfix, Comparison)
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPostfix(lexer.Dash, parseInfix, Sum)
 	p.registerPostfix(lexer.Star, parseInfix, Product)
