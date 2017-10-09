@@ -79,6 +79,8 @@ func transformExpr(scope *LexicalScope, expr parser.Expr) IRTypedNode {
 		return transformNumberExpr(scope, expr)
 	case parser.StringExpr:
 		return transformStringExpr(scope, expr)
+	case parser.BooleanExpr:
+		return transformBooleanExpr(scope, expr)
 	default:
 		panic(fmt.Sprintf("cannot transform %T", expr))
 	}
@@ -147,4 +149,8 @@ func transformNumberExpr(scope *LexicalScope, expr parser.NumberExpr) IRTypedNod
 
 func transformStringExpr(scope *LexicalScope, expr parser.StringExpr) IRTypedNode {
 	return IRStringLiteralNode{expr.Val}
+}
+
+func transformBooleanExpr(scope *LexicalScope, expr parser.BooleanExpr) IRTypedNode {
+	return IRBooleanLitearlNode{expr.Val}
 }

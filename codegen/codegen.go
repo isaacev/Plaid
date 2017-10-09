@@ -69,6 +69,8 @@ func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {
 		genIntegerLiteralNode(bc, node)
 	case IRStringLiteralNode:
 		getStringLiteralNode(bc, node)
+	case IRBooleanLitearlNode:
+		genBooleanLiteralNode(bc, node)
 	default:
 		panic(fmt.Sprintf("cannot compile %T", node))
 	}
@@ -147,6 +149,11 @@ func genIntegerLiteralNode(bc *vm.Bytecode, node IRIntegerLiteralNode) {
 
 func getStringLiteralNode(bc *vm.Bytecode, node IRStringLiteralNode) {
 	obj := &vm.ObjectStr{Val: node.Val}
+	bc.Write(vm.InstrPush{Val: obj})
+}
+
+func genBooleanLiteralNode(bc *vm.Bytecode, node IRBooleanLitearlNode) {
+	obj := &vm.ObjectBool{Val: node.Val}
 	bc.Write(vm.InstrPush{Val: obj})
 }
 

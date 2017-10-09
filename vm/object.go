@@ -53,6 +53,14 @@ type ObjectStr struct {
 func (os *ObjectStr) String() string { return os.Val }
 func (os *ObjectStr) isObject()      {}
 
+// ObjectBool represents any boolean object
+type ObjectBool struct {
+	Val bool
+}
+
+func (ob *ObjectBool) String() string { return fmt.Sprintf("%t", ob.Val) }
+func (ob *ObjectBool) isObject()      {}
+
 // ObjectBuiltin wraps a builtin function as an object that can be manipulated
 // the same as a native object
 type ObjectBuiltin struct {

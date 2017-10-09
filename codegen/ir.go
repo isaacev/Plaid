@@ -204,6 +204,22 @@ func (sln IRStringLiteralNode) Type() types.Type { return types.Str }
 func (sln IRStringLiteralNode) String() string   { return sln.Val }
 func (sln IRStringLiteralNode) isTypedNode()     {}
 
+// IRBooleanLitearlNode represents a boolean value
+type IRBooleanLitearlNode struct {
+	Val bool
+}
+
+// Type returns the value type that this node resolves to
+func (bln IRBooleanLitearlNode) Type() types.Type { return types.Bool }
+func (bln IRBooleanLitearlNode) String() string {
+	if bln.Val {
+		return "true"
+	}
+
+	return "false"
+}
+func (bln IRBooleanLitearlNode) isTypedNode() {}
+
 func indentBlock(indent string, source string) string {
 	lines := strings.Split(source, "\n")
 	for i, line := range lines {
