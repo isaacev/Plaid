@@ -532,6 +532,39 @@ func TestParseInfix(t *testing.T) {
 	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
+func TestParseSubscript(t *testing.T) {
+	p := makeParser("abc[0]")
+	loadGrammar(p)
+	ident, _ := parseIdent(p)
+	expr, err := parseSubscript(p, ident)
+	expectNoErrors(t, "abc[0]", expr, err)
+	expectStart(t, expr, 1, 1)
+
+	p = makeParser("abc]")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseSubscript(p, ident)
+	expectAnError(t, "(1:4) expect left bracket", expr, err)
+
+	p = makeParser("abc[]")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseSubscript(p, ident)
+	expectAnError(t, "(1:5) expected index expression", expr, err)
+
+	p = makeParser("abc[let]")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseSubscript(p, ident)
+	expectAnError(t, "(1:5) unexpected symbol", expr, err)
+
+	p = makeParser("abc[0")
+	loadGrammar(p)
+	ident, _ = parseIdent(p)
+	expr, err = parseSubscript(p, ident)
+	expectAnError(t, "(1:5) expect right bracket", expr, err)
+}
+
 func TestParseDispatchExpr(t *testing.T) {
 	p := makeParser("callee()")
 	loadGrammar(p)
