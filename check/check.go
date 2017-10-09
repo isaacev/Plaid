@@ -59,6 +59,9 @@ func checkProgram(scope *Scope, prog parser.Program) {
 
 func checkStmt(scope *Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+	case parser.IfStmt:
+		checkIfStmt(scope, stmt)
+		break
 	case parser.DeclarationStmt:
 		checkDeclarationStmt(scope, stmt)
 		break
@@ -80,6 +83,15 @@ func checkStmtBlock(scope *Scope, block parser.StmtBlock) {
 	for _, stmt := range block.Stmts {
 		checkStmt(scope, stmt)
 	}
+}
+
+func checkIfStmt(scope *Scope, stmt parser.IfStmt) {
+	typ := checkExpr(scope, stmt.Cond)
+	if typ.Equals(types.Bool) == false {
+		scope.addError(fmt.Errorf("condition must resolve to a boolean"))
+	}
+
+	checkStmtBlock(scope, stmt.Clause)
 }
 
 func checkDeclarationStmt(scope *Scope, stmt parser.DeclarationStmt) {
