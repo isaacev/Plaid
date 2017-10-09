@@ -49,6 +49,26 @@ type IRTypedNode interface {
 	isTypedNode()
 }
 
+// IRCondNode represents a test condition that--if evaluated to true--causes
+// the execution of the associated clause
+type IRCondNode struct {
+	Cond   IRTypedNode
+	Clause []IRVoidNode
+}
+
+func (cn IRCondNode) String() string {
+	out := "(if ("
+	out += cn.Cond.String()
+	out += ") {"
+	for _, node := range cn.Clause {
+		out += "\n" + indentBlock("  ", node.String())
+	}
+	out += "})"
+	return out
+}
+
+func (cn IRCondNode) isVoidNode() {}
+
 // IRReturnNode represents a function termination statement that optionally
 // pushes a typed value onto the stack
 type IRReturnNode struct {

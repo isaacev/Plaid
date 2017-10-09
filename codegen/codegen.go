@@ -33,6 +33,8 @@ func genVoidNodes(bc *vm.Bytecode, nodes []IRVoidNode) {
 
 func genVoidNode(bc *vm.Bytecode, node IRVoidNode) {
 	switch node := node.(type) {
+	case IRCondNode:
+		genCondNode(bc, node)
 	case IRReturnNode:
 		if node.Child != nil {
 			genTypedNode(bc, node.Child)
@@ -46,6 +48,14 @@ func genVoidNode(bc *vm.Bytecode, node IRVoidNode) {
 	default:
 		panic(fmt.Sprintf("cannot compile %T", node))
 	}
+}
+
+func genCondNode(bc *vm.Bytecode, node IRCondNode) {
+	genTypedNode(bc, node.Cond)
+	jumpIP := bc.Write(vm.InstrNOP{}) // Pending jump to end of clause
+	genVoidNodes(bc, node.Clause)
+	doneIP := bc.NextIP()
+	bc.Overwrite(jumpIP, vm.InstrJumpFalse{IP: doneIP})
 }
 
 func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {

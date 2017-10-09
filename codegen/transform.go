@@ -33,6 +33,8 @@ func transformStmts(scope *LexicalScope, stmts []parser.Stmt) []IRVoidNode {
 
 func transformStmt(scope *LexicalScope, stmt parser.Stmt) IRVoidNode {
 	switch stmt := stmt.(type) {
+	case parser.IfStmt:
+		return transformIfStmt(scope, stmt)
 	case parser.DeclarationStmt:
 		return transformDeclarationStmt(scope, stmt)
 	case parser.ReturnStmt:
@@ -42,6 +44,12 @@ func transformStmt(scope *LexicalScope, stmt parser.Stmt) IRVoidNode {
 	default:
 		panic(fmt.Sprintf("cannot transform %T", stmt))
 	}
+}
+
+func transformIfStmt(scope *LexicalScope, stmt parser.IfStmt) IRVoidNode {
+	cond := transformExpr(scope, stmt.Cond)
+	clause := transformStmts(scope, stmt.Clause.Stmts)
+	return IRCondNode{cond, clause}
 }
 
 func transformDeclarationStmt(scope *LexicalScope, stmt parser.DeclarationStmt) IRVoidNode {
