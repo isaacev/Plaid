@@ -33,9 +33,6 @@ func genVoidNodes(bc *vm.Bytecode, nodes []IRVoidNode) {
 
 func genVoidNode(bc *vm.Bytecode, node IRVoidNode) {
 	switch node := node.(type) {
-	case IRPrintNode:
-		genTypedNode(bc, node.Child)
-		bc.Write(vm.InstrPrint{})
 	case IRReturnNode:
 		if node.Child != nil {
 			genTypedNode(bc, node.Child)

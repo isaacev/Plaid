@@ -49,14 +49,6 @@ type IRTypedNode interface {
 	isTypedNode()
 }
 
-// IRPrintNode represents an expression that should be printed to stdout
-type IRPrintNode struct {
-	Child IRTypedNode
-}
-
-func (pn IRPrintNode) String() string { return fmt.Sprintf("(print %s)", pn.Child) }
-func (pn IRPrintNode) isVoidNode()    {}
-
 // IRReturnNode represents a function termination statement that optionally
 // pushes a typed value onto the stack
 type IRReturnNode struct {
