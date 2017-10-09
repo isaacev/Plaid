@@ -167,6 +167,23 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
+	scope.registerLocalVariable("foo", types.TypeFunction{
+		Params: types.TypeTuple{Children: []types.Type{
+			types.TypeIdent{Name: "Int"},
+		}},
+		Ret: types.TypeIdent{Name: "Int"},
+	})
+	expr = parser.DispatchExpr{
+		Callee: parser.IdentExpr{Tok: nop, Name: "foo"},
+		Args: []parser.Expr{
+			parser.SelfExpr{Tok: nop},
+		},
+	}
+	typ = checkDispatchExpr(scope, expr)
+	expectAnError(t, scope.errs[0], "self references must be inside a function")
+	expectBool(t, typ.IsError(), true)
+
+	scope = makeScope(nil, nil)
 	scope.registerLocalVariable("add", types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},

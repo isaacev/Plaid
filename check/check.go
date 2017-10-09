@@ -220,7 +220,9 @@ func checkDispatchExpr(scope *Scope, expr parser.DispatchExpr) types.Type {
 			argType := argTypes[i]
 			paramType := calleeFunc.Params.Children[i]
 
-			if argType.Equals(paramType) == false {
+			if argType.IsError() {
+				retType = types.TypeError{}
+			} else if argType.Equals(paramType) == false {
 				scope.addError(fmt.Errorf("expected '%s', got '%s'", paramType, argType))
 				retType = types.TypeError{}
 			}
