@@ -11,7 +11,7 @@ type binopsLUT map[string]map[types.Type]map[types.Type]types.Type
 type doubleLUT map[types.Type]map[types.Type]types.Type
 type singleLUT map[types.Type]types.Type
 
-var binops = binopsLUT{
+var defaultBinopsLUT = binopsLUT{
 	"+": doubleLUT{
 		types.Int: singleLUT{types.Int: types.Int},
 		types.Str: singleLUT{types.Str: types.Str},
@@ -136,9 +136,9 @@ func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 	case parser.AssignExpr:
 		typ = checkAssignExpr(scope, expr)
 	case parser.BinaryExpr:
-		typ = checkBinaryExpr(scope, expr)
+		typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	case parser.SubscriptExpr:
-		typ = checkSubscriptExpr(scope, expr)
+		typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
 	case parser.SelfExpr:
 		typ = checkSelfExpr(scope, expr)
 	case parser.IdentExpr:
@@ -254,7 +254,7 @@ func checkAssignExpr(scope *Scope, expr parser.AssignExpr) types.Type {
 	return leftType
 }
 
-func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
+func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr, lut binopsLUT) types.Type {
 	leftType := checkExpr(scope, expr.Left)
 	rightType := checkExpr(scope, expr.Right)
 
@@ -262,7 +262,7 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
 		return types.TypeError{}
 	}
 
-	if operLUT, ok := binops[expr.Oper]; ok {
+	if operLUT, ok := lut[expr.Oper]; ok {
 		if leftLUT, ok := operLUT[leftType]; ok {
 			if retType, ok := leftLUT[rightType]; ok {
 				return retType
@@ -277,7 +277,7 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
 	return types.TypeError{}
 }
 
-func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr) types.Type {
+func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr, lut binopsLUT) types.Type {
 	listType := checkExpr(scope, expr.ListLike)
 	indexType := checkExpr(scope, expr.Index)
 
@@ -285,7 +285,7 @@ func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr) types.Type {
 		return types.TypeError{}
 	}
 
-	if subscriptLUT, ok := binops["["]; ok {
+	if subscriptLUT, ok := lut["["]; ok {
 		if listLUT, ok := subscriptLUT[listType]; ok {
 			if retType, ok := listLUT[indexType]; ok {
 				return retType

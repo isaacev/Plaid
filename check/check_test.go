@@ -246,7 +246,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
-	typ := checkBinaryExpr(scope, expr)
+	typ := checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, types.Int)
 
@@ -256,12 +256,12 @@ func TestCheckBinaryExpr(t *testing.T) {
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	expr = parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(scope, expr)
+	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	expectNoErrors(t, scope.Errors())
 	expectEquivalentType(t, typ, types.Int)
 
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(scope, expr)
+	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
 	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
 	expectBool(t, typ.IsError(), true)
 }
