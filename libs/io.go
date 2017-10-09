@@ -11,7 +11,7 @@ var IO = map[string]*vm.Builtin{
 	"print": &vm.Builtin{
 		Type: types.TypeFunction{
 			Params: types.TypeTuple{Children: []types.Type{
-				types.TypeIdent{Name: "Str"},
+				types.Str,
 			}},
 			Ret: types.TypeVoid{},
 		},

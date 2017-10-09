@@ -7,12 +7,6 @@ import (
 	"plaid/vm"
 )
 
-// A collection of types native to the execution environment
-var (
-	BuiltinInt types.Type = types.TypeIdent{Name: "Int"}
-	BuiltinStr            = types.TypeIdent{Name: "Str"}
-)
-
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
@@ -224,7 +218,7 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr) types.Type {
 	case "-":
 		fallthrough
 	case "*":
-		return expectBinaryTypes(scope, expr.Left, BuiltinInt, expr.Right, BuiltinInt, BuiltinInt)
+		return expectBinaryTypes(scope, expr.Left, types.Int, expr.Right, types.Int, types.Int)
 	default:
 		scope.addError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
 		return types.TypeError{}
@@ -264,9 +258,9 @@ func checkIdentExpr(scope *Scope, expr parser.IdentExpr) types.Type {
 }
 
 func checkNumberExpr(scope *Scope, expr parser.NumberExpr) types.Type {
-	return BuiltinInt
+	return types.Int
 }
 
 func checkStringExpr(scope *Scope, expr parser.StringExpr) types.Type {
-	return BuiltinStr
+	return types.Str
 }

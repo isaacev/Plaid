@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"fmt"
-	"plaid/check"
 	"plaid/types"
 	"plaid/vm"
 	"strings"
@@ -161,7 +160,7 @@ type IRBinaryNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (bn IRBinaryNode) Type() types.Type { return check.BuiltinInt }
+func (bn IRBinaryNode) Type() types.Type { return types.Int }
 func (bn IRBinaryNode) String() string   { return fmt.Sprintf("(%s %s %s)", bn.Oper, bn.Left, bn.Right) }
 func (bn IRBinaryNode) isTypedNode()     {}
 
@@ -171,7 +170,7 @@ type IRReferenceNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (rn IRReferenceNode) Type() types.Type { return check.BuiltinInt }
+func (rn IRReferenceNode) Type() types.Type { return types.Int }
 func (rn IRReferenceNode) String() string   { return rn.Record.String() }
 func (rn IRReferenceNode) isTypedNode()     {}
 
@@ -191,7 +190,7 @@ type IRIntegerLiteralNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (iln IRIntegerLiteralNode) Type() types.Type { return check.BuiltinInt }
+func (iln IRIntegerLiteralNode) Type() types.Type { return types.Int }
 func (iln IRIntegerLiteralNode) String() string   { return fmt.Sprintf("%d", iln.Val) }
 func (iln IRIntegerLiteralNode) isTypedNode()     {}
 
@@ -201,7 +200,7 @@ type IRStringLiteralNode struct {
 }
 
 // Type returns the value type that this node resolves to
-func (sln IRStringLiteralNode) Type() types.Type { return check.BuiltinStr }
+func (sln IRStringLiteralNode) Type() types.Type { return types.Str }
 func (sln IRStringLiteralNode) String() string   { return sln.Val }
 func (sln IRStringLiteralNode) isTypedNode()     {}
 

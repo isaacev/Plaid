@@ -54,17 +54,17 @@ func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
 	scope := Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], BuiltinInt)
+	expectEquivalentType(t, scope.values["a"], types.Int)
 
 	prog, _ = parser.Parse("let a := 1;")
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], BuiltinInt)
+	expectEquivalentType(t, scope.values["a"], types.Int)
 
 	prog, _ = parser.Parse("let a := \"abc\";")
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], BuiltinStr)
+	expectEquivalentType(t, scope.values["a"], types.Str)
 
 	prog, _ = parser.Parse("let a := fn () {};")
 	scope = Check(prog)
@@ -114,10 +114,10 @@ func TestCheckDispatchExpr(t *testing.T) {
 	}
 	typ := checkDispatchExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", BuiltinInt)
+	scope.registerLocalVariable("add", types.Int)
 	expr = parser.DispatchExpr{
 		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
@@ -171,19 +171,19 @@ func TestCheckDispatchExpr(t *testing.T) {
 func TestCheckAssignExpr(t *testing.T) {
 	prog, _ := parser.Parse("a := 456;")
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinInt)
+	scope.registerLocalVariable("a", types.Int)
 	checkProgram(scope, prog)
 	expectNoErrors(t, scope.Errors())
 
 	prog, _ = parser.Parse("a := 456;")
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinStr)
+	scope.registerLocalVariable("a", types.Str)
 	checkProgram(scope, prog)
 	expectAnError(t, scope.Errors()[0], "'Str' cannot be assigned type 'Int'")
 
 	prog, _ = parser.Parse("a := \"a\" + 45;")
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinStr)
+	scope.registerLocalVariable("a", types.Str)
 	checkProgram(scope, prog)
 	expectAnError(t, scope.Errors()[0], "left side must have type Int, got Str")
 
@@ -195,24 +195,24 @@ func TestCheckAssignExpr(t *testing.T) {
 
 func TestCheckBinaryExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinInt)
-	scope.registerLocalVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", types.Int)
+	scope.registerLocalVariable("b", types.Int)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
 	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
 	typ := checkBinaryExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinInt)
-	scope.registerLocalVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", types.Int)
+	scope.registerLocalVariable("b", types.Int)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
 	expr = parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 
 	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ = checkBinaryExpr(scope, expr)
@@ -222,49 +222,49 @@ func TestCheckBinaryExpr(t *testing.T) {
 
 func TestExpectBinaryTypes(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinInt)
-	scope.registerLocalVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", types.Int)
+	scope.registerLocalVariable("b", types.Int)
 	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
-	typ := expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
+	typ := expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinStr)
-	scope.registerLocalVariable("b", BuiltinInt)
+	scope.registerLocalVariable("a", types.Str)
+	scope.registerLocalVariable("b", types.Int)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
+	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
 	expectAnError(t, scope.errs[0], "left side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", BuiltinInt)
-	scope.registerLocalVariable("b", BuiltinStr)
+	scope.registerLocalVariable("a", types.Int)
+	scope.registerLocalVariable("b", types.Str)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
+	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
 	expectAnError(t, scope.errs[0], "right side must have type Int, got Str")
 	expectBool(t, typ.IsError(), true)
 
 	scope = makeScope(nil, nil)
 	scope.registerLocalVariable("a", types.TypeError{})
-	scope.registerLocalVariable("b", BuiltinStr)
+	scope.registerLocalVariable("b", types.Str)
 	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
 	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	typ = expectBinaryTypes(scope, leftExpr, BuiltinInt, rightExpr, BuiltinInt, BuiltinInt)
+	typ = expectBinaryTypes(scope, leftExpr, types.Int, rightExpr, types.Int, types.Int)
 	expectNoErrors(t, scope.Errors())
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckIdentExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("x", BuiltinInt)
+	scope.registerLocalVariable("x", types.Int)
 	expr := parser.IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 
 	scope = makeScope(nil, nil)
 	expr = parser.IdentExpr{Tok: nop, Name: "x"}
@@ -278,7 +278,7 @@ func TestCheckNumberExpr(t *testing.T) {
 	expr := parser.NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinInt)
+	expectEquivalentType(t, typ, types.Int)
 }
 
 func TestCheckStringExpr(t *testing.T) {
@@ -286,7 +286,7 @@ func TestCheckStringExpr(t *testing.T) {
 	expr := parser.StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(scope, expr)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, typ, BuiltinStr)
+	expectEquivalentType(t, typ, types.Str)
 }
 
 func TestConvertTypeSig(t *testing.T) {
