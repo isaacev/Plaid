@@ -1,6 +1,8 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // CellTemplate is used in the codegen stage to build relationships between
 // uses of the same variable

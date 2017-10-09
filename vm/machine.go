@@ -83,18 +83,33 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 }
 
 func runInstrDispatch(env *Env, instr InstrDispatch) {
-	callee := env.pop().(*Closure)
-	subEnv := makeEnv(callee.Env)
+	popped := env.pop()
+	if callee, ok := popped.(*Closure); ok {
+		subEnv := makeEnv(callee.Env)
 
-	for i := instr.NumArgs - 1; i >= 0; i-- {
-		arg := env.pop()
-		subEnv.reserve(callee.Parameters[i])
-		subEnv.store(callee.Parameters[i], arg)
+		for i := instr.NumArgs - 1; i >= 0; i-- {
+			arg := env.pop()
+			subEnv.reserve(callee.Parameters[i])
+			subEnv.store(callee.Parameters[i], arg)
+		}
+
+		runWithEnv(subEnv, callee.Bytecode)
+		output := subEnv.pop()
+		env.push(output)
+	} else if obj, ok := popped.(*ObjectBuiltin); ok {
+		var args []Object
+		for i := 0; i < instr.NumArgs; i++ {
+			arg := env.pop()
+			args = append(args, arg)
+		}
+
+		output, err := obj.Val.Func(args)
+		if err != nil {
+			panic(err.Error())
+		} else {
+			env.push(output)
+		}
 	}
-
-	runWithEnv(subEnv, callee.Bytecode)
-	output := subEnv.pop()
-	env.push(output)
 }
 
 func runInstrAdd(env *Env, instr InstrAdd) {

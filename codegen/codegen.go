@@ -63,6 +63,8 @@ func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {
 		genBinaryNode(bc, node)
 	case IRReferenceNode:
 		genReferenceNode(bc, node)
+	case IRBuiltinReferenceNode:
+		genBuiltinReferenceNode(bc, node)
 	case IRIntegerLiteralNode:
 		genIntegerLiteralNode(bc, node)
 	case IRStringLiteralNode:
@@ -131,6 +133,11 @@ func genBinaryNode(bc *vm.Bytecode, node IRBinaryNode) {
 
 func genReferenceNode(bc *vm.Bytecode, node IRReferenceNode) {
 	bc.Write(vm.InstrLoad{Template: recordToCellTemplate(node.Record)})
+}
+
+func genBuiltinReferenceNode(bc *vm.Bytecode, node IRBuiltinReferenceNode) {
+	obj := &vm.ObjectBuiltin{Val: node.Builtin}
+	bc.Write(vm.InstrPush{Val: obj})
 }
 
 func genIntegerLiteralNode(bc *vm.Bytecode, node IRIntegerLiteralNode) {

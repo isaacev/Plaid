@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"plaid/check"
 	"plaid/types"
+	"plaid/vm"
 	"strings"
 )
 
@@ -173,6 +174,16 @@ type IRReferenceNode struct {
 func (rn IRReferenceNode) Type() types.Type { return check.BuiltinInt }
 func (rn IRReferenceNode) String() string   { return rn.Record.String() }
 func (rn IRReferenceNode) isTypedNode()     {}
+
+// IRBuiltinReferenceNode resolves to a builtin function
+type IRBuiltinReferenceNode struct {
+	Builtin *vm.Builtin
+}
+
+// Type returns the value type that this node resolves to
+func (rbn IRBuiltinReferenceNode) Type() types.Type { return rbn.Builtin.Type }
+func (rbn IRBuiltinReferenceNode) String() string   { return fmt.Sprintf("<builtin %s>", rbn.Type()) }
+func (rbn IRBuiltinReferenceNode) isTypedNode()     {}
 
 // IRIntegerLiteralNode represents an integer value
 type IRIntegerLiteralNode struct {

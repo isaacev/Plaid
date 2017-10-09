@@ -52,3 +52,12 @@ type ObjectStr struct {
 
 func (os *ObjectStr) String() string { return os.Val }
 func (os *ObjectStr) isObject()      {}
+
+// ObjectBuiltin wraps a builtin function as an object that can be manipulated
+// the same as a native object
+type ObjectBuiltin struct {
+	Val *Builtin
+}
+
+func (ob *ObjectBuiltin) String() string { return "<builtin>" }
+func (ob *ObjectBuiltin) isObject()      {}

@@ -4,12 +4,20 @@ import (
 	"fmt"
 	"plaid/parser"
 	"plaid/types"
+	"plaid/vm"
 )
 
 // Transform converts an AST to the intermediate representation (IR) which is a
 // precursor to the compiled bytecode
-func Transform(prog parser.Program) IR {
+func Transform(prog parser.Program, libraries ...vm.Library) IR {
 	scope := makeLexicalScope(nil)
+
+	for _, library := range libraries {
+		for name, builtin := range library {
+			scope.addGlobalVariable(name, builtin)
+		}
+	}
+
 	nodes := transformStmts(scope, prog.Stmts)
 	return IR{scope, nodes}
 }
@@ -121,8 +129,16 @@ func transformBinaryExpr(scope *LexicalScope, expr parser.BinaryExpr) IRTypedNod
 
 func transformIdentExpr(scope *LexicalScope, expr parser.IdentExpr) IRTypedNode {
 	name := expr.Name
-	record := scope.getVariable(name)
-	return IRReferenceNode{record}
+	if scope.hasLocalVariable(name) {
+		record := scope.getVariable(name)
+		return IRReferenceNode{record}
+	} else if scope.hasGlobalVariable(name) {
+		record := scope.getGlobalVariable(name)
+		return IRBuiltinReferenceNode{record}
+	} else {
+		record := scope.getVariable(name)
+		return IRReferenceNode{record}
+	}
 }
 
 func transformNumberExpr(scope *LexicalScope, expr parser.NumberExpr) IRTypedNode {

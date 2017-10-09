@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"plaid/parser"
 	"plaid/types"
+	"plaid/vm"
 )
 
 // A collection of types native to the execution environment
@@ -15,10 +16,15 @@ var (
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(prog parser.Program, global *Scope) *Scope {
-	if global == nil {
-		global = makeScope(nil, nil)
+func Check(prog parser.Program, libraries ...vm.Library) *Scope {
+	global := makeScope(nil, nil)
+
+	for _, library := range libraries {
+		for name, builtin := range library {
+			global.registerLocalVariable(name, builtin.Type)
+		}
 	}
+
 	checkProgram(global, prog)
 	return global
 }

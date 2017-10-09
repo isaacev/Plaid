@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 	"plaid/types"
+	"plaid/vm"
 )
 
 // LexicalScope represents a region of the program where all local variables
@@ -10,10 +11,32 @@ import (
 type LexicalScope struct {
 	parent *LexicalScope
 	Local  map[string]*VarRecord
+	Global map[string]*vm.Builtin
 }
 
 func (ls *LexicalScope) hasParent() bool {
 	return (ls.parent != nil)
+}
+
+func (ls *LexicalScope) hasGlobalVariable(name string) bool {
+	_, exists := ls.Global[name]
+	return exists
+}
+
+func (ls *LexicalScope) addGlobalVariable(name string, builtin *vm.Builtin) {
+	if ls.hasGlobalVariable(name) {
+		panic(fmt.Sprintf("variable '%s' redeclared locally", name))
+	}
+
+	ls.Global[name] = builtin
+}
+
+func (ls *LexicalScope) getGlobalVariable(name string) *vm.Builtin {
+	if ls.hasGlobalVariable(name) {
+		return ls.Global[name]
+	} else {
+		panic(fmt.Sprintf("global variable '%s' is not in scope", name))
+	}
 }
 
 func (ls *LexicalScope) hasLocalVariable(name string) bool {
@@ -44,8 +67,14 @@ func (ls *LexicalScope) getVariable(name string) *VarRecord {
 }
 
 func makeLexicalScope(parent *LexicalScope) *LexicalScope {
+	globals := make(map[string]*vm.Builtin)
+	if parent != nil {
+		globals = parent.Global
+	}
+
 	return &LexicalScope{
 		parent,
 		make(map[string]*VarRecord),
+		globals,
 	}
 }

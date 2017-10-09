@@ -36,7 +36,7 @@ func TestScopeHasLocalVariable(t *testing.T) {
 	expectBool(t, scope.hasLocalVariable("baz"), false)
 }
 
-func TestScopeRegisterLocalVariable(t *testing.T) {
+func TestScoperegisterLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
 	scope.registerLocalVariable("foo", types.TypeIdent{Name: "Bar"})
 	typ, exists := scope.values["foo"]
