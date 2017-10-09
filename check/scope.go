@@ -102,8 +102,12 @@ func (s *Scope) dequeueBody() (types.Type, parser.FunctionExpr) {
 
 func (s *Scope) String() string {
 	var out string
-	for _, name := range s.variables {
-		out += fmt.Sprintf("%s : %s\n", name, s.values[name])
+	for i, name := range s.variables {
+		if i > 0 {
+			out += "\n"
+		}
+
+		out += fmt.Sprintf("%s : %s", name, s.values[name])
 	}
 	return out
 }

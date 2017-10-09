@@ -86,5 +86,5 @@ func TestScopeString(t *testing.T) {
 	scope.registerLocalVariable("test", types.TypeIdent{Name: "Bool"})
 	scope.registerLocalVariable("coord", types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}, types.TypeIdent{Name: "Int"}}})
 
-	expectString(t, scope.String(), "num : Int\ntest : Bool\ncoord : (Int Int)\n")
+	expectString(t, scope.String(), "num : Int\ntest : Bool\ncoord : (Int Int)")
 }
