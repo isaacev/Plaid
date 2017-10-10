@@ -68,6 +68,8 @@ func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {
 		genAssignNode(bc, node)
 	case IRBinaryNode:
 		genBinaryNode(bc, node)
+	case IRSelfReferenceNode:
+		genSelfReferenceNode(bc, node)
 	case IRReferenceNode:
 		genReferenceNode(bc, node)
 	case IRBuiltinReferenceNode:
@@ -146,6 +148,10 @@ func genBinaryNode(bc *vm.Bytecode, node IRBinaryNode) {
 	default:
 		panic(fmt.Sprintf("cannot compile %T with '%s'", node, node.Oper))
 	}
+}
+
+func genSelfReferenceNode(bc *vm.Bytecode, node IRSelfReferenceNode) {
+	bc.Write(vm.InstrLoadSelf{})
 }
 
 func genReferenceNode(bc *vm.Bytecode, node IRReferenceNode) {

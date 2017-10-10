@@ -82,6 +82,11 @@ type InstrStore struct {
 func (is InstrStore) String() string { return fmt.Sprintf("Store\t%s", is.Template) }
 func (is InstrStore) isInstr()       {}
 
+type InstrLoadSelf struct{}
+
+func (ils InstrLoadSelf) String() string { return fmt.Sprintf("LoadSelf") }
+func (ils InstrLoadSelf) isInstr()       {}
+
 // InstrLoad reads a register and pushes its contents onto the stack
 type InstrLoad struct {
 	Template *CellTemplate

@@ -82,6 +82,9 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 	case InstrStore:
 		obj := env.pop()
 		env.store(instr.Template, obj)
+	case InstrLoadSelf:
+		obj := env.Self
+		env.push(obj)
 	case InstrLoad:
 		obj := env.load(instr.Template)
 		env.push(obj)
@@ -112,6 +115,7 @@ func runInstrDispatch(env *Env, instr InstrDispatch) {
 	popped := env.pop()
 	if callee, ok := popped.(*Closure); ok {
 		subEnv := makeEnv(callee.Env)
+		subEnv.Self = callee
 
 		for i := instr.NumArgs - 1; i >= 0; i-- {
 			arg := env.pop()

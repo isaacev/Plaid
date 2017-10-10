@@ -7,6 +7,7 @@ type Env struct {
 	Parent *Env
 	Stack  []Object
 	Cells  map[uint]*Cell
+	Self   *Closure
 }
 
 func (env *Env) hasParent() bool {
@@ -57,5 +58,6 @@ func makeEnv(parent *Env) *Env {
 		Parent: parent,
 		Stack:  []Object{},
 		Cells:  make(map[uint]*Cell),
+		Self:   nil,
 	}
 }

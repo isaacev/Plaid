@@ -176,6 +176,16 @@ func (bn IRBinaryNode) Type() types.Type { return types.Int }
 func (bn IRBinaryNode) String() string   { return fmt.Sprintf("(%s %s %s)", bn.Oper, bn.Left, bn.Right) }
 func (bn IRBinaryNode) isTypedNode()     {}
 
+// IRSelfReferenceNode resolves to the current function
+type IRSelfReferenceNode struct {
+	Typ types.Type
+}
+
+// Type returns the value type that this node resolves to
+func (srn IRSelfReferenceNode) Type() types.Type { return srn.Typ }
+func (srn IRSelfReferenceNode) String() string   { return "self" }
+func (srn IRSelfReferenceNode) isTypedNode()     {}
+
 // IRReferenceNode resolves to a known variable
 type IRReferenceNode struct {
 	Record *VarRecord

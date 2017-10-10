@@ -12,6 +12,7 @@ type LexicalScope struct {
 	parent *LexicalScope
 	Local  map[string]*VarRecord
 	Global map[string]*vm.Builtin
+	Self   types.Type
 }
 
 func (ls *LexicalScope) hasParent() bool {
@@ -76,5 +77,6 @@ func makeLexicalScope(parent *LexicalScope) *LexicalScope {
 		parent,
 		make(map[string]*VarRecord),
 		globals,
+		nil,
 	}
 }
