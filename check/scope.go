@@ -8,6 +8,7 @@ import (
 // Scope tracks the symbol table and other data used during the check
 type Scope struct {
 	parent    *Scope
+	children  []*Scope
 	errs      []error
 	variables []string
 	values    map[string]types.Type
@@ -16,6 +17,12 @@ type Scope struct {
 
 func (s *Scope) hasParent() bool {
 	return (s.parent != nil)
+}
+
+func (s *Scope) extend(self *types.TypeFunction) *Scope {
+	child := makeScope(s, self)
+	s.children = append(s.children, child)
+	return child
 }
 
 // Errors returns a list of errors detected during the check
@@ -80,6 +87,7 @@ func (s *Scope) String() string {
 func makeScope(parent *Scope, self *types.TypeFunction) *Scope {
 	return &Scope{
 		parent,
+		[]*Scope{},
 		[]error{},
 		[]string{},
 		make(map[string]types.Type),
