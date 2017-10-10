@@ -110,7 +110,7 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 		return
 	}
 
-	if scope.self.Equals(ret) || ret.IsError() {
+	if scope.self.Ret.Equals(ret) || ret.IsError() {
 		return
 	}
 
