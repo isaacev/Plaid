@@ -135,6 +135,14 @@ func genBinaryNode(bc *vm.Bytecode, node IRBinaryNode) {
 		bc.Write(vm.InstrAdd{})
 	case "-":
 		bc.Write(vm.InstrSub{})
+	case "<":
+		bc.Write(vm.InstrLT{})
+	case "<=":
+		bc.Write(vm.InstrLTEquals{})
+	case ">":
+		bc.Write(vm.InstrGT{})
+	case ">=":
+		bc.Write(vm.InstrGTEquals{})
 	default:
 		panic(fmt.Sprintf("cannot compile %T with '%s'", node, node.Oper))
 	}

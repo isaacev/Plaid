@@ -93,6 +93,14 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 		runInstrAdd(env, instr)
 	case InstrSub:
 		runInstrSub(env, instr)
+	case InstrLT:
+		runInstrLT(env, instr)
+	case InstrLTEquals:
+		runInstrLTEquals(env, instr)
+	case InstrGT:
+		runInstrGT(env, instr)
+	case InstrGTEquals:
+		runInstrGTEquals(env, instr)
 	case InstrPrint:
 		runInstrPrint(env, instr)
 	}
@@ -142,6 +150,34 @@ func runInstrSub(env *Env, instr InstrSub) {
 	a := env.pop().(*ObjectInt)
 	sum := a.Val - b.Val
 	env.push(&ObjectInt{sum})
+}
+
+func runInstrLT(env *Env, instr InstrLT) {
+	b := env.pop().(*ObjectInt)
+	a := env.pop().(*ObjectInt)
+	test := a.Val < b.Val
+	env.push(&ObjectBool{test})
+}
+
+func runInstrLTEquals(env *Env, instr InstrLTEquals) {
+	b := env.pop().(*ObjectInt)
+	a := env.pop().(*ObjectInt)
+	test := a.Val <= b.Val
+	env.push(&ObjectBool{test})
+}
+
+func runInstrGT(env *Env, instr InstrGT) {
+	b := env.pop().(*ObjectInt)
+	a := env.pop().(*ObjectInt)
+	test := a.Val > b.Val
+	env.push(&ObjectBool{test})
+}
+
+func runInstrGTEquals(env *Env, instr InstrGTEquals) {
+	b := env.pop().(*ObjectInt)
+	a := env.pop().(*ObjectInt)
+	test := a.Val >= b.Val
+	env.push(&ObjectBool{test})
 }
 
 func runInstrPrint(env *Env, instr InstrPrint) {

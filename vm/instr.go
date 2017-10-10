@@ -123,6 +123,30 @@ type InstrSub struct{}
 func (is InstrSub) String() string { return "Sub" }
 func (is InstrSub) isInstr()       {}
 
+// InstrLT pops top 2 values from stack, pushes true if first is greater than second
+type InstrLT struct{}
+
+func (ilt InstrLT) String() string { return "LT" }
+func (ilt InstrLT) isInstr()       {}
+
+// InstrLTEquals pops top 2 values from stack, pushes true if first is greater than second
+type InstrLTEquals struct{}
+
+func (ilte InstrLTEquals) String() string { return "LTEquals" }
+func (ilte InstrLTEquals) isInstr()       {}
+
+// InstrGT pops top 2 values from stack, pushes true if first is greater than second
+type InstrGT struct{}
+
+func (igt InstrGT) String() string { return "GT" }
+func (igt InstrGT) isInstr()       {}
+
+// InstrGTEquals pops top 2 values from stack, pushes true if first is greater than second
+type InstrGTEquals struct{}
+
+func (igte InstrGTEquals) String() string { return "GTEquals" }
+func (igte InstrGTEquals) isInstr()       {}
+
 // InstrPrint pops top value from stack and prints it to STDOUT
 type InstrPrint struct{}
 
