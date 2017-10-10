@@ -1,0 +1,13 @@
+let fib := fn (N: Int): Void {
+  let f := fn (a: Int, b: Int): Void {
+    print(intToStr(a));
+    N := N - 1;
+    if N > 0 {
+      self(b, a + b);
+    };
+  };
+
+  f(0, 1);
+};
+
+fib(50);
