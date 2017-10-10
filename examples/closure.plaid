@@ -1,0 +1,22 @@
+let newCounter := fn (n: Int): () => Int {
+  n := n - 1;
+  return fn (): Int {
+    n := n + 1;
+    return n;
+  };
+};
+
+let a := newCounter(1);
+let b := newCounter(10);
+
+print(intToStr(a()));
+print(intToStr(a()));
+print(intToStr(a()));
+
+print(intToStr(b()));
+print(intToStr(b()));
+print(intToStr(b()));
+
+print(intToStr(a()));
+print(intToStr(a()));
+print(intToStr(a()));
