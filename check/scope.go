@@ -86,11 +86,8 @@ func (s *Scope) String() string {
 
 func makeScope(parent *Scope, self *types.TypeFunction) *Scope {
 	return &Scope{
-		parent,
-		[]*Scope{},
-		[]error{},
-		[]string{},
-		make(map[string]types.Type),
-		self,
+		parent: parent,
+		values: make(map[string]types.Type),
+		self:   self,
 	}
 }
