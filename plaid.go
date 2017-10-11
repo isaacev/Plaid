@@ -7,6 +7,7 @@ import (
 	"os"
 	"plaid/check"
 	"plaid/codegen"
+	"plaid/debug"
 	"plaid/libs"
 	"plaid/parser"
 	"plaid/vm"
@@ -51,7 +52,7 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 			}
 			os.Exit(1)
 		} else if showCheck {
-			fmt.Println(scope)
+			fmt.Println(debug.PrettyTree(scope))
 		}
 
 		if showIR || showBC || showOut {
@@ -65,7 +66,7 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 				mod := codegen.Generate(ir)
 
 				if showBC {
-					fmt.Println(mod.Main.String())
+					fmt.Println(debug.PrettyTree(mod.Main))
 				}
 
 				if showOut {
