@@ -86,7 +86,7 @@ func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {
 }
 
 func genFunctionNode(bc *vm.Bytecode, node IRFunctionNode) {
-	fnbc := &vm.Bytecode{}
+	fnbc := bc.Descend()
 
 localLoop:
 	for _, record := range node.Scope.Local {

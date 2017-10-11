@@ -11,6 +11,15 @@ type Bytecode struct {
 	Children []*Bytecode
 }
 
+// Descend adds a new bytecode chunk in a child relationship to the current
+// bytecode chunk. This is done for to ease the visualization of bytecode
+// chunks during debugging
+func (bc *Bytecode) Descend() *Bytecode {
+	child := &Bytecode{}
+	bc.Children = append(bc.Children, child)
+	return child
+}
+
 func (bc *Bytecode) Write(instr Instr) uint32 {
 	ip := bc.NextIP()
 	bc.Instrs = append(bc.Instrs, instr)
