@@ -1,6 +1,6 @@
-let fib := fn (N: Int): Void {
+let fib := fn (N: Int, cb: (Int) => Void): Void {
   let f := fn (a: Int, b: Int): Void {
-    print(intToStr(a));
+    cb(a);
     N := N - 1;
     if N > 0 {
       self(b, a + b);
@@ -10,4 +10,19 @@ let fib := fn (N: Int): Void {
   f(0, 1);
 };
 
-fib(50);
+let printFib := fn(N: Int): Int {
+  fib(N, fn(n: Int): Void {
+    print(intToStr(n));
+  });
+};
+
+let sumFib := fn(N: Int): Int {
+  let sum := 0;
+  fib(N, fn(n: Int): Void {
+    sum := sum + n;
+  });
+  return sum;
+};
+
+printFib(10);
+print(intToStr(sumFib(10)));
