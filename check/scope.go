@@ -3,6 +3,7 @@ package check
 import (
 	"fmt"
 	"plaid/types"
+	"sort"
 )
 
 // Scope tracks the symbol table and other data used during the check
@@ -73,13 +74,23 @@ func (s *Scope) getVariable(name string) types.Type {
 }
 
 func (s *Scope) String() string {
+	maxNameWidth := 0
+	for _, name := range s.Variables {
+		if len(name) > maxNameWidth {
+			maxNameWidth = len(name)
+		}
+	}
+
+	entryFmt := fmt.Sprintf("%%-%ds : %%s", maxNameWidth)
 	var out string
-	for i, name := range s.Variables {
+	varNames := s.Variables
+	sort.Strings(varNames)
+	for i, name := range varNames {
 		if i > 0 {
 			out += "\n"
 		}
 
-		out += fmt.Sprintf("%s : %s", name, s.Values[name])
+		out += fmt.Sprintf(entryFmt, name, s.Values[name])
 	}
 	return out
 }
