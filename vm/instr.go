@@ -151,9 +151,3 @@ type InstrGTEquals struct{}
 
 func (igte InstrGTEquals) String() string { return "GTEquals" }
 func (igte InstrGTEquals) isInstr()       {}
-
-// InstrPrint pops top value from stack and prints it to STDOUT
-type InstrPrint struct{}
-
-func (ip InstrPrint) String() string { return "Print" }
-func (ip InstrPrint) isInstr()       {}

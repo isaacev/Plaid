@@ -104,8 +104,6 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 		runInstrGT(env, instr)
 	case InstrGTEquals:
 		runInstrGTEquals(env, instr)
-	case InstrPrint:
-		runInstrPrint(env, instr)
 	}
 
 	return ip + 1
@@ -182,11 +180,6 @@ func runInstrGTEquals(env *Env, instr InstrGTEquals) {
 	a := env.pop().(*ObjectInt)
 	test := a.Val >= b.Val
 	env.push(&ObjectBool{test})
-}
-
-func runInstrPrint(env *Env, instr InstrPrint) {
-	obj := env.pop()
-	fmt.Println(obj)
 }
 
 func buildClosureFromTemplate(env *Env, obj *ClosureTemplate) *Closure {
