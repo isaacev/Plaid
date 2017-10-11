@@ -18,6 +18,10 @@ type TypeError struct{}
 
 // Equals returns true for every other type
 func (te TypeError) Equals(other Type) bool {
+	if _, ok := other.(TypeError); ok {
+		return true
+	}
+
 	return false
 }
 
