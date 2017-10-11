@@ -20,16 +20,22 @@ func (on *ObjectNone) isObject()      {}
 // ClosureTemplate is generated in the codegen stage and encapsulates the scope
 // and bytecode data required to build a closure during execution
 type ClosureTemplate struct {
+	ID         int
 	Parameters []*CellTemplate
 	Bytecode   *Bytecode
 }
 
-func (ct *ClosureTemplate) String() string { return "<closure template>" }
+func (ct *ClosureTemplate) String() string { return fmt.Sprintf("<closure template #%d>", ct.ID) }
 func (ct *ClosureTemplate) isObject()      {}
+
+var uniqueClosureID int
 
 // MakeClosureTemplate builds a closure template and assigns it a unique ID
 func MakeClosureTemplate(params []*CellTemplate, bc *Bytecode) *ClosureTemplate {
+	nextID := uniqueClosureID
+	uniqueClosureID++
 	return &ClosureTemplate{
+		ID:         nextID,
 		Parameters: params,
 		Bytecode:   bc,
 	}
