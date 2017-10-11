@@ -557,6 +557,33 @@ func TestParseInfix(t *testing.T) {
 	expectAnError(t, "(1:3) unexpected symbol", expr, err)
 }
 
+func TestParseList(t *testing.T) {
+	good := func(source string, exp string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		expr, err := parseList(p)
+		expectNoErrors(t, exp, expr, err)
+		expectStart(t, expr, 1, 1)
+	}
+
+	bad := func(source string, exp string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		expr, err := parseList(p)
+		expectAnError(t, exp, expr, err)
+	}
+
+	good("[]", "[ ]")
+	good("[a]", "[ a ]")
+	good("[a,]", "[ a ]")
+	good("[a,b]", "[ a b ]")
+	good("[ a, b, c]", "[ a b c ]")
+
+	bad("a, b]", "(1:1) expected left bracket")
+	bad("[ let ]", "(1:3) unexpected symbol")
+	bad("[a, b", "(1:5) expected right bracket")
+}
+
 func TestParseSubscript(t *testing.T) {
 	p := makeParser("abc[0]")
 	loadGrammar(p)

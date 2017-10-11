@@ -127,6 +127,7 @@ func makeParser(source string) *Parser {
 
 func loadGrammar(p *Parser) {
 	p.registerPrefix(lexer.Fn, parseFunction)
+	p.registerPrefix(lexer.BracketL, parseList)
 	p.registerPrefix(lexer.ParenL, parseGroup)
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Dash, parsePrefix)
@@ -554,6 +555,37 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 	}
 
 	return BinaryExpr{oper, tok, left, right}, nil
+}
+
+func parseList(p *Parser) (Expr, error) {
+	tok, err := p.expectNextToken(lexer.BracketL, "expected left bracket")
+	if err != nil {
+		return nil, err
+	}
+
+	elements := []Expr{}
+	for p.peekTokenIsNot(lexer.BracketR, lexer.Error, lexer.EOF) {
+		var elem Expr
+		elem, err = parseExpr(p, Lowest)
+		if err != nil {
+			return nil, err
+		}
+
+		elements = append(elements, elem)
+
+		if p.peekTokenIsNot(lexer.Comma) {
+			break
+		}
+
+		p.lexer.Next()
+	}
+
+	_, err = p.expectNextToken(lexer.BracketR, "expected right bracket")
+	if err != nil {
+		return nil, err
+	}
+
+	return ListExpr{tok, elements}, nil
 }
 
 func parseSubscript(p *Parser, left Expr) (Expr, error) {
