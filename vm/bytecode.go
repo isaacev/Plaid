@@ -7,8 +7,8 @@ import (
 
 // Bytecode holds a list of instructions that can be executed by the VM
 type Bytecode struct {
-	Instrs     []Instr
-	ChildFuncs []*Bytecode
+	Instrs   []Instr
+	Children []*Bytecode
 }
 
 func (bc *Bytecode) Write(instr Instr) uint32 {
