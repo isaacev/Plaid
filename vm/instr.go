@@ -27,7 +27,7 @@ type InstrJump struct {
 	IP uint32
 }
 
-func (ij InstrJump) String() string { return fmt.Sprintf("jmp\t%d", ij.IP) }
+func (ij InstrJump) String() string { return fmt.Sprintf("%-8s%04d", "jmp", ij.IP) }
 func (ij InstrJump) isInstr()       {}
 
 // InstrJumpTrue will jump if the top value on the stack is true
@@ -35,7 +35,7 @@ type InstrJumpTrue struct {
 	IP uint32
 }
 
-func (ijc InstrJumpTrue) String() string { return fmt.Sprintf("jmpt\t%d", ijc.IP) }
+func (ijc InstrJumpTrue) String() string { return fmt.Sprintf("%-8s%04d", "jmpt", ijc.IP) }
 func (ijc InstrJumpTrue) isInstr()       {}
 
 // InstrJumpFalse will jump if the top value on the stack is false
@@ -43,7 +43,7 @@ type InstrJumpFalse struct {
 	IP uint32
 }
 
-func (ijc InstrJumpFalse) String() string { return fmt.Sprintf("jmpf\t%d", ijc.IP) }
+func (ijc InstrJumpFalse) String() string { return fmt.Sprintf("%-8s%04d", "jmpf", ijc.IP) }
 func (ijc InstrJumpFalse) isInstr()       {}
 
 // InstrPush adds its argument to the top of the VM expression stack
@@ -51,7 +51,7 @@ type InstrPush struct {
 	Val Object
 }
 
-func (ip InstrPush) String() string { return fmt.Sprintf("push\t%s", ip.Val) }
+func (ip InstrPush) String() string { return fmt.Sprintf("%-8s%s", "push", ip.Val) }
 func (ip InstrPush) isInstr()       {}
 
 // InstrPop remove the top value from the stack and discard the value
@@ -71,7 +71,7 @@ type InstrReserve struct {
 	Template *CellTemplate
 }
 
-func (ir InstrReserve) String() string { return fmt.Sprintf("alloc\t%s", ir.Template) }
+func (ir InstrReserve) String() string { return fmt.Sprintf("%-8s%s", "alloc", ir.Template) }
 func (ir InstrReserve) isInstr()       {}
 
 // InstrStore remove the top value from the stack and store it in a register
@@ -79,12 +79,12 @@ type InstrStore struct {
 	Template *CellTemplate
 }
 
-func (is InstrStore) String() string { return fmt.Sprintf("store\t%s", is.Template) }
+func (is InstrStore) String() string { return fmt.Sprintf("%-8s%s", "store", is.Template) }
 func (is InstrStore) isInstr()       {}
 
 type InstrLoadSelf struct{}
 
-func (ils InstrLoadSelf) String() string { return fmt.Sprintf("self") }
+func (ils InstrLoadSelf) String() string { return "self" }
 func (ils InstrLoadSelf) isInstr()       {}
 
 // InstrLoad reads a register and pushes its contents onto the stack
@@ -92,7 +92,7 @@ type InstrLoad struct {
 	Template *CellTemplate
 }
 
-func (il InstrLoad) String() string { return fmt.Sprintf("ld\t%s", il.Template) }
+func (il InstrLoad) String() string { return fmt.Sprintf("%-8s%s", "ld", il.Template) }
 func (il InstrLoad) isInstr()       {}
 
 // InstrDispatch reads arguments from the stack and passes them to the callee
@@ -100,20 +100,20 @@ type InstrDispatch struct {
 	NumArgs int
 }
 
-func (id InstrDispatch) String() string { return fmt.Sprintf("call\t%d", id.NumArgs) }
+func (id InstrDispatch) String() string { return fmt.Sprintf("%-8s%d", "call", id.NumArgs) }
 func (id InstrDispatch) isInstr()       {}
 
 // InstrNone adds a nothing object to the stack to help handling void
 // functions that return no values
 type InstrNone struct{}
 
-func (in InstrNone) String() string { return fmt.Sprintf("none") }
+func (in InstrNone) String() string { return "none" }
 func (in InstrNone) isInstr()       {}
 
 // InstrReturn exits the current function
 type InstrReturn struct{}
 
-func (ir InstrReturn) String() string { return fmt.Sprintf("ret") }
+func (ir InstrReturn) String() string { return "ret" }
 func (ir InstrReturn) isInstr()       {}
 
 // InstrAdd pops top 2 values from stack, adds them, pushes sum back onto stack
