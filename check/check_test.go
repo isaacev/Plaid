@@ -287,7 +287,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr := parser.SubscriptExpr{ListLike: str, Index: index}
 	typ := checkSubscriptExpr(scope, expr, defaultBinopsLUT)
 	expectNoErrors(t, scope.errs)
-	expectEquivalentType(t, typ, types.Str)
+	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Str})
 
 	scope = makeScope(nil, nil)
 	str = parser.StringExpr{Tok: nop, Val: "foo"}

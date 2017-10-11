@@ -35,7 +35,7 @@ var defaultBinopsLUT = binopsLUT{
 		types.Int: singleLUT{types.Int: types.Bool},
 	},
 	"[": doubleLUT{
-		types.Str: singleLUT{types.Int: types.Str},
+		types.Str: singleLUT{types.Int: types.TypeOptional{Child: types.Str}},
 	},
 }
 
