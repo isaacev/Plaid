@@ -108,7 +108,7 @@ func transformFunctionExpr(scope *LexicalScope, expr parser.FunctionExpr) IRType
 	}
 
 	ret := types.ConvertTypeNote(expr.Ret)
-	local.Self = ret
+	local.SelfRet = ret
 	block := transformStmts(local, expr.Block.Stmts)
 	block = append(block, IRReturnNode{})
 	return IRFunctionNode{local, params, ret, block}
@@ -141,7 +141,7 @@ func transformBinaryExpr(scope *LexicalScope, expr parser.BinaryExpr) IRTypedNod
 }
 
 func transformSelfExpr(scope *LexicalScope, expr parser.SelfExpr) IRTypedNode {
-	return IRSelfReferenceNode{scope.Self}
+	return IRSelfReferenceNode{scope.SelfRet}
 }
 
 func transformIdentExpr(scope *LexicalScope, expr parser.IdentExpr) IRTypedNode {

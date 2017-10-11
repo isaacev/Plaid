@@ -9,10 +9,10 @@ import (
 // LexicalScope represents a region of the program where all local variables
 // have the same lifetime
 type LexicalScope struct {
-	parent *LexicalScope
-	Local  map[string]*VarRecord
-	Global map[string]*vm.Builtin
-	Self   types.Type
+	parent  *LexicalScope
+	Local   map[string]*VarRecord
+	Global  map[string]*vm.Builtin
+	SelfRet types.Type
 }
 
 func (ls *LexicalScope) hasParent() bool {
