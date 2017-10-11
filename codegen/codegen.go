@@ -106,10 +106,7 @@ localLoop:
 		params = append(params, recordToCellTemplate(param))
 	}
 
-	obj := &vm.ClosureTemplate{
-		Parameters: params,
-		Bytecode:   fnbc,
-	}
+	obj := vm.MakeClosureTemplate(params, fnbc)
 	bc.Write(vm.InstrPush{Val: obj})
 }
 

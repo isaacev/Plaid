@@ -27,6 +27,14 @@ type ClosureTemplate struct {
 func (ct *ClosureTemplate) String() string { return "<closure template>" }
 func (ct *ClosureTemplate) isObject()      {}
 
+// MakeClosureTemplate builds a closure template and assigns it a unique ID
+func MakeClosureTemplate(params []*CellTemplate, bc *Bytecode) *ClosureTemplate {
+	return &ClosureTemplate{
+		Parameters: params,
+		Bytecode:   bc,
+	}
+}
+
 // Closure is bytecode bound to a lexical scope
 type Closure struct {
 	Env        *Env
