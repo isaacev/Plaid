@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"plaid/debug"
 	"strings"
 )
 
@@ -44,6 +45,16 @@ func (bc *Bytecode) String() (out string) {
 		out += fmt.Sprintf("%04d %s", o, instr)
 	}
 	return out
+}
+
+// StringChildren satisfies the requirements of the debug.StringTree interface
+// so that a scope tree can be pretty printed
+func (bc *Bytecode) StringChildren() []debug.StringTree {
+	var children []debug.StringTree
+	for _, child := range bc.Children {
+		children = append(children, child)
+	}
+	return children
 }
 
 func indentBlock(indent string, source string) string {

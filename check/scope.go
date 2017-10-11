@@ -2,6 +2,7 @@ package check
 
 import (
 	"fmt"
+	"plaid/debug"
 	"plaid/types"
 	"sort"
 )
@@ -24,6 +25,16 @@ func (s *Scope) descend(self *types.TypeFunction) *Scope {
 	child := makeScope(s, self)
 	s.Children = append(s.Children, child)
 	return child
+}
+
+// StringChildren satisfies the requirements of the debug.StringTree interface
+// so that a scope tree can be pretty printed
+func (s *Scope) StringChildren() []debug.StringTree {
+	var children []debug.StringTree
+	for _, child := range s.Children {
+		children = append(children, child)
+	}
+	return children
 }
 
 // Errors returns a list of errors detected during the check
