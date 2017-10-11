@@ -82,6 +82,8 @@ type InstrStore struct {
 func (is InstrStore) String() string { return fmt.Sprintf("%-8s%s", "store", is.Template) }
 func (is InstrStore) isInstr()       {}
 
+// InstrLoadSelf pushes a copy of the current closure onto the stack so that
+// it can be recursively called
 type InstrLoadSelf struct{}
 
 func (ils InstrLoadSelf) String() string { return "self" }
