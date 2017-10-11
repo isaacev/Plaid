@@ -39,7 +39,7 @@ func TestScopeHasLocalVariable(t *testing.T) {
 func TestScoperegisterLocalVariable(t *testing.T) {
 	scope := makeScope(nil, nil)
 	scope.registerLocalVariable("foo", types.TypeIdent{Name: "Bar"})
-	typ, exists := scope.values["foo"]
+	typ, exists := scope.Values["foo"]
 	if exists {
 		expectEquivalentType(t, typ, types.TypeIdent{Name: "Bar"})
 	} else {

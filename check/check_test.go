@@ -75,17 +75,17 @@ func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
 	scope := Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], types.Int)
+	expectEquivalentType(t, scope.Values["a"], types.Int)
 
 	prog, _ = parser.Parse("let a := 1;")
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], types.Int)
+	expectEquivalentType(t, scope.Values["a"], types.Int)
 
 	prog, _ = parser.Parse("let a := \"abc\";")
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["a"], types.Str)
+	expectEquivalentType(t, scope.Values["a"], types.Str)
 
 	prog, _ = parser.Parse("let a := fn () {};")
 	scope = Check(prog)
@@ -106,24 +106,24 @@ func TestCheckExpr(t *testing.T) {
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
-	expectBool(t, scope.values["a"].IsError(), true)
+	expectBool(t, scope.Values["a"].IsError(), true)
 
 	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "cannot use void types in an expression")
-	expectBool(t, scope.values["a"].IsError(), true)
+	expectBool(t, scope.Values["a"].IsError(), true)
 
 	prog, _ = parser.Parse("let a := -5;")
 	scope = Check(prog)
 	expectAnError(t, scope.errs[0], "unknown expression type")
-	expectBool(t, scope.values["a"].IsError(), true)
+	expectBool(t, scope.Values["a"].IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
 	scope := Check(prog)
 	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.values["f"], types.TypeFunction{
+	expectEquivalentType(t, scope.Values["f"], types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
 		Ret:    types.TypeIdent{Name: "Int"},
 	})

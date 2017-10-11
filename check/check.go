@@ -105,25 +105,25 @@ func checkReturnStmt(scope *Scope, stmt parser.ReturnStmt) {
 		ret = checkExpr(scope, stmt.Expr)
 	}
 
-	if scope.self == nil {
+	if scope.Self == nil {
 		scope.addError(fmt.Errorf("return statements must be inside a function"))
 		return
 	}
 
-	if scope.self.Ret.Equals(ret) || ret.IsError() {
+	if scope.Self.Ret.Equals(ret) || ret.IsError() {
 		return
 	}
 
-	if scope.self.Ret.Equals(types.TypeVoid{}) {
+	if scope.Self.Ret.Equals(types.TypeVoid{}) {
 		scope.addError(fmt.Errorf("expected to return nothing, got '%s'", ret))
 		return
 	}
 
 	if ret.Equals(types.TypeVoid{}) {
-		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.self.Ret))
+		scope.addError(fmt.Errorf("expected a return type of '%s', got nothing", scope.Self.Ret))
 	}
 
-	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.self.Ret, ret))
+	scope.addError(fmt.Errorf("expected to return '%s', got '%s'", scope.Self.Ret, ret))
 }
 
 func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
@@ -301,12 +301,12 @@ func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr, lut binopsLUT) 
 }
 
 func checkSelfExpr(scope *Scope, expr parser.SelfExpr) types.Type {
-	if scope.self == nil {
+	if scope.Self == nil {
 		scope.addError(fmt.Errorf("self references must be inside a function"))
 		return types.TypeError{}
 	}
 
-	return *scope.self
+	return *scope.Self
 }
 
 func checkIdentExpr(scope *Scope, expr parser.IdentExpr) types.Type {
