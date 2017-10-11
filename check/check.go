@@ -137,6 +137,8 @@ func checkExprAllowVoid(scope *Scope, expr parser.Expr) types.Type {
 		typ = checkAssignExpr(scope, expr)
 	case parser.BinaryExpr:
 		typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
+	case parser.ListExpr:
+		typ = checkListExpr(scope, expr)
 	case parser.SubscriptExpr:
 		typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
 	case parser.SelfExpr:
@@ -277,12 +279,49 @@ func checkBinaryExpr(scope *Scope, expr parser.BinaryExpr, lut binopsLUT) types.
 	return types.TypeError{}
 }
 
+func checkListExpr(scope *Scope, expr parser.ListExpr) types.Type {
+	var elemTypes []types.Type
+	for _, elem := range expr.Elements {
+		elemTypes = append(elemTypes, checkExpr(scope, elem))
+	}
+
+	if len(elemTypes) == 0 {
+		scope.addError(fmt.Errorf("cannot determine type from empty list"))
+		return types.TypeError{}
+	}
+
+	for _, typ := range elemTypes {
+		if typ.IsError() {
+			return types.TypeError{}
+		}
+	}
+
+	var listType types.Type
+	for _, typ := range elemTypes {
+		if listType == nil {
+			listType = typ
+			continue
+		}
+
+		if listType.Equals(typ) == false {
+			scope.addError(fmt.Errorf("element type %s is not compatible with type %s", typ, listType))
+			return types.TypeError{}
+		}
+	}
+
+	return types.TypeList{Child: listType}
+}
+
 func checkSubscriptExpr(scope *Scope, expr parser.SubscriptExpr, lut binopsLUT) types.Type {
 	listType := checkExpr(scope, expr.ListLike)
 	indexType := checkExpr(scope, expr.Index)
 
 	if listType.IsError() || indexType.IsError() {
 		return types.TypeError{}
+	}
+
+	if listType, ok := listType.(types.TypeList); ok {
+		return types.TypeOptional{Child: listType.Child}
 	}
 
 	if subscriptLUT, ok := lut["["]; ok {

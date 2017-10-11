@@ -99,6 +99,10 @@ func TestCheckExpr(t *testing.T) {
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
 
+	prog, _ = parser.Parse("let a := [1, 2, 3];")
+	scope = Check(prog)
+	expectNoErrors(t, scope.Errors())
+
 	prog, _ = parser.Parse("let a := \"abc\"[0];")
 	scope = Check(prog)
 	expectNoErrors(t, scope.Errors())
@@ -280,6 +284,35 @@ func TestCheckBinaryExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 }
 
+func TestCheckListExpr(t *testing.T) {
+	good := func(expr parser.ListExpr, exp types.Type) {
+		scope := makeScope(nil, nil)
+		got := checkListExpr(scope, expr)
+		expectNoErrors(t, scope.Errors())
+		expectEquivalentType(t, got, exp)
+	}
+
+	bad := func(expr parser.ListExpr, exp string) {
+		scope := makeScope(nil, nil)
+		got := checkListExpr(scope, expr)
+		expectAnError(t, scope.Errors()[0], exp)
+		expectEquivalentType(t, got, types.TypeError{})
+	}
+
+	good(parser.ListExpr{Elements: []parser.Expr{
+		parser.StringExpr{Val: "foo"},
+	}}, types.TypeList{Child: types.Str})
+
+	bad(parser.ListExpr{}, "cannot determine type from empty list")
+	bad(parser.ListExpr{Elements: []parser.Expr{
+		parser.IdentExpr{Name: "a"},
+	}}, "variable 'a' was used before it was declared")
+	bad(parser.ListExpr{Elements: []parser.Expr{
+		parser.StringExpr{Val: "foo"},
+		parser.NumberExpr{Val: 456},
+	}}, "element type Int is not compatible with type Str")
+}
+
 func TestCheckSubscriptExpr(t *testing.T) {
 	scope := makeScope(nil, nil)
 	str := parser.StringExpr{Tok: nop, Val: "foo"}
@@ -288,6 +321,16 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	typ := checkSubscriptExpr(scope, expr, defaultBinopsLUT)
 	expectNoErrors(t, scope.errs)
 	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Str})
+
+	scope = makeScope(nil, nil)
+	list := parser.ListExpr{Elements: []parser.Expr{
+		parser.NumberExpr{Val: 123},
+		parser.NumberExpr{Val: 456},
+	}}
+	expr = parser.SubscriptExpr{ListLike: list, Index: index}
+	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
+	expectNoErrors(t, scope.errs)
+	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Int})
 
 	scope = makeScope(nil, nil)
 	str = parser.StringExpr{Tok: nop, Val: "foo"}
