@@ -27,23 +27,13 @@ func (bc *Bytecode) NextIP() uint32 {
 	return uint32(len(bc.Instrs))
 }
 
-func (bc *Bytecode) String() string {
-	out := ""
+func (bc *Bytecode) String() (out string) {
 	for o, instr := range bc.Instrs {
 		if o > 0 {
 			out += "\n"
 		}
-
 		out += fmt.Sprintf("%04d %s", o, instr)
 	}
-
-	for _, child := range bc.ChildFuncs {
-		out += "\n\n##"
-		out += "\n## Child Function"
-		out += "\n##\n"
-		out += child.String()
-	}
-
 	return out
 }
 
