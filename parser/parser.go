@@ -587,7 +587,7 @@ func parseDispatch(p *Parser, left Expr) (Expr, error) {
 	}
 
 	var args []Expr
-	for p.peekTokenIsNot(lexer.ParenR) {
+	for p.peekTokenIsNot(lexer.ParenR, lexer.Error, lexer.EOF) {
 		var arg Expr
 		arg, err = parseExpr(p, Lowest)
 		if err != nil {
