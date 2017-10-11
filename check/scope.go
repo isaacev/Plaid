@@ -20,7 +20,7 @@ func (s *Scope) hasParent() bool {
 	return (s.Parent != nil)
 }
 
-func (s *Scope) extend(self *types.TypeFunction) *Scope {
+func (s *Scope) descend(self *types.TypeFunction) *Scope {
 	child := makeScope(s, self)
 	s.Children = append(s.Children, child)
 	return child
