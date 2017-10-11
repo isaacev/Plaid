@@ -146,6 +146,14 @@ func TestAssignExpr(t *testing.T) {
 	expectString(t, AssignExpr{nop, IdentExpr{nop, "a"}, IdentExpr{nop, "b"}}, "(= a b)")
 }
 
+func TestListExpr(t *testing.T) {
+	(ListExpr{}).isNode()
+	(ListExpr{}).isExpr()
+
+	expectString(t, ListExpr{nop, []Expr{}}, "[ ]")
+	expectString(t, ListExpr{nop, []Expr{IdentExpr{nop, "a"}}}, "[ a ]")
+}
+
 func TestSubscriptExpr(t *testing.T) {
 	(SubscriptExpr{}).isNode()
 	(SubscriptExpr{}).isExpr()

@@ -321,6 +321,24 @@ func (ae AssignExpr) String() string   { return fmt.Sprintf("(= %s %s)", ae.Left
 func (ae AssignExpr) isNode()          {}
 func (ae AssignExpr) isExpr()          {}
 
+// ListExpr describes a listeral list constructor
+type ListExpr struct {
+	Tok      lexer.Token
+	Elements []Expr
+}
+
+// Start returns a location that this node can be considered to start at
+func (le ListExpr) Start() lexer.Loc { return le.Tok.Loc }
+func (le ListExpr) String() string {
+	out := "[ "
+	for _, elem := range le.Elements {
+		out += fmt.Sprintf("%s ", elem)
+	}
+	return out + "]"
+}
+func (le ListExpr) isNode() {}
+func (le ListExpr) isExpr() {}
+
 // SubscriptExpr describes an index-access on a list-like expression
 type SubscriptExpr struct {
 	ListLike Expr
