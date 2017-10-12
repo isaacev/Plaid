@@ -178,10 +178,10 @@ func parseStmt(p *Parser) (Stmt, error) {
 	}
 }
 
-func parseStmtBlock(p *Parser) (StmtBlock, error) {
+func parseStmtBlock(p *Parser) (*StmtBlock, error) {
 	left, err := p.expectNextToken(lexer.BraceL, "expected left brace")
 	if err != nil {
-		return StmtBlock{}, err
+		return &StmtBlock{}, err
 	}
 
 	stmts := []Stmt{}
@@ -189,7 +189,7 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 		var stmt Stmt
 		stmt, err = parseStmt(p)
 		if err != nil {
-			return StmtBlock{}, err
+			return &StmtBlock{}, err
 		}
 
 		stmts = append(stmts, stmt)
@@ -197,10 +197,10 @@ func parseStmtBlock(p *Parser) (StmtBlock, error) {
 
 	right, err := p.expectNextToken(lexer.BraceR, "expected right brace")
 	if err != nil {
-		return StmtBlock{}, err
+		return &StmtBlock{}, err
 	}
 
-	return StmtBlock{left, stmts, right}, nil
+	return &StmtBlock{left, stmts, right}, nil
 }
 
 func parseIfStmt(p *Parser) (Stmt, error) {
@@ -214,7 +214,7 @@ func parseIfStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	var clause StmtBlock
+	var clause *StmtBlock
 	if clause, err = parseStmtBlock(p); err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func parseIfStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	return IfStmt{tok, cond, clause}, nil
+	return &IfStmt{tok, cond, clause}, nil
 }
 
 func parseDeclarationStmt(p *Parser) (Stmt, error) {
@@ -238,7 +238,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	name := expr.(IdentExpr)
+	name := expr.(*IdentExpr)
 
 	_, err = p.expectNextToken(lexer.Assign, "expected :=")
 	if err != nil {
@@ -254,7 +254,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	return DeclarationStmt{tok, name, expr}, nil
+	return &DeclarationStmt{tok, name, expr}, nil
 }
 
 func parseReturnStmt(p *Parser) (Stmt, error) {
@@ -276,7 +276,7 @@ func parseReturnStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	return ReturnStmt{tok, expr}, nil
+	return &ReturnStmt{tok, expr}, nil
 }
 
 func parseExprStmt(p *Parser) (Stmt, error) {
@@ -287,10 +287,10 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 
 	var stmt Stmt
 	switch expr.(type) {
-	case DispatchExpr:
-		stmt = ExprStmt{expr}
-	case AssignExpr:
-		stmt = ExprStmt{expr}
+	case *DispatchExpr:
+		stmt = &ExprStmt{expr}
+	case *AssignExpr:
+		stmt = &ExprStmt{expr}
 	default:
 		return nil, SyntaxError{expr.Start(), "expected start of statement"}
 	}
@@ -461,11 +461,11 @@ func parseFunction(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return FunctionExpr{tok, params, ret, block, nil}, nil
+	return &FunctionExpr{tok, params, ret, block, nil}, nil
 }
 
-func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeNote, error) {
-	var params []FunctionParam
+func parseFunctionSignature(p *Parser) ([]*FunctionParam, TypeNote, error) {
+	var params []*FunctionParam
 	var ret TypeNote
 	var err error
 
@@ -480,15 +480,15 @@ func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeNote, error) {
 	return params, ret, nil
 }
 
-func parseFunctionParams(p *Parser) ([]FunctionParam, error) {
+func parseFunctionParams(p *Parser) ([]*FunctionParam, error) {
 	_, err := p.expectNextToken(lexer.ParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
 
-	params := []FunctionParam{}
+	params := []*FunctionParam{}
 	for p.peekTokenIsNot(lexer.ParenR, lexer.EOF, lexer.Error) {
-		var param FunctionParam
+		var param *FunctionParam
 		param, err = parseFunctionParam(p)
 		if err != nil {
 			return nil, err
@@ -511,24 +511,24 @@ func parseFunctionParams(p *Parser) ([]FunctionParam, error) {
 	return params, nil
 }
 
-func parseFunctionParam(p *Parser) (FunctionParam, error) {
+func parseFunctionParam(p *Parser) (*FunctionParam, error) {
 	ident, err := parseIdent(p)
 	if err != nil {
-		return FunctionParam{}, err
+		return &FunctionParam{}, err
 	}
 
 	_, err = p.expectNextToken(lexer.Colon, "expected colon between parameter name and type")
 	if err != nil {
-		return FunctionParam{}, err
+		return &FunctionParam{}, err
 	}
 
 	var sig TypeNote
 	sig, err = parseTypeNote(p)
 	if err != nil {
-		return FunctionParam{}, err
+		return &FunctionParam{}, err
 	}
 
-	return FunctionParam{ident.(IdentExpr), sig}, nil
+	return &FunctionParam{ident.(*IdentExpr), sig}, nil
 }
 
 func parseFunctionReturnSig(p *Parser) (TypeNote, error) {
@@ -554,7 +554,7 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return BinaryExpr{oper, tok, left, right}, nil
+	return &BinaryExpr{oper, tok, left, right}, nil
 }
 
 func parseList(p *Parser) (Expr, error) {
@@ -585,7 +585,7 @@ func parseList(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return ListExpr{tok, elements}, nil
+	return &ListExpr{tok, elements}, nil
 }
 
 func parseSubscript(p *Parser, left Expr) (Expr, error) {
@@ -609,7 +609,7 @@ func parseSubscript(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return SubscriptExpr{left, index}, nil
+	return &SubscriptExpr{left, index}, nil
 }
 
 func parseDispatch(p *Parser, left Expr) (Expr, error) {
@@ -639,11 +639,11 @@ func parseDispatch(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return DispatchExpr{left, args}, nil
+	return &DispatchExpr{left, args}, nil
 }
 
 func parseAssign(p *Parser, left Expr) (Expr, error) {
-	leftIdent, ok := left.(IdentExpr)
+	leftIdent, ok := left.(*IdentExpr)
 	if ok == false {
 		return nil, SyntaxError{left.Start(), "left hand must be an identifier"}
 	}
@@ -655,14 +655,14 @@ func parseAssign(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return AssignExpr{tok, leftIdent, right}, nil
+	return &AssignExpr{tok, leftIdent, right}, nil
 }
 
 func parsePostfix(p *Parser, left Expr) (Expr, error) {
 	tok := p.lexer.Next()
 	oper := tok.Lexeme
 
-	return UnaryExpr{oper, tok, left}, nil
+	return &UnaryExpr{oper, tok, left}, nil
 }
 
 func parsePrefix(p *Parser) (Expr, error) {
@@ -673,7 +673,7 @@ func parsePrefix(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return UnaryExpr{oper, tok, right}, nil
+	return &UnaryExpr{oper, tok, right}, nil
 }
 
 func parseGroup(p *Parser) (Expr, error) {
@@ -701,7 +701,7 @@ func parseSelf(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return SelfExpr{tok}, nil
+	return &SelfExpr{tok}, nil
 }
 
 func parseIdent(p *Parser) (Expr, error) {
@@ -710,7 +710,7 @@ func parseIdent(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return IdentExpr{tok, tok.Lexeme}, nil
+	return &IdentExpr{tok, tok.Lexeme}, nil
 }
 
 func parseNumber(p *Parser) (Expr, error) {
@@ -722,13 +722,13 @@ func parseNumber(p *Parser) (Expr, error) {
 	return evalNumber(tok)
 }
 
-func evalNumber(tok lexer.Token) (NumberExpr, error) {
+func evalNumber(tok lexer.Token) (*NumberExpr, error) {
 	val, err := strconv.ParseUint(tok.Lexeme, 10, 64)
 	if err != nil {
-		return NumberExpr{}, makeSyntaxError(tok, "malformed number literal", false)
+		return &NumberExpr{}, makeSyntaxError(tok, "malformed number literal", false)
 	}
 
-	return NumberExpr{tok, int(val)}, nil
+	return &NumberExpr{tok, int(val)}, nil
 }
 
 func parseString(p *Parser) (Expr, error) {
@@ -740,12 +740,12 @@ func parseString(p *Parser) (Expr, error) {
 	return evalString(tok)
 }
 
-func evalString(tok lexer.Token) (StringExpr, error) {
+func evalString(tok lexer.Token) (*StringExpr, error) {
 	dblQuote := "\""
 	remSuffix := strings.TrimSuffix(tok.Lexeme, dblQuote)
 	remBoth := strings.TrimPrefix(remSuffix, dblQuote)
 
-	return StringExpr{tok, remBoth}, nil
+	return &StringExpr{tok, remBoth}, nil
 }
 
 func parseBoolean(p *Parser) (Expr, error) {
@@ -757,12 +757,12 @@ func parseBoolean(p *Parser) (Expr, error) {
 	return evalBoolean(tok)
 }
 
-func evalBoolean(tok lexer.Token) (BooleanExpr, error) {
+func evalBoolean(tok lexer.Token) (*BooleanExpr, error) {
 	if tok.Lexeme == "true" {
-		return BooleanExpr{tok, true}, nil
+		return &BooleanExpr{tok, true}, nil
 	} else if tok.Lexeme == "false" {
-		return BooleanExpr{tok, false}, nil
+		return &BooleanExpr{tok, false}, nil
 	}
 
-	return BooleanExpr{}, makeSyntaxError(tok, "malformed boolean literal", false)
+	return &BooleanExpr{}, makeSyntaxError(tok, "malformed boolean literal", false)
 }

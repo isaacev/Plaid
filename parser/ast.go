@@ -75,7 +75,7 @@ func (sb StmtBlock) isNode() {}
 type IfStmt struct {
 	Tok    lexer.Token
 	Cond   Expr
-	Clause StmtBlock
+	Clause *StmtBlock
 }
 
 // Start returns a location that this node can be considered to start at
@@ -87,7 +87,7 @@ func (is IfStmt) isStmt()          {}
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
 	Tok  lexer.Token
-	Name IdentExpr
+	Name *IdentExpr
 	Expr Expr
 }
 
@@ -237,9 +237,9 @@ type Expr interface {
 // FunctionExpr describes a function's entire type signature and body
 type FunctionExpr struct {
 	Tok    lexer.Token
-	Params []FunctionParam
+	Params []*FunctionParam
 	Ret    TypeNote
-	Block  StmtBlock
+	Block  *StmtBlock
 	Scope  scope.Scope
 }
 
@@ -267,7 +267,7 @@ func (fe FunctionExpr) isNode() {}
 
 // FunctionParam describes a single function argument's name and type annotation
 type FunctionParam struct {
-	Name IdentExpr
+	Name *IdentExpr
 	Note TypeNote
 }
 
@@ -313,7 +313,7 @@ func (de DispatchExpr) isExpr() {}
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
 	Tok   lexer.Token
-	Left  IdentExpr
+	Left  *IdentExpr
 	Right Expr
 }
 
