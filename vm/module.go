@@ -31,8 +31,11 @@ type ClosureTemplate struct {
 	Bytecode   *Bytecode
 }
 
-func (ct *ClosureTemplate) String() string { return fmt.Sprintf("<closure template #%d>", ct.ID) }
-func (ct *ClosureTemplate) isObject()      {}
+func (c *ClosureTemplate) String() string {
+	return fmt.Sprintf("<closure template #%d>", c.ID)
+}
+
+func (c *ClosureTemplate) isObject() {}
 
 var uniqueClosureID int
 
