@@ -188,6 +188,7 @@ func checkFunctionExpr(s scope.Scope, expr *parser.FunctionExpr) types.Type {
 	}
 
 	checkStmtBlock(childScope, expr.Block)
+	expr.Scope = childScope
 	return self
 }
 
