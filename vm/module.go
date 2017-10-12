@@ -8,6 +8,7 @@ import (
 // Module holds all the data necessary to build and evaluate a code module
 // including all child closures and any dependency information
 type Module struct {
+	Name    string
 	Root    *ClosureTemplate
 	Exports map[string]*Export
 }
