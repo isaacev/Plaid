@@ -28,7 +28,7 @@ type Export struct {
 // may be converted to any number of Closures during runtime
 type ClosureTemplate struct {
 	ID         int
-	Parameters []*CellTemplate
+	Parameters []*RegisterTemplate
 	Bytecode   *Bytecode
 	Enclosed   []*ClosureTemplate
 }
@@ -58,10 +58,10 @@ func (c *ClosureTemplate) isObject() {}
 var uniqueClosureID int
 
 // MakeEmptyClosureTemplate is a helper function to create a closure template
-// from a given set of parameter CellTemplates and a Bytecode blob. This
+// from a given set of parameter RegisterTemplates and a Bytecode blob. This
 // function should be called during codegen exactly once for each function
 // literal
-func MakeEmptyClosureTemplate(params []*CellTemplate) *ClosureTemplate {
+func MakeEmptyClosureTemplate(params []*RegisterTemplate) *ClosureTemplate {
 	nextID := uniqueClosureID
 	uniqueClosureID++
 	template := &ClosureTemplate{
@@ -80,7 +80,7 @@ func MakeEmptyClosureTemplate(params []*CellTemplate) *ClosureTemplate {
 // object in the virtual machine.
 type Closure struct {
 	Env        *Env
-	Parameters []*CellTemplate
+	Parameters []*RegisterTemplate
 	Bytecode   *Bytecode
 }
 

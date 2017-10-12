@@ -4,18 +4,8 @@ import (
 	"fmt"
 )
 
-// Register holds a value and is associated with a variable
-type Register struct {
-	id  uint8
-	val Object
-}
-
-func (r *Register) setValue(newVal Object) {
-	r.val = newVal
-}
-
 func (r *Register) String() string {
-	return fmt.Sprintf("r%d", r.id)
+	return fmt.Sprintf("r%d", r.Template.ID)
 }
 
 // Run does stuff
@@ -78,15 +68,15 @@ func runInstr(ip uint32, env *Env, instr Instr) uint32 {
 		env.push(obj)
 		env.push(obj)
 	case InstrReserve:
-		env.reserve(instr.Template)
+		env.reserve(instr.Register)
 	case InstrStore:
 		obj := env.pop()
-		env.store(instr.Template, obj)
+		env.store(instr.Register, obj)
 	case InstrLoadSelf:
 		obj := env.Self
 		env.push(obj)
 	case InstrLoad:
-		obj := env.load(instr.Template)
+		obj := env.load(instr.Register)
 		env.push(obj)
 	case InstrDispatch:
 		runInstrDispatch(env, instr)

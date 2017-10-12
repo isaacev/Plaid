@@ -68,18 +68,18 @@ func (ic InstrCopy) isInstr()       {}
 
 // InstrReserve allocates registers for local variables
 type InstrReserve struct {
-	Template *CellTemplate
+	Register *RegisterTemplate
 }
 
-func (ir InstrReserve) String() string { return fmt.Sprintf("%-8s%s", "alloc", ir.Template) }
+func (ir InstrReserve) String() string { return fmt.Sprintf("%-8s%s", "alloc", ir.Register) }
 func (ir InstrReserve) isInstr()       {}
 
 // InstrStore remove the top value from the stack and store it in a register
 type InstrStore struct {
-	Template *CellTemplate
+	Register *RegisterTemplate
 }
 
-func (is InstrStore) String() string { return fmt.Sprintf("%-8s%s", "store", is.Template) }
+func (is InstrStore) String() string { return fmt.Sprintf("%-8s%s", "store", is.Register) }
 func (is InstrStore) isInstr()       {}
 
 // InstrLoadSelf pushes a copy of the current closure onto the stack so that
@@ -91,10 +91,10 @@ func (ils InstrLoadSelf) isInstr()       {}
 
 // InstrLoad reads a register and pushes its contents onto the stack
 type InstrLoad struct {
-	Template *CellTemplate
+	Register *RegisterTemplate
 }
 
-func (il InstrLoad) String() string { return fmt.Sprintf("%-8s%s", "ld", il.Template) }
+func (il InstrLoad) String() string { return fmt.Sprintf("%-8s%s", "ld", il.Register) }
 func (il InstrLoad) isInstr()       {}
 
 // InstrDispatch reads arguments from the stack and passes them to the callee

@@ -4,10 +4,10 @@ import "fmt"
 
 // Env holds variable references available in the current context
 type Env struct {
-	Parent *Env
-	Stack  []Object
-	Cells  map[uint]*Cell
-	Self   *Closure
+	Parent    *Env
+	Stack     []Object
+	Registers map[int]*Register
+	Self      *Closure
 }
 
 func (env *Env) hasParent() bool {
@@ -24,40 +24,40 @@ func (env *Env) pop() Object {
 	return obj
 }
 
-func (env *Env) reserve(template *CellTemplate) {
-	env.Cells[template.ID] = &Cell{
-		ID:  template.ID,
-		Ref: nil,
+func (env *Env) reserve(reg *RegisterTemplate) {
+	env.Registers[reg.ID] = &Register{
+		Contents: nil,
+		Template: reg,
 	}
 }
 
-func (env *Env) store(template *CellTemplate, obj Object) {
-	local, ok := env.Cells[template.ID]
+func (env *Env) store(reg *RegisterTemplate, obj Object) {
+	local, ok := env.Registers[reg.ID]
 	if ok {
-		local.Ref = obj
+		local.Contents = obj
 	} else if env.hasParent() {
-		env.Parent.store(template, obj)
+		env.Parent.store(reg, obj)
 	} else {
-		panic(fmt.Sprintf("%s not local or remote", template.Name))
+		panic(fmt.Sprintf("%s not local or remote", reg.Name))
 	}
 }
 
-func (env *Env) load(template *CellTemplate) Object {
-	local, ok := env.Cells[template.ID]
+func (env *Env) load(reg *RegisterTemplate) Object {
+	local, ok := env.Registers[reg.ID]
 	if ok {
-		return local.Ref
+		return local.Contents
 	} else if env.hasParent() {
-		return env.Parent.load(template)
+		return env.Parent.load(reg)
 	} else {
-		panic(fmt.Sprintf("%s not local or remote", template.Name))
+		panic(fmt.Sprintf("%s not local or remote", reg.Name))
 	}
 }
 
 func makeEnv(parent *Env) *Env {
 	return &Env{
-		Parent: parent,
-		Stack:  []Object{},
-		Cells:  make(map[uint]*Cell),
-		Self:   nil,
+		Parent:    parent,
+		Stack:     []Object{},
+		Registers: make(map[int]*Register),
+		Self:      nil,
 	}
 }
