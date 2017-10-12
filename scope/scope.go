@@ -20,16 +20,18 @@ type Scope interface {
 	GetErrors() []error
 	NewError(error)
 	HasLocalVariable(string) bool
-	GetLocalVariable(string) (*vm.RegisterTemplate, types.Type, error)
+	GetLocalVariableType(string) types.Type
+	GetLocalVariableRegister(string) *vm.RegisterTemplate
 	GetLocalVariableNames() []string
 	HasVariable(string) bool
-	GetVariable(string) (*vm.RegisterTemplate, types.Type, error)
 	GetVariableType(string) types.Type
+	GetVariableRegister(string) *vm.RegisterTemplate
 	NewVariable(string, types.Type) *vm.RegisterTemplate
 }
 
 // GlobalScope exists at the top of the scope tree
 type GlobalScope struct {
+	imports   []*vm.Module
 	children  []Scope
 	errors    []error
 	types     map[string]types.Type
@@ -42,6 +44,11 @@ func MakeGlobalScope() *GlobalScope {
 		types:     make(map[string]types.Type),
 		registers: make(map[string]*vm.RegisterTemplate),
 	}
+}
+
+// Import exposes another module's exports to the global scope
+func (s *GlobalScope) Import(module *vm.Module) {
+	s.imports = append(s.imports, module)
 }
 
 // HasParent returns true if the current scope has a parent scope
@@ -80,14 +87,25 @@ func (s *GlobalScope) HasLocalVariable(name string) bool {
 	return false
 }
 
-// GetLocalVariable returns the register template associated with the given
-// variable or an error if the given variable is not local
-func (s *GlobalScope) GetLocalVariable(name string) (*vm.RegisterTemplate, types.Type, error) {
+// GetLocalVariableType returns the type of a given variable if it exists in the
+// local scope. If the variable cannot be found the method returns nil
+func (s *GlobalScope) GetLocalVariableType(name string) types.Type {
 	if s.HasLocalVariable(name) {
-		return s.registers[name], s.types[name], nil
+		return s.types[name]
 	}
 
-	return nil, nil, fmt.Errorf("variable '%s' is not in scope", name)
+	return nil
+}
+
+// GetLocalVariableRegister returns the register template of a given variable if it
+// exists in the local scope. It the variable cannot be found the method returns
+// nil
+func (s *GlobalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate {
+	if s.HasLocalVariable(name) {
+		return s.registers[name]
+	}
+
+	return nil
 }
 
 // GetLocalVariableNames returns a list of all locally registered variables
@@ -101,24 +119,51 @@ func (s *GlobalScope) GetLocalVariableNames() (names []string) {
 // HasVariable returns true if this or *any parent scope* recognizes the given
 // variable. For global scope this is the same as HasLocalvariable
 func (s *GlobalScope) HasVariable(name string) bool {
-	return s.HasLocalVariable(name)
-}
-
-// GetVariable returns the register template associated with the given variable
-// or an error if the given variable is not recognized by this or any of its
-// parent scopes. For global scope this is the same as GetLocalVariable
-func (s *GlobalScope) GetVariable(name string) (*vm.RegisterTemplate, types.Type, error) {
-	return s.GetLocalVariable(name)
-}
-
-// GetVariableType returns the associated type of a variable if its in scope or
-// returns the error type if it's not in scope
-func (s *GlobalScope) GetVariableType(name string) types.Type {
-	if s.HasVariable(name) {
-		return s.types[name]
+	if s.HasLocalVariable(name) {
+		return true
 	}
 
-	return types.TypeError{}
+	for _, module := range s.imports {
+		if module.HasExport(name) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetVariableType returns the type associated with the given variable name if
+// it can be found in scope. It returns nil if the variable cannot be found in
+// the current scope
+func (s *GlobalScope) GetVariableType(name string) types.Type {
+	if s.HasLocalVariable(name) {
+		return s.GetLocalVariableType(name)
+	}
+
+	for _, module := range s.imports {
+		if module.HasExport(name) {
+			return module.GetExport(name).Type
+		}
+	}
+
+	return nil
+}
+
+// GetVariableRegister returns the reigster template associated with the given
+// variable if it can be found in scope. It returns nil if the variable cannot
+// be found in scope
+func (s *GlobalScope) GetVariableRegister(name string) *vm.RegisterTemplate {
+	if s.HasLocalVariable(name) {
+		return s.GetLocalVariableRegister(name)
+	}
+
+	for _, module := range s.imports {
+		if module.HasExport(name) {
+			return module.GetExport(name).Register
+		}
+	}
+
+	return nil
 }
 
 // NewVariable registers a new variable with the given name and type and
@@ -219,14 +264,26 @@ func (s *LocalScope) HasLocalVariable(name string) bool {
 	return false
 }
 
-// GetLocalVariable returns the register template associated with the given
-// variable or an error if the given variable is not local
-func (s *LocalScope) GetLocalVariable(name string) (*vm.RegisterTemplate, types.Type, error) {
+// GetLocalVariableType returns the type associated with the given variable name if
+// it can be found in scope. It returns nil if the variable cannot be found in
+// the current scope
+func (s *LocalScope) GetLocalVariableType(name string) types.Type {
 	if s.HasLocalVariable(name) {
-		return s.registers[name], s.types[name], nil
+		return s.types[name]
 	}
 
-	return nil, nil, fmt.Errorf("variable '%s' is not in scope", name)
+	return nil
+}
+
+// GetLocalVariableRegister returns the register template of a given variable if it
+// exists in the local scope. It the variable cannot be found the method returns
+// nil
+func (s *LocalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate {
+	if s.HasLocalVariable(name) {
+		return s.registers[name]
+	}
+
+	return nil
 }
 
 // GetLocalVariableNames returns a list of all locally registered variables
@@ -247,26 +304,26 @@ func (s *LocalScope) HasVariable(name string) bool {
 	return s.parent.HasVariable(name)
 }
 
-// GetVariable returns the register template associated with the given variable
-// or an error if the given variable is not recognized by this or any of its
-// parent scopes
-func (s *LocalScope) GetVariable(name string) (*vm.RegisterTemplate, types.Type, error) {
+// GetVariableType returns the type associated with the given variable name if
+// it can be found in scope. It returns nil if the variable cannot be found in
+// the current scope
+func (s *LocalScope) GetVariableType(name string) types.Type {
 	if s.HasLocalVariable(name) {
-		return s.GetLocalVariable(name)
+		return s.GetLocalVariableType(name)
 	}
 
-	return s.parent.GetVariable(name)
+	return s.parent.GetVariableType(name)
 }
 
-// GetVariableType returns the associated type of a variable if its in scope or
-// returns the error type if it's not in scope
-func (s *LocalScope) GetVariableType(name string) types.Type {
-	if s.HasVariable(name) {
-		_, typ, _ := s.GetVariable(name)
-		return typ
+// GetVariableRegister returns the reigster template associated with the given
+// variable if it can be found in scope. It returns nil if the variable cannot
+// be found in scope
+func (s *LocalScope) GetVariableRegister(name string) *vm.RegisterTemplate {
+	if s.HasLocalVariable(name) {
+		return s.GetLocalVariableRegister(name)
 	}
 
-	return types.TypeError{}
+	return s.parent.GetVariableRegister(name)
 }
 
 func (s *LocalScope) String() (out string) {

@@ -237,7 +237,7 @@ func checkDispatchExpr(s scope.Scope, expr *parser.DispatchExpr) types.Type {
 
 func checkAssignExpr(s scope.Scope, expr *parser.AssignExpr) types.Type {
 	name := expr.Left.Name
-	_, leftType, _ := s.GetVariable(name)
+	leftType := s.GetVariableType(name)
 	rightType := checkExpr(s, expr.Right)
 
 	if leftType == nil {
@@ -351,8 +351,7 @@ func checkSelfExpr(s scope.Scope, expr *parser.SelfExpr) types.Type {
 
 func checkIdentExpr(s scope.Scope, expr *parser.IdentExpr) types.Type {
 	if s.HasVariable(expr.Name) {
-		_, typ, _ := s.GetVariable(expr.Name)
-		return typ
+		return s.GetVariableType(expr.Name)
 	}
 
 	s.NewError(fmt.Errorf("variable '%s' was used before it was declared", expr.Name))

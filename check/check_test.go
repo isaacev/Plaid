@@ -474,13 +474,8 @@ func expectNthError(t *testing.T, s scope.Scope, n int, msg string) {
 
 func expectLocalVariableType(t *testing.T, s scope.Scope, name string, exp types.Type) {
 	if s.HasLocalVariable(name) {
-		_, got, err := s.GetLocalVariable(name)
-
-		if err != nil {
-			t.Errorf("Expected no errors, got '%s'", err)
-		} else {
-			expectEquivalentType(t, got, exp)
-		}
+		got := s.GetLocalVariableType(name)
+		expectEquivalentType(t, got, exp)
 	} else {
 		t.Errorf("Expected local variable '%s', none found", name)
 	}
