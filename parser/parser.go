@@ -106,7 +106,7 @@ func (p *Parser) peekPrecedence() Precedence {
 }
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(source string) (Program, error) {
+func Parse(source string) (*Program, error) {
 	p := makeParser(source)
 	loadGrammar(p)
 	return parseProgram(p)
@@ -150,19 +150,19 @@ func loadGrammar(p *Parser) {
 	p.registerPostfix(lexer.Slash, parseInfix, Product)
 }
 
-func parseProgram(p *Parser) (Program, error) {
+func parseProgram(p *Parser) (*Program, error) {
 	stmts := []Stmt{}
 
 	for p.peekTokenIsNot(lexer.Error, lexer.EOF) {
 		stmt, err := parseStmt(p)
 		if err != nil {
-			return Program{}, err
+			return &Program{}, err
 		}
 
 		stmts = append(stmts, stmt)
 	}
 
-	return Program{stmts}, nil
+	return &Program{stmts}, nil
 }
 
 func parseStmt(p *Parser) (Stmt, error) {

@@ -12,7 +12,7 @@ import (
 var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
-	s := Check(parser.Program{})
+	s := Check(&parser.Program{})
 	expectNoErrors(t, s)
 
 	var lib1 vm.Library = map[string]*vm.Builtin{
@@ -21,7 +21,7 @@ func TestCheckMain(t *testing.T) {
 			Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
 		},
 	}
-	s = Check(parser.Program{}, lib1)
+	s = Check(&parser.Program{}, lib1)
 	expectLocalVariableType(t, s, "foo", types.Bool)
 	expectNoErrors(t, s)
 }
