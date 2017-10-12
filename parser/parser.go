@@ -162,7 +162,7 @@ func parseProgram(p *Parser) (*Program, error) {
 		stmts = append(stmts, stmt)
 	}
 
-	return &Program{stmts}, nil
+	return &Program{stmts, nil}, nil
 }
 
 func parseStmt(p *Parser) (Stmt, error) {

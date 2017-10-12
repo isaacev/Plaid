@@ -13,10 +13,10 @@ func TestProgram(t *testing.T) {
 	prog := Program{[]Stmt{
 		DeclarationStmt{nop, &IdentExpr{nop, "a"}, &NumberExpr{nop, 123}},
 		DeclarationStmt{nop, &IdentExpr{nop, "b"}, &NumberExpr{nop, 456}},
-	}}
+	}, nil}
 	expectString(t, prog, "(let a 123)\n(let b 456)")
 
-	prog = Program{[]Stmt{}}
+	prog = Program{[]Stmt{}, nil}
 	expectString(t, prog, "")
 }
 

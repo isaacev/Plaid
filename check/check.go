@@ -53,6 +53,7 @@ func Check(prog *parser.Program, libraries ...vm.Library) *scope.GlobalScope {
 	}
 
 	checkProgram(global, prog)
+	prog.Scope = global
 	return global
 }
 

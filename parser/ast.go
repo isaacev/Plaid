@@ -18,6 +18,7 @@ type Node interface {
 // Program describes all top-level statements within a script
 type Program struct {
 	Stmts []Stmt
+	Scope *scope.GlobalScope
 }
 
 // Start returns a location that this node can be considered to start at
