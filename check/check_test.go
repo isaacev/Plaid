@@ -3,6 +3,7 @@ package check
 import (
 	"plaid/lexer"
 	"plaid/parser"
+	"plaid/scope"
 	"plaid/types"
 	"plaid/vm"
 	"testing"
@@ -11,8 +12,8 @@ import (
 var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
-	scope := Check(parser.Program{})
-	expectNoErrors(t, scope.Errors())
+	s := Check(parser.Program{})
+	expectNoErrors(t, s)
 
 	var lib1 vm.Library = map[string]*vm.Builtin{
 		"foo": &vm.Builtin{
@@ -20,388 +21,388 @@ func TestCheckMain(t *testing.T) {
 			Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
 		},
 	}
-	scope = Check(parser.Program{}, lib1)
-	expectBool(t, scope.getVariable("foo").Equals(types.Bool), true)
-	expectNoErrors(t, scope.Errors())
+	s = Check(parser.Program{}, lib1)
+	expectLocalVariableType(t, s, "foo", types.Bool)
+	expectNoErrors(t, s)
 }
 
 func TestCheckProgram(t *testing.T) {
 	prog, _ := parser.Parse("let a := 123;")
-	scope := makeScope(nil, nil)
-	checkProgram(scope, prog)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	checkProgram(s, prog)
+	expectNoErrors(t, s)
 }
 
 func TestCheckStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := 123;")
-	scope := makeScope(nil, nil)
-	checkStmt(scope, prog.Stmts[0])
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	checkStmt(s, prog.Stmts[0])
+	expectNoErrors(t, s)
 }
 
 func TestCheckIfStmt(t *testing.T) {
 	prog, _ := parser.Parse("if true {};")
-	scope := Check(prog)
-	expectNoErrors(t, scope.errs)
+	s := Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("if 123 {};")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "condition must resolve to a boolean")
+	s = Check(prog)
+	expectNthError(t, s, 0, "condition must resolve to a boolean")
 }
 
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
-	scope := Check(prog)
-	expectAnError(t, scope.errs[0], "expected to return 'Int', got 'Str'")
+	s := Check(prog)
+	expectNthError(t, s, 0, "expected to return 'Int', got 'Str'")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return x; };")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
+	s = Check(prog)
+	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return; };")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "expected a return type of 'Int', got nothing")
+	s = Check(prog)
+	expectNthError(t, s, 0, "expected a return type of 'Int', got nothing")
 
 	prog, _ = parser.Parse("let a := fn ():Void { return 123; };")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "expected to return nothing, got 'Int'")
+	s = Check(prog)
+	expectNthError(t, s, 0, "expected to return nothing, got 'Int'")
 
 	prog, _ = parser.Parse("return;")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "return statements must be inside a function")
+	s = Check(prog)
+	expectNthError(t, s, 0, "return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
 	prog, _ := parser.Parse("let a := 2 + 1;")
-	scope := Check(prog)
-	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.Values["a"], types.Int)
+	s := Check(prog)
+	expectNoErrors(t, s)
+	expectEquivalentType(t, s.GetVariableType("a"), types.Int)
 
 	prog, _ = parser.Parse("let a := 1;")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.Values["a"], types.Int)
+	s = Check(prog)
+	expectNoErrors(t, s)
+	expectEquivalentType(t, s.GetVariableType("a"), types.Int)
 
 	prog, _ = parser.Parse("let a := \"abc\";")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.Values["a"], types.Str)
+	s = Check(prog)
+	expectNoErrors(t, s)
+	expectEquivalentType(t, s.GetVariableType("a"), types.Str)
 
 	prog, _ = parser.Parse("let a := fn () {};")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s = Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("let a := true;")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s = Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("let a := false;")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s = Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("let a := [1, 2, 3];")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s = Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("let a := \"abc\"[0];")
-	scope = Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s = Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("let a := add(2, 2);")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "variable 'add' was used before it was declared")
-	expectBool(t, scope.Values["a"].IsError(), true)
+	s = Check(prog)
+	expectNthError(t, s, 0, "variable 'add' was used before it was declared")
+	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "cannot use void types in an expression")
-	expectBool(t, scope.Values["a"].IsError(), true)
+	s = Check(prog)
+	expectNthError(t, s, 0, "cannot use void types in an expression")
+	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = parser.Parse("let a := -5;")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "unknown expression type")
-	expectBool(t, scope.Values["a"].IsError(), true)
+	s = Check(prog)
+	expectNthError(t, s, 0, "unknown expression type")
+	expectBool(t, s.GetVariableType("a").IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
-	scope := Check(prog)
-	expectNoErrors(t, scope.Errors())
-	expectEquivalentType(t, scope.Values["f"], types.TypeFunction{
+	s := Check(prog)
+	expectNoErrors(t, s)
+	expectEquivalentType(t, s.GetVariableType("f"), types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
 		Ret:    types.TypeIdent{Name: "Int"},
 	})
 }
 
 func TestCheckDispatchExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("add", types.TypeFunction{
+	s := scope.MakeGlobalScope()
+	s.NewVariable("add", types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 			types.TypeIdent{Name: "Int"},
 		}},
 		Ret: types.TypeIdent{Name: "Int"},
 	})
-	expr := parser.DispatchExpr{
-		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+	expr := &parser.DispatchExpr{
+		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
-			parser.NumberExpr{Tok: nop, Val: 2},
-			parser.NumberExpr{Tok: nop, Val: 5},
+			&parser.NumberExpr{Tok: nop, Val: 2},
+			&parser.NumberExpr{Tok: nop, Val: 5},
 		},
 	}
-	typ := checkDispatchExpr(scope, expr)
-	expectNoErrors(t, scope.Errors())
+	typ := checkDispatchExpr(s, expr)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Int)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", types.Int)
-	expr = parser.DispatchExpr{
-		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+	s = scope.MakeGlobalScope()
+	s.NewVariable("add", types.Int)
+	expr = &parser.DispatchExpr{
+		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
-			parser.NumberExpr{Tok: nop, Val: 2},
-			parser.NumberExpr{Tok: nop, Val: 5},
+			&parser.NumberExpr{Tok: nop, Val: 2},
+			&parser.NumberExpr{Tok: nop, Val: 5},
 		},
 	}
-	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.errs[0], "cannot call function on type 'Int'")
+	typ = checkDispatchExpr(s, expr)
+	expectNthError(t, s, 0, "cannot call function on type 'Int'")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", types.TypeFunction{
+	s = scope.MakeGlobalScope()
+	s.NewVariable("add", types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 			types.TypeIdent{Name: "Int"},
 		}},
 		Ret: types.TypeIdent{Name: "Int"},
 	})
-	expr = parser.DispatchExpr{
-		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+	expr = &parser.DispatchExpr{
+		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
-			parser.NumberExpr{Tok: nop, Val: 2},
+			&parser.NumberExpr{Tok: nop, Val: 2},
 		},
 	}
-	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.errs[0], "expected 2 arguments, got 1")
+	typ = checkDispatchExpr(s, expr)
+	expectNthError(t, s, 0, "expected 2 arguments, got 1")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("foo", types.TypeFunction{
+	s = scope.MakeGlobalScope()
+	s.NewVariable("foo", types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 		}},
 		Ret: types.TypeIdent{Name: "Int"},
 	})
-	expr = parser.DispatchExpr{
-		Callee: parser.IdentExpr{Tok: nop, Name: "foo"},
+	expr = &parser.DispatchExpr{
+		Callee: &parser.IdentExpr{Tok: nop, Name: "foo"},
 		Args: []parser.Expr{
-			parser.SelfExpr{Tok: nop},
+			&parser.SelfExpr{Tok: nop},
 		},
 	}
-	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.errs[0], "self references must be inside a function")
+	typ = checkDispatchExpr(s, expr)
+	expectNthError(t, s, 0, "self references must be inside a function")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("add", types.TypeFunction{
+	s = scope.MakeGlobalScope()
+	s.NewVariable("add", types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 			types.TypeIdent{Name: "Int"},
 		}},
 		Ret: types.TypeIdent{Name: "Int"},
 	})
-	expr = parser.DispatchExpr{
-		Callee: parser.IdentExpr{Tok: nop, Name: "add"},
+	expr = &parser.DispatchExpr{
+		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
 		Args: []parser.Expr{
-			parser.StringExpr{Tok: nop, Val: "2"},
-			parser.StringExpr{Tok: nop, Val: "4"},
+			&parser.StringExpr{Tok: nop, Val: "2"},
+			&parser.StringExpr{Tok: nop, Val: "4"},
 		},
 	}
-	typ = checkDispatchExpr(scope, expr)
-	expectAnError(t, scope.errs[0], "expected 'Int', got 'Str'")
-	expectAnError(t, scope.errs[1], "expected 'Int', got 'Str'")
+	typ = checkDispatchExpr(s, expr)
+	expectNthError(t, s, 0, "expected 'Int', got 'Str'")
+	expectNthError(t, s, 1, "expected 'Int', got 'Str'")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckAssignExpr(t *testing.T) {
 	prog, _ := parser.Parse("a := 456;")
-	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	checkProgram(scope, prog)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	s.NewVariable("a", types.Int)
+	checkProgram(s, prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("a := 456;")
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Str)
-	checkProgram(scope, prog)
-	expectAnError(t, scope.Errors()[0], "'Str' cannot be assigned type 'Int'")
+	s = scope.MakeGlobalScope()
+	s.NewVariable("a", types.Str)
+	checkProgram(s, prog)
+	expectNthError(t, s, 0, "'Str' cannot be assigned type 'Int'")
 
 	prog, _ = parser.Parse("a := \"a\" + 45;")
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Str)
-	checkProgram(scope, prog)
-	expectAnError(t, scope.Errors()[0], "operator '+' does not support Str and Int")
+	s = scope.MakeGlobalScope()
+	s.NewVariable("a", types.Str)
+	checkProgram(s, prog)
+	expectNthError(t, s, 0, "operator '+' does not support Str and Int")
 
 	prog, _ = parser.Parse("a := 123;")
-	scope = makeScope(nil, nil)
-	checkProgram(scope, prog)
-	expectAnError(t, scope.Errors()[0], "'a' cannot be assigned before it is declared")
+	s = scope.MakeGlobalScope()
+	checkProgram(s, prog)
+	expectNthError(t, s, 0, "'a' cannot be assigned before it is declared")
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	scope.registerLocalVariable("b", types.Int)
-	leftExpr := parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr := parser.IdentExpr{Tok: nop, Name: "b"}
-	expr := parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
-	typ := checkBinaryExpr(scope, expr, defaultBinopsLUT)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	s.NewVariable("a", types.Int)
+	s.NewVariable("b", types.Int)
+	leftExpr := &parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr := &parser.IdentExpr{Tok: nop, Name: "b"}
+	expr := &parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
+	typ := checkBinaryExpr(s, expr, defaultBinopsLUT)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Int)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	scope.registerLocalVariable("b", types.Int)
-	leftExpr = parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr = parser.IdentExpr{Tok: nop, Name: "b"}
-	expr = parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
-	expectNoErrors(t, scope.Errors())
+	s = scope.MakeGlobalScope()
+	s.NewVariable("a", types.Int)
+	s.NewVariable("b", types.Int)
+	leftExpr = &parser.IdentExpr{Tok: nop, Name: "a"}
+	rightExpr = &parser.IdentExpr{Tok: nop, Name: "b"}
+	expr = &parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Int)
 
-	scope = makeScope(nil, nil)
-	expr = parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
-	expectAnError(t, scope.errs[0], "variable 'a' was used before it was declared")
-	expectAnError(t, scope.errs[1], "variable 'b' was used before it was declared")
+	s = scope.MakeGlobalScope()
+	expr = &parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
+	expectNthError(t, s, 0, "variable 'a' was used before it was declared")
+	expectNthError(t, s, 1, "variable 'b' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	scope.registerLocalVariable("a", types.Int)
-	scope.registerLocalVariable("b", types.Int)
-	expr = parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(scope, expr, defaultBinopsLUT)
-	expectAnError(t, scope.errs[0], "unknown infix operator '@'")
+	s = scope.MakeGlobalScope()
+	s.NewVariable("a", types.Int)
+	s.NewVariable("b", types.Int)
+	expr = &parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
+	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
+	expectNthError(t, s, 0, "unknown infix operator '@'")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckListExpr(t *testing.T) {
-	good := func(expr parser.ListExpr, exp types.Type) {
-		scope := makeScope(nil, nil)
-		got := checkListExpr(scope, expr)
-		expectNoErrors(t, scope.Errors())
+	good := func(expr *parser.ListExpr, exp types.Type) {
+		s := scope.MakeGlobalScope()
+		got := checkListExpr(s, expr)
+		expectNoErrors(t, s)
 		expectEquivalentType(t, got, exp)
 	}
 
-	bad := func(expr parser.ListExpr, exp string) {
-		scope := makeScope(nil, nil)
-		got := checkListExpr(scope, expr)
-		expectAnError(t, scope.Errors()[0], exp)
+	bad := func(expr *parser.ListExpr, exp string) {
+		s := scope.MakeGlobalScope()
+		got := checkListExpr(s, expr)
+		expectNthError(t, s, 0, exp)
 		expectEquivalentType(t, got, types.TypeError{})
 	}
 
-	good(parser.ListExpr{Elements: []parser.Expr{
-		parser.StringExpr{Val: "foo"},
+	good(&parser.ListExpr{Elements: []parser.Expr{
+		&parser.StringExpr{Val: "foo"},
 	}}, types.TypeList{Child: types.Str})
 
-	bad(parser.ListExpr{}, "cannot determine type from empty list")
-	bad(parser.ListExpr{Elements: []parser.Expr{
-		parser.IdentExpr{Name: "a"},
+	bad(&parser.ListExpr{}, "cannot determine type from empty list")
+	bad(&parser.ListExpr{Elements: []parser.Expr{
+		&parser.IdentExpr{Name: "a"},
 	}}, "variable 'a' was used before it was declared")
-	bad(parser.ListExpr{Elements: []parser.Expr{
-		parser.StringExpr{Val: "foo"},
-		parser.NumberExpr{Val: 456},
+	bad(&parser.ListExpr{Elements: []parser.Expr{
+		&parser.StringExpr{Val: "foo"},
+		&parser.NumberExpr{Val: 456},
 	}}, "element type Int is not compatible with type Str")
 }
 
 func TestCheckSubscriptExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	str := parser.StringExpr{Tok: nop, Val: "foo"}
-	index := parser.NumberExpr{Tok: nop, Val: 0}
-	expr := parser.SubscriptExpr{ListLike: str, Index: index}
-	typ := checkSubscriptExpr(scope, expr, defaultBinopsLUT)
-	expectNoErrors(t, scope.errs)
+	s := scope.MakeGlobalScope()
+	str := &parser.StringExpr{Tok: nop, Val: "foo"}
+	index := &parser.NumberExpr{Tok: nop, Val: 0}
+	expr := &parser.SubscriptExpr{ListLike: str, Index: index}
+	typ := checkSubscriptExpr(s, expr, defaultBinopsLUT)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Str})
 
-	scope = makeScope(nil, nil)
-	list := parser.ListExpr{Elements: []parser.Expr{
-		parser.NumberExpr{Val: 123},
-		parser.NumberExpr{Val: 456},
+	s = scope.MakeGlobalScope()
+	list := &parser.ListExpr{Elements: []parser.Expr{
+		&parser.NumberExpr{Val: 123},
+		&parser.NumberExpr{Val: 456},
 	}}
-	expr = parser.SubscriptExpr{ListLike: list, Index: index}
-	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
-	expectNoErrors(t, scope.errs)
+	expr = &parser.SubscriptExpr{ListLike: list, Index: index}
+	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Int})
 
-	scope = makeScope(nil, nil)
-	str = parser.StringExpr{Tok: nop, Val: "foo"}
-	badRef := parser.IdentExpr{Tok: nop, Name: "x"}
-	expr = parser.SubscriptExpr{ListLike: str, Index: badRef}
-	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
-	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
+	s = scope.MakeGlobalScope()
+	str = &parser.StringExpr{Tok: nop, Val: "foo"}
+	badRef := &parser.IdentExpr{Tok: nop, Name: "x"}
+	expr = &parser.SubscriptExpr{ListLike: str, Index: badRef}
+	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
+	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	str = parser.StringExpr{Tok: nop, Val: "foo"}
-	badIndex := parser.StringExpr{Tok: nop, Val: "0"}
-	expr = parser.SubscriptExpr{ListLike: str, Index: badIndex}
-	typ = checkSubscriptExpr(scope, expr, defaultBinopsLUT)
-	expectAnError(t, scope.errs[0], "subscript operator does not support Str[Str]")
+	s = scope.MakeGlobalScope()
+	str = &parser.StringExpr{Tok: nop, Val: "foo"}
+	badIndex := &parser.StringExpr{Tok: nop, Val: "0"}
+	expr = &parser.SubscriptExpr{ListLike: str, Index: badIndex}
+	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
+	expectNthError(t, s, 0, "subscript operator does not support Str[Str]")
 	expectBool(t, typ.IsError(), true)
 
-	scope = makeScope(nil, nil)
-	str = parser.StringExpr{Tok: nop, Val: "foo"}
-	expr = parser.SubscriptExpr{ListLike: str, Index: index}
-	typ = checkSubscriptExpr(scope, expr, make(binopsLUT))
-	expectAnError(t, scope.errs[0], "unknown infix operator '['")
+	s = scope.MakeGlobalScope()
+	str = &parser.StringExpr{Tok: nop, Val: "foo"}
+	expr = &parser.SubscriptExpr{ListLike: str, Index: index}
+	typ = checkSubscriptExpr(s, expr, make(binopsLUT))
+	expectNthError(t, s, 0, "unknown infix operator '['")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckSelfExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn(): Void { self(); };")
-	scope := Check(prog)
-	expectNoErrors(t, scope.Errors())
+	s := Check(prog)
+	expectNoErrors(t, s)
 
 	prog, _ = parser.Parse("self();")
-	scope = Check(prog)
-	expectAnError(t, scope.errs[0], "self references must be inside a function")
+	s = Check(prog)
+	expectNthError(t, s, 0, "self references must be inside a function")
 }
 
 func TestCheckIdentExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	scope.registerLocalVariable("x", types.Int)
-	expr := parser.IdentExpr{Tok: nop, Name: "x"}
-	typ := checkIdentExpr(scope, expr)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	s.NewVariable("x", types.Int)
+	expr := &parser.IdentExpr{Tok: nop, Name: "x"}
+	typ := checkIdentExpr(s, expr)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Int)
 
-	scope = makeScope(nil, nil)
-	expr = parser.IdentExpr{Tok: nop, Name: "x"}
-	typ = checkIdentExpr(scope, expr)
-	expectAnError(t, scope.errs[0], "variable 'x' was used before it was declared")
+	s = scope.MakeGlobalScope()
+	expr = &parser.IdentExpr{Tok: nop, Name: "x"}
+	typ = checkIdentExpr(s, expr)
+	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 }
 
 func TestCheckNumberExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	expr := parser.NumberExpr{Tok: nop, Val: 123}
-	typ := checkNumberExpr(scope, expr)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	expr := &parser.NumberExpr{Tok: nop, Val: 123}
+	typ := checkNumberExpr(s, expr)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Int)
 }
 
 func TestCheckStringExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	expr := parser.StringExpr{Tok: nop, Val: "abc"}
-	typ := checkStringExpr(scope, expr)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	expr := &parser.StringExpr{Tok: nop, Val: "abc"}
+	typ := checkStringExpr(s, expr)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Str)
 }
 
 func TestCheckBooleanExpr(t *testing.T) {
-	scope := makeScope(nil, nil)
-	expr := parser.BooleanExpr{Tok: nop, Val: true}
-	typ := checkBooleanExpr(scope, expr)
-	expectNoErrors(t, scope.Errors())
+	s := scope.MakeGlobalScope()
+	expr := &parser.BooleanExpr{Tok: nop, Val: true}
+	typ := checkBooleanExpr(s, expr)
+	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, types.Bool)
 }
 
@@ -409,7 +410,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note parser.TypeNote
 
 	note = parser.TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeVoid{})
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeVoid{})
 
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
@@ -418,7 +419,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeFunction{
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 			types.TypeIdent{Name: "Bool"},
@@ -433,7 +434,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteVoid{},
 	}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeFunction{
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeFunction{
 		Params: types.TypeTuple{Children: []types.Type{
 			types.TypeIdent{Name: "Int"},
 			types.TypeIdent{Name: "Bool"},
@@ -445,31 +446,53 @@ func TestConvertTypeSig(t *testing.T) {
 		parser.TypeNoteIdent{Tok: nop, Name: "Int"},
 		parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeTuple{Children: []types.Type{
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeTuple{Children: []types.Type{
 		types.TypeIdent{Name: "Int"},
 		types.TypeIdent{Name: "Bool"},
 	}})
 
 	note = parser.TypeNoteList{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeList{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeList{Child: types.TypeIdent{Name: "Int"}})
 
 	note = parser.TypeNoteOptional{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeOptional{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeOptional{Child: types.TypeIdent{Name: "Int"}})
 
 	note = parser.TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, types.ConvertTypeNote(note), types.TypeIdent{Name: "Int"})
+	expectEquivalentType(t, ConvertTypeNote(note), types.TypeIdent{Name: "Int"})
 
 	note = nil
-	expectBool(t, types.ConvertTypeNote(note) == nil, true)
+	expectBool(t, ConvertTypeNote(note) == nil, true)
 }
 
-func expectNoErrors(t *testing.T, errs []error) {
-	if len(errs) > 0 {
-		for i, err := range errs {
+func expectNthError(t *testing.T, s scope.Scope, n int, msg string) {
+	if len(s.GetErrors()) <= n {
+		t.Fatalf("Expected at least %d errors", n+1)
+	}
+
+	expectAnError(t, s.GetErrors()[n], msg)
+}
+
+func expectLocalVariableType(t *testing.T, s scope.Scope, name string, exp types.Type) {
+	if s.HasLocalVariable(name) {
+		_, got, err := s.GetLocalVariable(name)
+
+		if err != nil {
+			t.Errorf("Expected no errors, got '%s'", err)
+		} else {
+			expectEquivalentType(t, got, exp)
+		}
+	} else {
+		t.Errorf("Expected local variable '%s', none found", name)
+	}
+}
+
+func expectNoErrors(t *testing.T, s scope.Scope) {
+	if s.HasErrors() {
+		for i, err := range s.GetErrors() {
 			t.Errorf("%d '%s'", i, err)
 		}
 
-		t.Fatalf("Expected no errors, found %d", len(errs))
+		t.Fatalf("Expected no errors, found %d", len(s.GetErrors()))
 	}
 }
 
@@ -488,6 +511,14 @@ func expectNil(t *testing.T, got interface{}) {
 }
 
 func expectEquivalentType(t *testing.T, t1 types.Type, t2 types.Type) {
+	if t1 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
+	if t2 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
 	same := t1.Equals(t2)
 	commutative := t1.Equals(t2) == t2.Equals(t1)
 
