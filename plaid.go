@@ -66,11 +66,11 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 				mod := codegen.Generate(ir)
 
 				if showBC {
-					fmt.Println(debug.PrettyTree(mod.Main))
+					fmt.Println(debug.PrettyTree(mod.Root))
 				}
 
 				if showOut {
-					vm.Run(mod.Main)
+					vm.Run(mod.Root.Bytecode)
 				}
 			}
 		}

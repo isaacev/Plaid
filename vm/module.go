@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"plaid/debug"
 	"plaid/types"
 )
 
@@ -29,27 +30,47 @@ type ClosureTemplate struct {
 	ID         int
 	Parameters []*CellTemplate
 	Bytecode   *Bytecode
+	Enclosed   []*ClosureTemplate
 }
 
-func (c *ClosureTemplate) String() string {
-	return fmt.Sprintf("<closure template #%d>", c.ID)
+// Enclose does some stuff
+func (c *ClosureTemplate) Enclose(enclosed *ClosureTemplate) {
+	c.Enclosed = append(c.Enclosed, enclosed)
+}
+
+func (c *ClosureTemplate) String() (out string) {
+	out += fmt.Sprintf("<closure template #%d>\n", c.ID)
+	out += c.Bytecode.String()
+	return out
+}
+
+// StringChildren satisfies the requirements of the debug.StringTree interface
+// so that related closures can be pretty-printed
+func (c *ClosureTemplate) StringChildren() (children []debug.StringTree) {
+	for _, enclosed := range c.Enclosed {
+		children = append(children, enclosed)
+	}
+	return children
 }
 
 func (c *ClosureTemplate) isObject() {}
 
 var uniqueClosureID int
 
-// MakeClosureTemplate is a helper function to create a closure template from
-// a given set of parameter CellTemplates and a Bytecode blob. This function
-// should be called during codegen exactly once for each function literal
-func MakeClosureTemplate(params []*CellTemplate, bc *Bytecode) *ClosureTemplate {
+// MakeEmptyClosureTemplate is a helper function to create a closure template
+// from a given set of parameter CellTemplates and a Bytecode blob. This
+// function should be called during codegen exactly once for each function
+// literal
+func MakeEmptyClosureTemplate(params []*CellTemplate) *ClosureTemplate {
 	nextID := uniqueClosureID
 	uniqueClosureID++
-	return &ClosureTemplate{
+	template := &ClosureTemplate{
 		ID:         nextID,
 		Parameters: params,
-		Bytecode:   bc,
+		Bytecode:   &Bytecode{},
 	}
+	template.Bytecode.Closure = template
+	return template
 }
 
 // Closure is an object created during runtime from a ClosureTemplate that binds

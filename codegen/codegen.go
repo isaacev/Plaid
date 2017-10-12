@@ -8,21 +8,21 @@ import (
 // Generate converts an IR into a Module
 func Generate(ir IR) *vm.Module {
 	return &vm.Module{
-		Main: genProg(ir),
+		Root:    genProg(ir),
+		Exports: make(map[string]*vm.Export),
 	}
 }
 
-func genProg(ir IR) *vm.Bytecode {
-	bc := &vm.Bytecode{}
+func genProg(ir IR) *vm.ClosureTemplate {
+	template := vm.MakeEmptyClosureTemplate(nil)
 
 	for _, record := range ir.Scope.Local {
-		bc.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
+		template.Bytecode.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
 	}
 
-	genVoidNodes(bc, ir.Children)
-
-	bc.Write(vm.InstrHalt{})
-	return bc
+	genVoidNodes(template.Bytecode, ir.Children)
+	template.Bytecode.Write(vm.InstrHalt{})
+	return template
 }
 
 func genVoidNodes(bc *vm.Bytecode, nodes []IRVoidNode) {
@@ -86,7 +86,7 @@ func genTypedNode(bc *vm.Bytecode, node IRTypedNode) {
 }
 
 func genFunctionNode(bc *vm.Bytecode, node IRFunctionNode) {
-	fnbc := bc.Descend()
+	template := vm.MakeEmptyClosureTemplate(nil)
 
 localLoop:
 	for _, record := range node.Scope.Local {
@@ -96,18 +96,17 @@ localLoop:
 			}
 		}
 
-		fnbc.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
+		template.Bytecode.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
 	}
 
-	genVoidNodes(fnbc, node.Body)
+	genVoidNodes(template.Bytecode, node.Body)
 
-	var params []*vm.CellTemplate
 	for _, param := range node.Params {
-		params = append(params, recordToCellTemplate(param))
+		template.Parameters = append(template.Parameters, recordToCellTemplate(param))
 	}
 
-	obj := vm.MakeClosureTemplate(params, fnbc)
-	bc.Write(vm.InstrPush{Val: obj})
+	bc.Closure.Enclose(template)
+	bc.Write(vm.InstrPush{Val: template})
 }
 
 func genDispatchNode(bc *vm.Bytecode, node IRDispatchNode) {
