@@ -14,6 +14,25 @@ type Module struct {
 	Exports map[string]*Export
 }
 
+// HasExport returns true if this module has an export with the given name
+func (m *Module) HasExport(name string) bool {
+	if _, exists := m.Exports[name]; exists {
+		return true
+	}
+
+	return false
+}
+
+// GetExport returns an Export struct if the given variable is exported, returns
+// nil otherwise
+func (m *Module) GetExport(name string) *Export {
+	if m.HasExport(name) {
+		return m.Exports[name]
+	}
+
+	return nil
+}
+
 // Export describes an object made available to other modules. That object is
 // described by a type for use during the type-checking stage of whatever
 // modules use this export
