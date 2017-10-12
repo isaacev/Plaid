@@ -46,10 +46,8 @@ var defaultBinopsLUT = binopsLUT{
 func Check(prog *parser.Program, modules ...*vm.Module) *scope.GlobalScope {
 	global := scope.MakeGlobalScope()
 
-	for _, library := range libraries {
-		for name, builtin := range library {
-			global.NewVariable(name, builtin.Type)
-		}
+	for _, module := range modules {
+		global.Import(module)
 	}
 
 	checkProgram(global, prog)

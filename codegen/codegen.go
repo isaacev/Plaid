@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"plaid/libs"
 	"plaid/vm"
 )
 
@@ -10,6 +11,7 @@ func Generate(ir IR) *vm.Module {
 	return &vm.Module{
 		Root:    genProg(ir),
 		Exports: make(map[string]*vm.Export),
+		Imports: []*vm.Module{libs.IO, libs.Conv},
 	}
 }
 

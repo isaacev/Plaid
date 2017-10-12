@@ -12,6 +12,7 @@ type Module struct {
 	Name    string
 	Root    *ClosureTemplate
 	Exports map[string]*Export
+	Imports []*Module
 }
 
 // HasExport returns true if this module has an export with the given name
