@@ -3,169 +3,150 @@ package codegen
 import (
 	"fmt"
 	"plaid/parser"
-	"plaid/types"
+	"plaid/scope"
 	"plaid/vm"
 )
 
 // Transform converts an AST to the intermediate representation (IR) which is a
 // precursor to the compiled bytecode
-func Transform(prog parser.Program, libraries ...vm.Library) IR {
-	scope := makeLexicalScope(nil)
-
-	for _, library := range libraries {
-		for name, builtin := range library {
-			scope.addGlobalVariable(name, builtin)
-		}
-	}
-
-	nodes := transformStmts(scope, prog.Stmts)
-	return IR{scope, nodes}
+func Transform(prog *parser.Program, modules ...*vm.Module) IR {
+	global := prog.Scope
+	nodes := transformStmts(global, prog.Stmts)
+	return IR{global, nodes}
 }
 
-func transformStmts(scope *LexicalScope, stmts []parser.Stmt) []IRVoidNode {
+func transformStmts(s scope.Scope, stmts []parser.Stmt) []IRVoidNode {
 	var nodes []IRVoidNode
 	for _, stmt := range stmts {
-		node := transformStmt(scope, stmt)
+		node := transformStmt(s, stmt)
 		nodes = append(nodes, node)
 	}
 	return nodes
 }
 
-func transformStmt(scope *LexicalScope, stmt parser.Stmt) IRVoidNode {
+func transformStmt(s scope.Scope, stmt parser.Stmt) IRVoidNode {
 	switch stmt := stmt.(type) {
-	case parser.IfStmt:
-		return transformIfStmt(scope, stmt)
-	case parser.DeclarationStmt:
-		return transformDeclarationStmt(scope, stmt)
-	case parser.ReturnStmt:
-		return transformReturnStmt(scope, stmt)
-	case parser.ExprStmt:
-		return transformExprStmt(scope, stmt)
+	case *parser.IfStmt:
+		return transformIfStmt(s, stmt)
+	case *parser.DeclarationStmt:
+		return transformDeclarationStmt(s, stmt)
+	case *parser.ReturnStmt:
+		return transformReturnStmt(s, stmt)
+	case *parser.ExprStmt:
+		return transformExprStmt(s, stmt)
 	default:
 		panic(fmt.Sprintf("cannot transform %T", stmt))
 	}
 }
 
-func transformIfStmt(scope *LexicalScope, stmt parser.IfStmt) IRVoidNode {
-	cond := transformExpr(scope, stmt.Cond)
-	clause := transformStmts(scope, stmt.Clause.Stmts)
+func transformIfStmt(s scope.Scope, stmt *parser.IfStmt) IRVoidNode {
+	cond := transformExpr(s, stmt.Cond)
+	clause := transformStmts(s, stmt.Clause.Stmts)
 	return IRCondNode{cond, clause}
 }
 
-func transformDeclarationStmt(scope *LexicalScope, stmt parser.DeclarationStmt) IRVoidNode {
+func transformDeclarationStmt(s scope.Scope, stmt *parser.DeclarationStmt) IRVoidNode {
 	name := stmt.Name.Name
-	child := transformExpr(scope, stmt.Expr)
-	record := scope.addLocalVariable(name, child.Type())
-	return IRVoidedNode{IRAssignNode{record, child}}
+	child := transformExpr(s, stmt.Expr)
+	reg := s.GetVariableRegister(name)
+	return IRVoidedNode{IRAssignNode{reg, child}}
 }
 
-func transformReturnStmt(scope *LexicalScope, stmt parser.ReturnStmt) IRVoidNode {
+func transformReturnStmt(s scope.Scope, stmt *parser.ReturnStmt) IRVoidNode {
 	if stmt.Expr != nil {
-		return IRReturnNode{transformExpr(scope, stmt.Expr)}
+		return IRReturnNode{transformExpr(s, stmt.Expr)}
 	}
 
 	return IRReturnNode{nil}
 }
 
-func transformExprStmt(scope *LexicalScope, stmt parser.ExprStmt) IRVoidNode {
-	return IRVoidedNode{transformExpr(scope, stmt.Expr)}
+func transformExprStmt(s scope.Scope, stmt *parser.ExprStmt) IRVoidNode {
+	return IRVoidedNode{transformExpr(s, stmt.Expr)}
 }
 
-func transformExpr(scope *LexicalScope, expr parser.Expr) IRTypedNode {
+func transformExpr(s scope.Scope, expr parser.Expr) IRTypedNode {
 	switch expr := expr.(type) {
-	case parser.FunctionExpr:
-		return transformFunctionExpr(scope, expr)
-	case parser.DispatchExpr:
-		return transformDispatchExpr(scope, expr)
-	case parser.AssignExpr:
-		return transformAssignExpr(scope, expr)
-	case parser.BinaryExpr:
-		return transformBinaryExpr(scope, expr)
-	case parser.SelfExpr:
-		return transformSelfExpr(scope, expr)
-	case parser.IdentExpr:
-		return transformIdentExpr(scope, expr)
-	case parser.NumberExpr:
-		return transformNumberExpr(scope, expr)
-	case parser.StringExpr:
-		return transformStringExpr(scope, expr)
-	case parser.BooleanExpr:
-		return transformBooleanExpr(scope, expr)
+	case *parser.FunctionExpr:
+		return transformFunctionExpr(s, expr)
+	case *parser.DispatchExpr:
+		return transformDispatchExpr(s, expr)
+	case *parser.AssignExpr:
+		return transformAssignExpr(s, expr)
+	case *parser.BinaryExpr:
+		return transformBinaryExpr(s, expr)
+	case *parser.SelfExpr:
+		return transformSelfExpr(s, expr)
+	case *parser.IdentExpr:
+		return transformIdentExpr(s, expr)
+	case *parser.NumberExpr:
+		return transformNumberExpr(s, expr)
+	case *parser.StringExpr:
+		return transformStringExpr(s, expr)
+	case *parser.BooleanExpr:
+		return transformBooleanExpr(s, expr)
 	default:
 		panic(fmt.Sprintf("cannot transform %T", expr))
 	}
 }
 
-func transformFunctionExpr(scope *LexicalScope, expr parser.FunctionExpr) IRTypedNode {
-	local := makeLexicalScope(scope)
-
-	var params []*VarRecord
+func transformFunctionExpr(s scope.Scope, expr *parser.FunctionExpr) IRTypedNode {
+	local := expr.Scope
+	var params []*vm.RegisterTemplate
 	for _, param := range expr.Params {
 		name := param.Name.Name
-		typ := types.ConvertTypeNote(param.Note)
-		record := local.addLocalVariable(name, typ)
-		params = append(params, record)
+		reg := local.GetLocalVariableRegister(name)
+		params = append(params, reg)
 	}
 
-	ret := types.ConvertTypeNote(expr.Ret)
-	local.SelfRet = ret
 	block := transformStmts(local, expr.Block.Stmts)
 	block = append(block, IRReturnNode{})
-	return IRFunctionNode{local, params, ret, block}
+	return IRFunctionNode{local, params, local.GetSelfReference().Ret, block}
 }
 
-func transformDispatchExpr(scope *LexicalScope, expr parser.DispatchExpr) IRTypedNode {
-	callee := transformExpr(scope, expr.Callee)
+func transformDispatchExpr(s scope.Scope, expr *parser.DispatchExpr) IRTypedNode {
+	callee := transformExpr(s, expr.Callee)
 
 	var args []IRTypedNode
 	for _, expr := range expr.Args {
-		arg := transformExpr(scope, expr)
+		arg := transformExpr(s, expr)
 		args = append(args, arg)
 	}
 
 	return IRDispatchNode{callee, args}
 }
 
-func transformAssignExpr(scope *LexicalScope, expr parser.AssignExpr) IRTypedNode {
+func transformAssignExpr(s scope.Scope, expr *parser.AssignExpr) IRTypedNode {
 	name := expr.Left.Name
-	child := transformExpr(scope, expr.Right)
-	record := scope.getVariable(name)
-	return IRAssignNode{record, child}
+	child := transformExpr(s, expr.Right)
+	reg := s.GetVariableRegister(name)
+	return IRAssignNode{reg, child}
 }
 
-func transformBinaryExpr(scope *LexicalScope, expr parser.BinaryExpr) IRTypedNode {
+func transformBinaryExpr(s scope.Scope, expr *parser.BinaryExpr) IRTypedNode {
 	oper := expr.Oper
-	left := transformExpr(scope, expr.Left)
-	right := transformExpr(scope, expr.Right)
+	left := transformExpr(s, expr.Left)
+	right := transformExpr(s, expr.Right)
 	return IRBinaryNode{oper, left, right}
 }
 
-func transformSelfExpr(scope *LexicalScope, expr parser.SelfExpr) IRTypedNode {
-	return IRSelfReferenceNode{scope.SelfRet}
+func transformSelfExpr(s scope.Scope, expr *parser.SelfExpr) IRTypedNode {
+	return IRSelfReferenceNode{s.GetSelfReference().Ret}
 }
 
-func transformIdentExpr(scope *LexicalScope, expr parser.IdentExpr) IRTypedNode {
+func transformIdentExpr(s scope.Scope, expr *parser.IdentExpr) IRTypedNode {
 	name := expr.Name
-	if scope.hasLocalVariable(name) {
-		record := scope.getVariable(name)
-		return IRReferenceNode{record}
-	} else if scope.hasGlobalVariable(name) {
-		record := scope.getGlobalVariable(name)
-		return IRBuiltinReferenceNode{record}
-	} else {
-		record := scope.getVariable(name)
-		return IRReferenceNode{record}
-	}
+	reg := s.GetVariableRegister(name)
+	return IRReferenceNode{reg}
 }
 
-func transformNumberExpr(scope *LexicalScope, expr parser.NumberExpr) IRTypedNode {
+func transformNumberExpr(s scope.Scope, expr *parser.NumberExpr) IRTypedNode {
 	return IRIntegerLiteralNode{int64(expr.Val)}
 }
 
-func transformStringExpr(scope *LexicalScope, expr parser.StringExpr) IRTypedNode {
+func transformStringExpr(s scope.Scope, expr *parser.StringExpr) IRTypedNode {
 	return IRStringLiteralNode{expr.Val}
 }
 
-func transformBooleanExpr(scope *LexicalScope, expr parser.BooleanExpr) IRTypedNode {
+func transformBooleanExpr(s scope.Scope, expr *parser.BooleanExpr) IRTypedNode {
 	return IRBooleanLitearlNode{expr.Val}
 }

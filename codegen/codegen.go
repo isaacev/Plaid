@@ -16,8 +16,9 @@ func Generate(ir IR) *vm.Module {
 func genProg(ir IR) *vm.ClosureTemplate {
 	template := vm.MakeEmptyClosureTemplate(nil)
 
-	for _, record := range ir.Scope.Local {
-		template.Bytecode.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
+	for _, name := range ir.Scope.GetLocalVariableNames() {
+		reg := ir.Scope.GetLocalVariableRegister(name)
+		template.Bytecode.Write(vm.InstrReserve{Register: reg})
 	}
 
 	genVoidNodes(template.Bytecode, ir.Children)
@@ -89,20 +90,22 @@ func genFunctionNode(bc *vm.Bytecode, node IRFunctionNode) {
 	template := vm.MakeEmptyClosureTemplate(nil)
 
 localLoop:
-	for _, record := range node.Scope.Local {
+	for _, name := range node.Scope.GetLocalVariableNames() {
+		reg := node.Scope.GetLocalVariableRegister(name)
+		// Only register variables that ARE NOT paramters
 		for _, param := range node.Params {
-			if record == param {
+			if reg == param {
 				continue localLoop
 			}
 		}
 
-		template.Bytecode.Write(vm.InstrReserve{Template: recordToCellTemplate(record)})
+		template.Bytecode.Write(vm.InstrReserve{Register: reg})
 	}
 
 	genVoidNodes(template.Bytecode, node.Body)
 
 	for _, param := range node.Params {
-		template.Parameters = append(template.Parameters, recordToCellTemplate(param))
+		template.Parameters = append(template.Parameters, param)
 	}
 
 	bc.Closure.Enclose(template)
@@ -121,7 +124,7 @@ func genDispatchNode(bc *vm.Bytecode, node IRDispatchNode) {
 func genAssignNode(bc *vm.Bytecode, node IRAssignNode) {
 	genTypedNode(bc, node.Child)
 	bc.Write(vm.InstrCopy{})
-	bc.Write(vm.InstrStore{Template: recordToCellTemplate(node.Record)})
+	bc.Write(vm.InstrStore{Register: node.Register})
 }
 
 func genBinaryNode(bc *vm.Bytecode, node IRBinaryNode) {
@@ -151,7 +154,7 @@ func genSelfReferenceNode(bc *vm.Bytecode, node IRSelfReferenceNode) {
 }
 
 func genReferenceNode(bc *vm.Bytecode, node IRReferenceNode) {
-	bc.Write(vm.InstrLoad{Template: recordToCellTemplate(node.Record)})
+	bc.Write(vm.InstrLoad{Register: node.Register})
 }
 
 func genBuiltinReferenceNode(bc *vm.Bytecode, node IRBuiltinReferenceNode) {
@@ -172,11 +175,4 @@ func getStringLiteralNode(bc *vm.Bytecode, node IRStringLiteralNode) {
 func genBooleanLiteralNode(bc *vm.Bytecode, node IRBooleanLitearlNode) {
 	obj := &vm.ObjectBool{Val: node.Val}
 	bc.Write(vm.InstrPush{Val: obj})
-}
-
-func recordToCellTemplate(record *VarRecord) *vm.CellTemplate {
-	return &vm.CellTemplate{
-		ID:   record.ID,
-		Name: record.Name,
-	}
 }

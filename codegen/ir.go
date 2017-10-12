@@ -2,32 +2,24 @@ package codegen
 
 import (
 	"fmt"
+	"plaid/scope"
 	"plaid/types"
 	"plaid/vm"
 	"strings"
 )
 
-var varRecordID uint
-
-// VarRecord represents a declared variable
-type VarRecord struct {
-	ID   uint
-	Name string
-	typ  types.Type
-}
-
-func (vr *VarRecord) String() string { return fmt.Sprintf("%s<%d>", vr.Name, vr.ID) }
-
 // IR represents the root of the intermediate representation tree
 type IR struct {
-	Scope    *LexicalScope
+	Scope    scope.Scope
 	Children []IRVoidNode
 }
 
 func (ir *IR) String() string {
 	out := "(local"
-	for _, record := range ir.Scope.Local {
-		out += fmt.Sprintf(" %s:%s", record, record.typ)
+	for _, name := range ir.Scope.GetLocalVariableNames() {
+		reg := ir.Scope.GetLocalVariableRegister(name)
+		typ := ir.Scope.GetLocalVariableType(name)
+		out += fmt.Sprintf(" %s:%s", reg, typ)
 	}
 	out += ")"
 	for _, child := range ir.Children {
@@ -94,8 +86,8 @@ func (vn IRVoidedNode) isVoidNode()    {}
 
 // IRFunctionNode represents a function literal
 type IRFunctionNode struct {
-	Scope  *LexicalScope
-	Params []*VarRecord
+	Scope  scope.Scope
+	Params []*vm.RegisterTemplate
 	Ret    types.Type
 	Body   []IRVoidNode
 }
@@ -115,10 +107,12 @@ func (fn IRFunctionNode) String() string {
 		out += fmt.Sprintf(":%s", fn.Ret)
 	}
 	out += " {"
-	if len(fn.Scope.Local) > 0 {
+	if len(fn.Scope.GetLocalVariableNames()) > 0 {
 		out += "\n  (local"
-		for _, record := range fn.Scope.Local {
-			out += fmt.Sprintf(" %s:%s", record, record.typ)
+		for _, name := range fn.Scope.GetLocalVariableNames() {
+			reg := fn.Scope.GetLocalVariableRegister(name)
+			typ := fn.Scope.GetLocalVariableType(name)
+			out += fmt.Sprintf(" %s:%s", reg, typ)
 		}
 		out += ")"
 	}
@@ -155,13 +149,13 @@ func (dn IRDispatchNode) isTypedNode() {}
 
 // IRAssignNode represents an IR node that changes the value of a variable
 type IRAssignNode struct {
-	Record *VarRecord
-	Child  IRTypedNode
+	Register *vm.RegisterTemplate
+	Child    IRTypedNode
 }
 
 // Type returns the value type that this node resolves to
 func (an IRAssignNode) Type() types.Type { return an.Child.Type() }
-func (an IRAssignNode) String() string   { return fmt.Sprintf("(= %s %s)", an.Record, an.Child) }
+func (an IRAssignNode) String() string   { return fmt.Sprintf("(= %s %s)", an.Register, an.Child) }
 func (an IRAssignNode) isTypedNode()     {}
 
 // IRBinaryNode reprents a binary expression and operator
@@ -188,12 +182,12 @@ func (srn IRSelfReferenceNode) isTypedNode()     {}
 
 // IRReferenceNode resolves to a known variable
 type IRReferenceNode struct {
-	Record *VarRecord
+	Register *vm.RegisterTemplate
 }
 
 // Type returns the value type that this node resolves to
 func (rn IRReferenceNode) Type() types.Type { return types.Int }
-func (rn IRReferenceNode) String() string   { return rn.Record.String() }
+func (rn IRReferenceNode) String() string   { return rn.Register.String() }
 func (rn IRReferenceNode) isTypedNode()     {}
 
 // IRBuiltinReferenceNode resolves to a builtin function
