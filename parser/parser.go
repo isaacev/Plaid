@@ -461,7 +461,7 @@ func parseFunction(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return FunctionExpr{tok, params, ret, block}, nil
+	return FunctionExpr{tok, params, ret, block, nil}, nil
 }
 
 func parseFunctionSignature(p *Parser) ([]FunctionParam, TypeNote, error) {

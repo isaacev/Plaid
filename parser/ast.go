@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"plaid/lexer"
+	"plaid/scope"
 	"strconv"
 	"strings"
 )
@@ -239,6 +240,7 @@ type FunctionExpr struct {
 	Params []FunctionParam
 	Ret    TypeNote
 	Block  StmtBlock
+	Scope  scope.Scope
 }
 
 // Start returns a location that this node can be considered to start at

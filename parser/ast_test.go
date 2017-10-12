@@ -122,7 +122,7 @@ func TestFunctionExpr(t *testing.T) {
 		DeclarationStmt{nop, IdentExpr{nop, "z"}, NumberExpr{nop, 123}},
 	}, nop}
 
-	expectString(t, FunctionExpr{nop, params, ret, block}, "(fn (x:Int y):Str {\n  (let z 123)})")
+	expectString(t, FunctionExpr{nop, params, ret, block, nil}, "(fn (x:Int y):Str {\n  (let z 123)})")
 }
 
 func TestDispatchExpr(t *testing.T) {
