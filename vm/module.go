@@ -106,6 +106,7 @@ type Closure struct {
 	Env        *Env
 	Parameters []*RegisterTemplate
 	Bytecode   *Bytecode
+	Template   *ClosureTemplate
 }
 
 func (c *Closure) String() string { return "<closure>" }

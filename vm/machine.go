@@ -177,5 +177,6 @@ func buildClosureFromTemplate(env *Env, obj *ClosureTemplate) *Closure {
 		Env:        env,
 		Parameters: obj.Parameters,
 		Bytecode:   obj.Bytecode,
+		Template:   obj,
 	}
 }
