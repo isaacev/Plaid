@@ -21,7 +21,9 @@ type Export struct {
 }
 
 // ClosureTemplate is generated in the codegen stage and encapsulates the scope
-// and bytecode data required to build a closure during execution
+// and bytecode data required to build a closure during execution. Each
+// function literal is converted to a single ClosureTemplate but each template
+// may be converted to any number of Closures during runtime
 type ClosureTemplate struct {
 	ID         int
 	Parameters []*CellTemplate
@@ -33,7 +35,9 @@ func (ct *ClosureTemplate) isObject()      {}
 
 var uniqueClosureID int
 
-// MakeClosureTemplate builds a closure template and assigns it a unique ID
+// MakeClosureTemplate is a helper function to create a closure template from
+// a given set of parameter CellTemplates and a Bytecode blob. This function
+// should be called during codegen exactly once for each function literal
 func MakeClosureTemplate(params []*CellTemplate, bc *Bytecode) *ClosureTemplate {
 	nextID := uniqueClosureID
 	uniqueClosureID++
@@ -44,7 +48,11 @@ func MakeClosureTemplate(params []*CellTemplate, bc *Bytecode) *ClosureTemplate 
 	}
 }
 
-// Closure is bytecode bound to a lexical scope
+// Closure is an object created during runtime from a ClosureTemplate that binds
+// a runtime environment to a Bytecode blob so that any evaluation of that
+// Bytecode is done in the context of the bound environment. Closures are
+// objects that can be passed, referenced, and manipulated the same as any other
+// object in the virtual machine.
 type Closure struct {
 	Env        *Env
 	Parameters []*CellTemplate
