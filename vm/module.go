@@ -18,8 +18,9 @@ type Module struct {
 // described by a type for use during the type-checking stage of whatever
 // modules use this export
 type Export struct {
-	Type   types.Type
-	Object Object
+	Type     types.Type
+	Register *RegisterTemplate
+	Object   Object
 }
 
 // ClosureTemplate is generated in the codegen stage and encapsulates the scope
