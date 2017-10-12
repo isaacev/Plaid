@@ -9,6 +9,3 @@ type Builtin struct {
 	Type types.Type
 	Func builtinFunc
 }
-
-// Library is a bundle of builtin functions mapped to the respective names
-type Library map[string]*Builtin

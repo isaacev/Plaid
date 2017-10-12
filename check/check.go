@@ -43,7 +43,7 @@ var defaultBinopsLUT = binopsLUT{
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(prog *parser.Program, libraries ...vm.Library) *scope.GlobalScope {
+func Check(prog *parser.Program, modules ...*vm.Module) *scope.GlobalScope {
 	global := scope.MakeGlobalScope()
 
 	for _, library := range libraries {

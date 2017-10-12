@@ -5,7 +5,6 @@ import (
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/types"
-	"plaid/vm"
 	"testing"
 )
 
@@ -15,15 +14,15 @@ func TestCheckMain(t *testing.T) {
 	s := Check(&parser.Program{})
 	expectNoErrors(t, s)
 
-	var lib1 vm.Library = map[string]*vm.Builtin{
-		"foo": &vm.Builtin{
-			Type: types.Bool,
-			Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
-		},
-	}
-	s = Check(&parser.Program{}, lib1)
-	expectLocalVariableType(t, s, "foo", types.Bool)
-	expectNoErrors(t, s)
+	// var lib1 vm.Library = map[string]*vm.Builtin{
+	// 	"foo": &vm.Builtin{
+	// 		Type: types.Bool,
+	// 		Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
+	// 	},
+	// }
+	// s = Check(&parser.Program{}, lib1)
+	// expectLocalVariableType(t, s, "foo", types.Bool)
+	// expectNoErrors(t, s)
 }
 
 func TestCheckProgram(t *testing.T) {
