@@ -1,12 +1,9 @@
-package types
+package check
 
 import (
-	"plaid/lexer"
 	"plaid/parser"
 	"testing"
 )
-
-var nop lexer.Token
 
 func TestConvertTypeNote(t *testing.T) {
 	var note parser.TypeNote
