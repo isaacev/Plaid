@@ -13,7 +13,7 @@ var tTuple = TypeTuple{[]Type{tInt, tBool, tOpt, tList}}
 var tFunc = TypeFunction{tTuple, tList}
 
 func TestTypeError(t *testing.T) {
-	expectNotEquivalentType(t, tError, tError)
+	expectEquivalentType(t, tError, tError)
 	expectNotEquivalentType(t, tError, tInt)
 
 	expectString(t, tError.String(), "ERROR")
