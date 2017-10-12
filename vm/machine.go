@@ -14,6 +14,17 @@ func Run(bc *Bytecode) {
 	runWithEnv(env, bc)
 }
 
+// Eval interprets a given module
+func Eval(module *Module) {
+	env := makeEnv(nil)
+
+	for _, mod := range module.Imports {
+		env.Import(mod)
+	}
+
+	runWithEnv(env, module.Root.Bytecode)
+}
+
 func runWithEnv(env *Env, bc *Bytecode) {
 	var ip uint32
 	instr := bc.Instrs[ip]

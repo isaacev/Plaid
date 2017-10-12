@@ -70,7 +70,7 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 				}
 
 				if showOut {
-					vm.Run(mod.Root.Bytecode)
+					vm.Eval(mod)
 				}
 			}
 		}
