@@ -58,8 +58,12 @@ func (c *ClosureTemplate) Enclose(enclosed *ClosureTemplate) {
 	c.Enclosed = append(c.Enclosed, enclosed)
 }
 
+func (c *ClosureTemplate) StringName() string {
+	return fmt.Sprintf("<closure template #%d>", c.ID)
+}
+
 func (c *ClosureTemplate) String() (out string) {
-	out += fmt.Sprintf("<closure template #%d>\n", c.ID)
+	out += c.StringName() + "\n"
 	out += c.Bytecode.String()
 	return out
 }

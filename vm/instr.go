@@ -51,8 +51,14 @@ type InstrPush struct {
 	Val Object
 }
 
-func (ip InstrPush) String() string { return fmt.Sprintf("%-8s%s", "push", ip.Val) }
-func (ip InstrPush) isInstr()       {}
+func (ip InstrPush) String() string {
+	if c, ok := ip.Val.(*ClosureTemplate); ok {
+		return fmt.Sprintf("%-8s%s", "push", c.StringName())
+	}
+
+	return fmt.Sprintf("%-8s%s", "push", ip.Val)
+}
+func (ip InstrPush) isInstr() {}
 
 // InstrPop remove the top value from the stack and discard the value
 type InstrPop struct{}
