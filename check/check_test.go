@@ -5,6 +5,7 @@ import (
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/types"
+	"plaid/vm"
 	"testing"
 )
 
@@ -14,15 +15,17 @@ func TestCheckMain(t *testing.T) {
 	s := Check(&parser.Program{})
 	expectNoErrors(t, s)
 
-	// var lib1 vm.Library = map[string]*vm.Builtin{
-	// 	"foo": &vm.Builtin{
-	// 		Type: types.Bool,
-	// 		Func: func(args []vm.Object) (vm.Object, error) { return nil, nil },
-	// 	},
-	// }
-	// s = Check(&parser.Program{}, lib1)
-	// expectLocalVariableType(t, s, "foo", types.Bool)
-	// expectNoErrors(t, s)
+	mod1 := &vm.Module{
+		Name: "mod1",
+		Exports: map[string]*vm.Export{
+			"foo": &vm.Export{
+				Type: types.Bool,
+			},
+		},
+	}
+	s = Check(&parser.Program{}, mod1)
+	expectVariable(t, s, "foo", types.Bool)
+	expectNoErrors(t, s)
 }
 
 func TestCheckProgram(t *testing.T) {
@@ -469,6 +472,15 @@ func expectNthError(t *testing.T, s scope.Scope, n int, msg string) {
 	}
 
 	expectAnError(t, s.GetErrors()[n], msg)
+}
+
+func expectVariable(t *testing.T, s scope.Scope, name string, exp types.Type) {
+	if s.HasVariable(name) {
+		got := s.GetVariableType(name)
+		expectEquivalentType(t, got, exp)
+	} else {
+		t.Errorf("Expected variable '%s', none found", name)
+	}
 }
 
 func expectLocalVariableType(t *testing.T, s scope.Scope, name string, exp types.Type) {
