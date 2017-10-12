@@ -115,15 +115,18 @@ func checkReturnStmt(s scope.Scope, stmt *parser.ReturnStmt) {
 	}
 
 	if s.GetSelfReference().Ret.Equals(types.TypeVoid{}) {
-		s.NewError(fmt.Errorf("expected to return nothing, got '%s'", ret))
+		msg := "expected to return nothing, got '%s'"
+		s.NewError(fmt.Errorf(msg, ret))
 		return
 	}
 
 	if ret.Equals(types.TypeVoid{}) {
-		s.NewError(fmt.Errorf("expected a return type of '%s', got nothing", s.GetSelfReference().Ret))
+		msg := "expected a return type of '%s', got nothing"
+		s.NewError(fmt.Errorf(msg, s.GetSelfReference().Ret))
 	}
 
-	s.NewError(fmt.Errorf("expected to return '%s', got '%s'", s.GetSelfReference().Ret, ret))
+	msg := "expected to return '%s', got '%s'"
+	s.NewError(fmt.Errorf(msg, s.GetSelfReference().Ret, ret))
 }
 
 func checkExprAllowVoid(s scope.Scope, expr parser.Expr) types.Type {
@@ -241,7 +244,8 @@ func checkAssignExpr(s scope.Scope, expr *parser.AssignExpr) types.Type {
 	rightType := checkExpr(s, expr.Right)
 
 	if leftType == nil {
-		s.NewError(fmt.Errorf("'%s' cannot be assigned before it is declared", name))
+		msg := "'%s' cannot be assigned before it is declared"
+		s.NewError(fmt.Errorf(msg, name))
 		return types.TypeError{}
 	}
 
@@ -250,7 +254,8 @@ func checkAssignExpr(s scope.Scope, expr *parser.AssignExpr) types.Type {
 	}
 
 	if leftType.Equals(rightType) == false {
-		s.NewError(fmt.Errorf("'%s' cannot be assigned type '%s'", leftType, rightType))
+		msg := "'%s' cannot be assigned type '%s'"
+		s.NewError(fmt.Errorf(msg, leftType, rightType))
 		return types.TypeError{}
 	}
 
@@ -272,11 +277,13 @@ func checkBinaryExpr(s scope.Scope, expr *parser.BinaryExpr, lut binopsLUT) type
 			}
 		}
 
-		s.NewError(fmt.Errorf("operator '%s' does not support %s and %s", expr.Oper, leftType, rightType))
+		msg := "operator '%s' does not support %s and %s"
+		s.NewError(fmt.Errorf(msg, expr.Oper, leftType, rightType))
 		return types.TypeError{}
 	}
 
-	s.NewError(fmt.Errorf("unknown infix operator '%s'", expr.Oper))
+	msg := "unknown infix operator '%s'"
+	s.NewError(fmt.Errorf(msg, expr.Oper))
 	return types.TypeError{}
 }
 
@@ -305,7 +312,8 @@ func checkListExpr(s scope.Scope, expr *parser.ListExpr) types.Type {
 		}
 
 		if listType.Equals(typ) == false {
-			s.NewError(fmt.Errorf("element type %s is not compatible with type %s", typ, listType))
+			msg := "element type %s is not compatible with type %s"
+			s.NewError(fmt.Errorf(msg, typ, listType))
 			return types.TypeError{}
 		}
 	}
@@ -332,7 +340,8 @@ func checkSubscriptExpr(s scope.Scope, expr *parser.SubscriptExpr, lut binopsLUT
 			}
 		}
 
-		s.NewError(fmt.Errorf("subscript operator does not support %s[%s]", listType, indexType))
+		msg := "subscript operator does not support %s[%s]"
+		s.NewError(fmt.Errorf(msg, listType, indexType))
 		return types.TypeError{}
 	}
 
@@ -354,7 +363,8 @@ func checkIdentExpr(s scope.Scope, expr *parser.IdentExpr) types.Type {
 		return s.GetVariableType(expr.Name)
 	}
 
-	s.NewError(fmt.Errorf("variable '%s' was used before it was declared", expr.Name))
+	msg := "variable '%s' was used before it was declared"
+	s.NewError(fmt.Errorf(msg, expr.Name))
 	return types.TypeError{}
 }
 
