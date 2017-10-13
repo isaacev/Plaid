@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-var tError = TypeError{}
-var tInt = TypeIdent{"Int"}
-var tBool = TypeIdent{"Bool"}
-var tOpt = TypeOptional{tBool}
-var tList = TypeList{tInt}
-var tTuple = TypeTuple{[]Type{tInt, tBool, tOpt, tList}}
-var tFunc = TypeFunction{tTuple, tList}
+var tError = Error{}
+var tInt = Ident{"Int"}
+var tBool = Ident{"Bool"}
+var tOpt = Optional{tBool}
+var tList = List{tInt}
+var tTuple = Tuple{[]Type{tInt, tBool, tOpt, tList}}
+var tFunc = Function{tTuple, tList}
 
 func TestTypeError(t *testing.T) {
 	expectEquivalentType(t, tError, tError)
@@ -22,21 +22,21 @@ func TestTypeError(t *testing.T) {
 }
 
 func TestTypeVoid(t *testing.T) {
-	expectEquivalentType(t, TypeVoid{}, TypeVoid{})
-	expectNotEquivalentType(t, TypeVoid{}, TypeError{})
-	expectNotEquivalentType(t, TypeVoid{}, tInt)
+	expectEquivalentType(t, Void{}, Void{})
+	expectNotEquivalentType(t, Void{}, Error{})
+	expectNotEquivalentType(t, Void{}, tInt)
 
-	expectString(t, (TypeVoid{}).String(), "Void")
-	expectBool(t, (TypeVoid{}).IsError(), false)
-	(TypeVoid{}).isType()
+	expectString(t, (Void{}).String(), "Void")
+	expectBool(t, (Void{}).IsError(), false)
+	(Void{}).isType()
 }
 
 func TestTypeFunction(t *testing.T) {
 	expectEquivalentType(t, tFunc, tFunc)
 	expectNotEquivalentType(t, tFunc, tList)
 	expectNotEquivalentType(t, tFunc, tError)
-	expectNotEquivalentType(t, tFunc, TypeFunction{tTuple, tBool})
-	expectNotEquivalentType(t, tFunc, TypeFunction{TypeTuple{}, tList})
+	expectNotEquivalentType(t, tFunc, Function{tTuple, tBool})
+	expectNotEquivalentType(t, tFunc, Function{Tuple{}, tList})
 
 	expectString(t, tFunc.String(), "(Int Bool Bool? [Int]) => [Int]")
 	expectBool(t, tFunc.IsError(), false)
@@ -47,8 +47,8 @@ func TestTypeTuple(t *testing.T) {
 	expectEquivalentType(t, tTuple, tTuple)
 	expectNotEquivalentType(t, tTuple, tInt)
 	expectNotEquivalentType(t, tTuple, tError)
-	expectNotEquivalentType(t, tTuple, TypeTuple{[]Type{tInt, tBool, tOpt}})
-	expectNotEquivalentType(t, tTuple, TypeTuple{[]Type{tInt, tBool, tOpt, tOpt}})
+	expectNotEquivalentType(t, tTuple, Tuple{[]Type{tInt, tBool, tOpt}})
+	expectNotEquivalentType(t, tTuple, Tuple{[]Type{tInt, tBool, tOpt, tOpt}})
 
 	expectString(t, tTuple.String(), "(Int Bool Bool? [Int])")
 	expectBool(t, tTuple.IsError(), false)
@@ -56,22 +56,22 @@ func TestTypeTuple(t *testing.T) {
 }
 
 func TestTypeList(t *testing.T) {
-	expectEquivalentType(t, TypeList{tInt}, TypeList{tInt})
-	expectEquivalentType(t, TypeList{tOpt}, TypeList{tOpt})
-	expectNotEquivalentType(t, TypeList{tInt}, tInt)
-	expectNotEquivalentType(t, TypeList{tInt}, tError)
-	expectNotEquivalentType(t, TypeList{tInt}, TypeList{tBool})
+	expectEquivalentType(t, List{tInt}, List{tInt})
+	expectEquivalentType(t, List{tOpt}, List{tOpt})
+	expectNotEquivalentType(t, List{tInt}, tInt)
+	expectNotEquivalentType(t, List{tInt}, tError)
+	expectNotEquivalentType(t, List{tInt}, List{tBool})
 
-	expectString(t, TypeList{tOpt}.String(), "[Bool?]")
+	expectString(t, List{tOpt}.String(), "[Bool?]")
 	expectBool(t, tList.IsError(), false)
 	tList.isType()
 }
 
 func TestTypeOptional(t *testing.T) {
-	expectEquivalentType(t, TypeOptional{tInt}, TypeOptional{tInt})
-	expectNotEquivalentType(t, TypeOptional{tInt}, tInt)
-	expectNotEquivalentType(t, TypeOptional{tInt}, tError)
-	expectNotEquivalentType(t, TypeOptional{tInt}, TypeOptional{tBool})
+	expectEquivalentType(t, Optional{tInt}, Optional{tInt})
+	expectNotEquivalentType(t, Optional{tInt}, tInt)
+	expectNotEquivalentType(t, Optional{tInt}, tError)
+	expectNotEquivalentType(t, Optional{tInt}, Optional{tBool})
 
 	expectString(t, tOpt.String(), "Bool?")
 	expectBool(t, tOpt.IsError(), false)

@@ -8,14 +8,14 @@ import (
 
 func TestScopeHasParent(t *testing.T) {
 	root := MakeGlobalScope()
-	child := MakeLocalScope(root, types.TypeFunction{})
+	child := MakeLocalScope(root, types.Function{})
 	expectBool(t, root.HasParent(), false)
 	expectBool(t, child.HasParent(), true)
 }
 
 func TestScopeErrors(t *testing.T) {
 	root := MakeGlobalScope()
-	child := MakeLocalScope(root, types.TypeFunction{})
+	child := MakeLocalScope(root, types.Function{})
 	child.NewError(fmt.Errorf("foo bar baz"))
 	expectNthError(t, root, 0, "foo bar baz")
 	expectNthError(t, child, 0, "foo bar baz")
@@ -30,16 +30,16 @@ func TestScopeAddError(t *testing.T) {
 
 func TestScopeHasLocalVariable(t *testing.T) {
 	scope := MakeGlobalScope()
-	scope.NewVariable("foo", types.TypeIdent{Name: "Bar"})
+	scope.NewVariable("foo", types.Ident{Name: "Bar"})
 	expectBool(t, scope.HasLocalVariable("foo"), true)
 	expectBool(t, scope.HasLocalVariable("baz"), false)
 }
 
 func TestScopeNewVariable(t *testing.T) {
 	scope := MakeGlobalScope()
-	scope.NewVariable("foo", types.TypeIdent{Name: "Bar"})
+	scope.NewVariable("foo", types.Ident{Name: "Bar"})
 	if scope.HasVariable("foo") {
-		expectEquivalentType(t, scope.GetVariableType("foo"), types.TypeIdent{Name: "Bar"})
+		expectEquivalentType(t, scope.GetVariableType("foo"), types.Ident{Name: "Bar"})
 	} else {
 		t.Errorf("Expected key '%s' in Scope#variables, none found", "foo")
 	}
@@ -47,16 +47,16 @@ func TestScopeNewVariable(t *testing.T) {
 
 func TestScopeGetVariable(t *testing.T) {
 	parent := MakeGlobalScope()
-	child := MakeLocalScope(parent, types.TypeFunction{})
-	parent.NewVariable("foo", types.TypeIdent{Name: "Bar"})
-	expectEquivalentType(t, child.GetVariableType("foo"), types.TypeIdent{Name: "Bar"})
+	child := MakeLocalScope(parent, types.Function{})
+	parent.NewVariable("foo", types.Ident{Name: "Bar"})
+	expectEquivalentType(t, child.GetVariableType("foo"), types.Ident{Name: "Bar"})
 }
 
 func TestScopeString(t *testing.T) {
 	scope := MakeGlobalScope()
-	scope.NewVariable("num", types.TypeIdent{Name: "Int"})
-	scope.NewVariable("test", types.TypeIdent{Name: "Bool"})
-	scope.NewVariable("coord", types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}, types.TypeIdent{Name: "Int"}}})
+	scope.NewVariable("num", types.Ident{Name: "Int"})
+	scope.NewVariable("test", types.Ident{Name: "Bool"})
+	scope.NewVariable("coord", types.Tuple{Children: []types.Type{types.Ident{Name: "Int"}, types.Ident{Name: "Int"}}})
 
 	expectString(t, scope.String(), "coord : (Int Int)\nnum   : Int\ntest  : Bool")
 }

@@ -130,20 +130,20 @@ func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
 	s := Check(prog)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, s.GetVariableType("f"), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
-		Ret:    types.TypeIdent{Name: "Int"},
+	expectEquivalentType(t, s.GetVariableType("f"), types.Function{
+		Params: types.Tuple{Children: []types.Type{types.Ident{Name: "Int"}}},
+		Ret:    types.Ident{Name: "Int"},
 	})
 }
 
 func TestCheckDispatchExpr(t *testing.T) {
 	s := scope.MakeGlobalScope()
-	s.NewVariable("add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	s.NewVariable("add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	})
 	expr := &parser.DispatchExpr{
 		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
@@ -170,12 +170,12 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	s = scope.MakeGlobalScope()
-	s.NewVariable("add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	s.NewVariable("add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	})
 	expr = &parser.DispatchExpr{
 		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
@@ -188,11 +188,11 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	s = scope.MakeGlobalScope()
-	s.NewVariable("foo", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
+	s.NewVariable("foo", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	})
 	expr = &parser.DispatchExpr{
 		Callee: &parser.IdentExpr{Tok: nop, Name: "foo"},
@@ -205,12 +205,12 @@ func TestCheckDispatchExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 
 	s = scope.MakeGlobalScope()
-	s.NewVariable("add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	s.NewVariable("add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	})
 	expr = &parser.DispatchExpr{
 		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
@@ -299,12 +299,12 @@ func TestCheckListExpr(t *testing.T) {
 		s := scope.MakeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNthError(t, s, 0, exp)
-		expectEquivalentType(t, got, types.TypeError{})
+		expectEquivalentType(t, got, types.Error{})
 	}
 
 	good(&parser.ListExpr{Elements: []parser.Expr{
 		&parser.StringExpr{Val: "foo"},
-	}}, types.TypeList{Child: types.Str})
+	}}, types.List{Child: types.Str})
 
 	bad(&parser.ListExpr{}, "cannot determine type from empty list")
 	bad(&parser.ListExpr{Elements: []parser.Expr{
@@ -323,7 +323,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr := &parser.SubscriptExpr{ListLike: str, Index: index}
 	typ := checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Str})
+	expectEquivalentType(t, typ, types.Optional{Child: types.Str})
 
 	s = scope.MakeGlobalScope()
 	list := &parser.ListExpr{Elements: []parser.Expr{
@@ -333,7 +333,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr = &parser.SubscriptExpr{ListLike: list, Index: index}
 	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeOptional{Child: types.Int})
+	expectEquivalentType(t, typ, types.Optional{Child: types.Int})
 
 	s = scope.MakeGlobalScope()
 	str = &parser.StringExpr{Tok: nop, Val: "foo"}
@@ -412,7 +412,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note parser.TypeNote
 
 	note = parser.TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeVoid{})
+	expectEquivalentType(t, ConvertTypeNote(note), types.Void{})
 
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
@@ -421,12 +421,12 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, ConvertTypeNote(note), types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Bool"},
 		}},
-		Ret: types.TypeIdent{Name: "Str"},
+		Ret: types.Ident{Name: "Str"},
 	})
 
 	note = parser.TypeNoteFunction{
@@ -436,31 +436,31 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: parser.TypeNoteVoid{},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, ConvertTypeNote(note), types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Bool"},
 		}},
-		Ret: types.TypeVoid{},
+		Ret: types.Void{},
 	})
 
 	note = parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{
 		parser.TypeNoteIdent{Tok: nop, Name: "Int"},
 		parser.TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeTuple{Children: []types.Type{
-		types.TypeIdent{Name: "Int"},
-		types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, ConvertTypeNote(note), types.Tuple{Children: []types.Type{
+		types.Ident{Name: "Int"},
+		types.Ident{Name: "Bool"},
 	}})
 
 	note = parser.TypeNoteList{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeList{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), types.List{Child: types.Ident{Name: "Int"}})
 
 	note = parser.TypeNoteOptional{Tok: nop, Child: parser.TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeOptional{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, ConvertTypeNote(note), types.Optional{Child: types.Ident{Name: "Int"}})
 
 	note = parser.TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, ConvertTypeNote(note), types.TypeIdent{Name: "Int"})
+	expectEquivalentType(t, ConvertTypeNote(note), types.Ident{Name: "Int"})
 
 	note = nil
 	expectBool(t, ConvertTypeNote(note) == nil, true)

@@ -11,8 +11,8 @@ var Conv = &vm.Module{
 	Name: "Conv",
 	Exports: map[string]*vm.Export{
 		"intToStr": &vm.Export{
-			Type: types.TypeFunction{
-				Params: types.TypeTuple{Children: []types.Type{
+			Type: types.Function{
+				Params: types.Tuple{Children: []types.Type{
 					types.Int,
 				}},
 				Ret: types.Str,
@@ -20,8 +20,8 @@ var Conv = &vm.Module{
 			Register: vm.MakeRegisterTemplate("intToStr"),
 			Object: &vm.ObjectBuiltin{
 				Val: &vm.Builtin{
-					Type: types.TypeFunction{
-						Params: types.TypeTuple{Children: []types.Type{
+					Type: types.Function{
+						Params: types.Tuple{Children: []types.Type{
 							types.Int,
 						}},
 						Ret: types.Str,

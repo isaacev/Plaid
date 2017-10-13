@@ -10,10 +10,10 @@ import (
 func ConvertTypeNote(note parser.TypeNote) types.Type {
 	switch note := note.(type) {
 	case parser.TypeNoteVoid:
-		return types.TypeVoid{}
+		return types.Void{}
 	case parser.TypeNoteFunction:
-		return types.TypeFunction{
-			Params: ConvertTypeNote(note.Params).(types.TypeTuple),
+		return types.Function{
+			Params: ConvertTypeNote(note.Params).(types.Tuple),
 			Ret:    ConvertTypeNote(note.Ret),
 		}
 	case parser.TypeNoteTuple:
@@ -21,13 +21,13 @@ func ConvertTypeNote(note parser.TypeNote) types.Type {
 		for _, elem := range note.Elems {
 			elems = append(elems, ConvertTypeNote(elem))
 		}
-		return types.TypeTuple{Children: elems}
+		return types.Tuple{Children: elems}
 	case parser.TypeNoteList:
-		return types.TypeList{Child: ConvertTypeNote(note.Child)}
+		return types.List{Child: ConvertTypeNote(note.Child)}
 	case parser.TypeNoteOptional:
-		return types.TypeOptional{Child: ConvertTypeNote(note.Child)}
+		return types.Optional{Child: ConvertTypeNote(note.Child)}
 	case parser.TypeNoteIdent:
-		return types.TypeIdent{Name: note.Name}
+		return types.Ident{Name: note.Name}
 	default:
 		return nil
 	}

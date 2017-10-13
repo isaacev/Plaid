@@ -11,20 +11,20 @@ var IO = &vm.Module{
 	Name: "IO",
 	Exports: map[string]*vm.Export{
 		"print": &vm.Export{
-			Type: types.TypeFunction{
-				Params: types.TypeTuple{Children: []types.Type{
+			Type: types.Function{
+				Params: types.Tuple{Children: []types.Type{
 					types.Str,
 				}},
-				Ret: types.TypeVoid{},
+				Ret: types.Void{},
 			},
 			Register: vm.MakeRegisterTemplate("print"),
 			Object: &vm.ObjectBuiltin{
 				Val: &vm.Builtin{
-					Type: types.TypeFunction{
-						Params: types.TypeTuple{Children: []types.Type{
+					Type: types.Function{
+						Params: types.Tuple{Children: []types.Type{
 							types.Str,
 						}},
-						Ret: types.TypeVoid{},
+						Ret: types.Void{},
 					},
 					Func: func(args []vm.Object) (vm.Object, error) {
 						if len(args) != 1 {
