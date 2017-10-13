@@ -59,6 +59,8 @@ func (c *ClosureTemplate) Enclose(enclosed *ClosureTemplate) {
 	c.Enclosed = append(c.Enclosed, enclosed)
 }
 
+// StringName returns the name of the closure template without any of the
+// enclosed bytecode
 func (c *ClosureTemplate) StringName() string {
 	return fmt.Sprintf("<closure template #%d>", c.ID)
 }
