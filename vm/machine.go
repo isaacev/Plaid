@@ -4,10 +4,6 @@ import (
 	"fmt"
 )
 
-func (r *Register) String() string {
-	return fmt.Sprintf("r%d", r.Template.ID)
-}
-
 // Run does stuff
 func Run(bc *Bytecode) {
 	env := makeEnv(nil)
