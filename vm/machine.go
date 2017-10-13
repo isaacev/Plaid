@@ -4,12 +4,6 @@ import (
 	"fmt"
 )
 
-// Run does stuff
-func Run(bc *Bytecode) {
-	env := makeEnv(nil)
-	runWithEnv(env, bc)
-}
-
 // Eval interprets a given module
 func Eval(module *Module) {
 	env := makeEnv(nil)
