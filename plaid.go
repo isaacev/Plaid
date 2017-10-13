@@ -47,8 +47,8 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 	if showCheck || showIR || showBC || showOut {
 		scope := check.Check(ast, libs.IO, libs.Conv)
 		if scope.HasErrors() {
-			for i, err := range scope.GetErrors() {
-				fmt.Printf("%4d %s\n", i, err)
+			for _, err := range scope.GetErrors() {
+				fmt.Println(err)
 			}
 			os.Exit(1)
 		} else if showCheck {
