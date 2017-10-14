@@ -34,7 +34,13 @@ func (t Error) isType()        {}
 type Any struct{}
 
 // Equals returns true for every other type
-func (t Any) Equals(other Type) bool { return true }
+func (t Any) Equals(other Type) bool {
+	if other.IsError() {
+		return false
+	}
+
+	return true
+}
 
 // IsError returns false because this is a properly resolved type
 func (t Any) IsError() bool  { return false }
