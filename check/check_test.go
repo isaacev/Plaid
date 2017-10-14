@@ -226,28 +226,35 @@ func TestCheckDispatchExpr(t *testing.T) {
 }
 
 func TestCheckAssignExpr(t *testing.T) {
-	prog, _ := parser.Parse("a := 456;")
-	s := scope.MakeGlobalScope()
-	s.NewVariable("a", types.Int)
-	checkProgram(s, prog)
-	expectNoErrors(t, s)
+	good := func(source string, name string, typ types.Type) {
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			s := scope.MakeGlobalScope()
+			s.NewVariable(name, typ)
+			checkProgram(s, prog)
+			expectNoErrors(t, s)
+		}
+	}
 
-	prog, _ = parser.Parse("a := 456;")
-	s = scope.MakeGlobalScope()
-	s.NewVariable("a", types.Str)
-	checkProgram(s, prog)
-	expectNthError(t, s, 0, "(1:6) 'Str' cannot be assigned type 'Int'")
+	bad := func(source string, name string, typ types.Type, exp string) {
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			s := scope.MakeGlobalScope()
+			s.NewVariable(name, typ)
+			checkProgram(s, prog)
+			expectNthError(t, s, 0, exp)
+		}
+	}
 
-	prog, _ = parser.Parse("a := \"a\" + 45;")
-	s = scope.MakeGlobalScope()
-	s.NewVariable("a", types.Str)
-	checkProgram(s, prog)
-	expectNthError(t, s, 0, "(1:10) operator '+' does not support Str and Int")
+	good("a := 456;", "a", types.Int)
+	good("b := \"456\";", "b", types.Str)
+	good("c := true;", "c", types.Bool)
 
-	prog, _ = parser.Parse("a := 123;")
-	s = scope.MakeGlobalScope()
-	checkProgram(s, prog)
-	expectNthError(t, s, 0, "(1:1) 'a' cannot be assigned before it is declared")
+	bad("a := 456;", "a", types.Str, "(1:6) 'Str' cannot be assigned type 'Int'")
+	bad(`a := "a" + 45;`, "a", types.Str, "(1:10) operator '+' does not support Str and Int")
+	bad("a := 123;", "b", types.Str, "(1:1) 'a' cannot be assigned before it is declared")
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
