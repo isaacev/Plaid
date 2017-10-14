@@ -178,6 +178,13 @@ func TestCheckDispatchExpr(t *testing.T) {
 		Ret: types.Ident{Name: "Int"},
 	}, "(1:1) expected 2 arguments, got 1")
 	bad("self();", "", nil, "(1:1) self references must be inside a function")
+	bad("add(5, x);", "add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
+		}},
+		Ret: types.Ident{Name: "Int"},
+	}, "(1:8) variable 'x' was used before it was declared")
 	bad(`add("2", "4");`, "add", types.Function{
 		Params: types.Tuple{Children: []types.Type{
 			types.Ident{Name: "Int"},
