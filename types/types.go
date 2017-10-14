@@ -37,6 +37,8 @@ type Any struct{}
 func (t Any) Equals(other Type) bool {
 	if other.IsError() {
 		return false
+	} else if _, ok := other.(Void); ok {
+		return false
 	}
 
 	return true

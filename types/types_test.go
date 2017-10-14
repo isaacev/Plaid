@@ -27,6 +27,7 @@ func TestTypeError(t *testing.T) {
 func TestTypeAny(t *testing.T) {
 	expectEquivalentType(t, Any{}, Any{})
 	expectBool(t, tAny.Equals(tAny), true)
+	expectBool(t, tAny.Equals(Void{}), false)
 
 	expectString(t, Any{}.String(), "Any")
 	expectBool(t, Any{}.IsError(), false)
