@@ -49,29 +49,29 @@ func TestCheckIfStmt(t *testing.T) {
 
 	prog, _ = parser.Parse("if 123 {};")
 	s = Check(prog)
-	expectNthError(t, s, 0, "condition must resolve to a boolean")
+	expectNthError(t, s, 0, "(1:4) condition must resolve to a boolean")
 }
 
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
 	s := Check(prog)
-	expectNthError(t, s, 0, "expected to return 'Int', got 'Str'")
+	expectNthError(t, s, 0, "(1:30) expected to return 'Int', got 'Str'")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return x; };")
 	s = Check(prog)
-	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
+	expectNthError(t, s, 0, "(1:30) variable 'x' was used before it was declared")
 
 	prog, _ = parser.Parse("let a := fn (): Int { return; };")
 	s = Check(prog)
-	expectNthError(t, s, 0, "expected a return type of 'Int', got nothing")
+	expectNthError(t, s, 0, "(1:23) expected a return type of 'Int', got nothing")
 
 	prog, _ = parser.Parse("let a := fn ():Void { return 123; };")
 	s = Check(prog)
-	expectNthError(t, s, 0, "expected to return nothing, got 'Int'")
+	expectNthError(t, s, 0, "(1:30) expected to return nothing, got 'Int'")
 
 	prog, _ = parser.Parse("return;")
 	s = Check(prog)
-	expectNthError(t, s, 0, "return statements must be inside a function")
+	expectNthError(t, s, 0, "(1:1) return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
@@ -112,17 +112,17 @@ func TestCheckExpr(t *testing.T) {
 
 	prog, _ = parser.Parse("let a := add(2, 2);")
 	s = Check(prog)
-	expectNthError(t, s, 0, "variable 'add' was used before it was declared")
+	expectNthError(t, s, 0, "(1:10) variable 'add' was used before it was declared")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
 	s = Check(prog)
-	expectNthError(t, s, 0, "cannot use void types in an expression")
+	expectNthError(t, s, 0, "(1:32) cannot use void types in an expression")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = parser.Parse("let a := -5;")
 	s = Check(prog)
-	expectNthError(t, s, 0, "unknown expression type")
+	expectNthError(t, s, 0, "(1:10) unknown expression type")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 }
 
@@ -236,18 +236,18 @@ func TestCheckAssignExpr(t *testing.T) {
 	s = scope.MakeGlobalScope()
 	s.NewVariable("a", types.Str)
 	checkProgram(s, prog)
-	expectNthError(t, s, 0, "'Str' cannot be assigned type 'Int'")
+	expectNthError(t, s, 0, "(1:6) 'Str' cannot be assigned type 'Int'")
 
 	prog, _ = parser.Parse("a := \"a\" + 45;")
 	s = scope.MakeGlobalScope()
 	s.NewVariable("a", types.Str)
 	checkProgram(s, prog)
-	expectNthError(t, s, 0, "operator '+' does not support Str and Int")
+	expectNthError(t, s, 0, "(1:10) operator '+' does not support Str and Int")
 
 	prog, _ = parser.Parse("a := 123;")
 	s = scope.MakeGlobalScope()
 	checkProgram(s, prog)
-	expectNthError(t, s, 0, "'a' cannot be assigned before it is declared")
+	expectNthError(t, s, 0, "(1:1) 'a' cannot be assigned before it is declared")
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
@@ -366,7 +366,7 @@ func TestCheckSelfExpr(t *testing.T) {
 
 	prog, _ = parser.Parse("self();")
 	s = Check(prog)
-	expectNthError(t, s, 0, "self references must be inside a function")
+	expectNthError(t, s, 0, "(1:1) self references must be inside a function")
 }
 
 func TestCheckIdentExpr(t *testing.T) {
