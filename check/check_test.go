@@ -290,14 +290,17 @@ func TestCheckListExpr(t *testing.T) {
 		&parser.StringExpr{Val: "foo"},
 	}}, types.List{Child: types.Str})
 
-	bad(&parser.ListExpr{}, "cannot determine type from empty list")
-	bad(&parser.ListExpr{Elements: []parser.Expr{
-		&parser.IdentExpr{Name: "a"},
-	}}, "variable 'a' was used before it was declared")
-	bad(&parser.ListExpr{Elements: []parser.Expr{
-		&parser.StringExpr{Val: "foo"},
-		&parser.NumberExpr{Val: 456},
-	}}, "element type Int is not compatible with type Str")
+	start := makeTok(5, 4)
+	first := makeTok(7, 12)
+	second := makeTok(3, 9)
+	bad(&parser.ListExpr{Tok: start}, "(5:4) cannot determine type from empty list")
+	bad(&parser.ListExpr{Tok: start, Elements: []parser.Expr{
+		&parser.IdentExpr{Tok: first, Name: "a"},
+	}}, "(7:12) variable 'a' was used before it was declared")
+	bad(&parser.ListExpr{Tok: start, Elements: []parser.Expr{
+		&parser.StringExpr{Tok: first, Val: "foo"},
+		&parser.NumberExpr{Tok: second, Val: 456},
+	}}, "(3:9) element type Int is not compatible with type Str")
 }
 
 func TestCheckSubscriptExpr(t *testing.T) {
@@ -362,9 +365,9 @@ func TestCheckIdentExpr(t *testing.T) {
 	expectEquivalentType(t, typ, types.Int)
 
 	s = scope.MakeGlobalScope()
-	expr = &parser.IdentExpr{Tok: nop, Name: "x"}
+	expr = &parser.IdentExpr{Tok: makeTok(10, 13), Name: "x"}
 	typ = checkIdentExpr(s, expr)
-	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
+	expectNthError(t, s, 0, "(10:13) variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 }
 
@@ -448,6 +451,10 @@ func TestConvertTypeSig(t *testing.T) {
 
 	note = nil
 	expectBool(t, ConvertTypeNote(note) == nil, true)
+}
+
+func makeTok(line int, col int) lexer.Token {
+	return lexer.Token{Loc: lexer.Loc{Line: line, Col: col}}
 }
 
 func expectNthError(t *testing.T, s scope.Scope, n int, msg string) {
