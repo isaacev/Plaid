@@ -30,6 +30,17 @@ func (t Error) IsError() bool  { return true }
 func (t Error) String() string { return "ERROR" }
 func (t Error) isType()        {}
 
+// Any can represent all types
+type Any struct{}
+
+// Equals returns true for every other type
+func (t Any) Equals(other Type) bool { return true }
+
+// IsError returns false because this is a properly resolved type
+func (t Any) IsError() bool  { return false }
+func (t Any) String() string { return "Any" }
+func (t Any) isType()        {}
+
 // Void descirbes the return type of a function that returns no value
 type Void struct{}
 
