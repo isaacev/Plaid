@@ -28,9 +28,9 @@ func TestTypeAny(t *testing.T) {
 	expectEquivalentType(t, Any{}, Any{})
 	expectBool(t, tAny.Equals(tAny), true)
 
-	expectString(t, (Any{}).String(), "Any")
-	expectBool(t, (Any{}).IsError(), false)
-	(Any{}).isType()
+	expectString(t, Any{}.String(), "Any")
+	expectBool(t, Any{}.IsError(), false)
+	Any{}.isType()
 }
 
 func TestTypeVoid(t *testing.T) {
