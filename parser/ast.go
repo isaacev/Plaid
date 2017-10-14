@@ -72,6 +72,18 @@ func (sb StmtBlock) String() string {
 
 func (sb StmtBlock) isNode() {}
 
+// UseStmt describes a file or module import
+type UseStmt struct {
+	Tok  lexer.Token
+	Path *StringExpr
+}
+
+// Start returns a location that this node can be considered to start at
+func (s UseStmt) Start() lexer.Loc { return s.Tok.Loc }
+func (s UseStmt) String() string   { return fmt.Sprintf("(use %s)", s.Path) }
+func (s UseStmt) isNode()          {}
+func (s UseStmt) isStmt()          {}
+
 // IfStmt describes a condition expression and an associated clause
 type IfStmt struct {
 	Tok    lexer.Token

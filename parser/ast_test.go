@@ -30,6 +30,15 @@ func TestStmtBlock(t *testing.T) {
 	expectString(t, block, "{\n  (let a 123)\n  (let b 456)}")
 }
 
+func TestUseStmt(t *testing.T) {
+	(UseStmt{}).isNode()
+	(UseStmt{}).isStmt()
+
+	path := &StringExpr{Val: "fancy_module"}
+	expectString(t, UseStmt{Path: path}, `(use "fancy_module")`)
+	expectStart(t, UseStmt{Path: path}, 0, 0)
+}
+
 func TestIfStmt(t *testing.T) {
 	(IfStmt{}).isNode()
 	(IfStmt{}).isStmt()
