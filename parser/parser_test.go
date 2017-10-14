@@ -145,25 +145,28 @@ func TestParseProgram(t *testing.T) {
 }
 
 func TestParseStmt(t *testing.T) {
-	expectStmt := func(source string, ast string) {
+	expectStmt := func(source string, ast string, fn func(*Parser) (Stmt, error)) {
 		parser := makeParser(source)
 		loadGrammar(parser)
-		stmt, err := parseStmt(parser)
+		stmt, err := fn(parser)
 		expectNoErrors(t, ast, stmt, err)
 		expectStart(t, stmt, 1, 1)
 	}
 
-	expectStmtError := func(source string, msg string) {
+	expectStmtError := func(source string, msg string, fn func(*Parser) (Stmt, error)) {
 		parser := makeParser(source)
 		loadGrammar(parser)
-		stmt, err := parseStmt(parser)
+		stmt, err := fn(parser)
 		expectAnError(t, msg, stmt, err)
 	}
 
-	expectStmt("if a { let a := 456; };", "(if a {\n  (let a 456)})")
-	expectStmt("let a := 123;", "(let a 123)")
-	expectStmt("return 123;", "(return 123)")
-	expectStmtError("123 + 456", "(1:1) expected start of statement")
+	expectStmt("if a { let a := 456; };", "(if a {\n  (let a 456)})", parseGeneralStmt)
+	expectStmt("let a := 123;", "(let a 123)", parseGeneralStmt)
+	expectStmt("return 123;", "(return 123)", parseNonTopLevelStmt)
+	expectStmtError("123 + 456", "(1:1) expected start of statement", parseStmt)
+	expectStmtError("123 + 456", "(1:1) expected start of statement", parseTopLevelStmt)
+	expectStmtError("123 + 456", "(1:1) expected start of statement", parseNonTopLevelStmt)
+	expectStmtError("return 123;", "(1:1) return statements must be inside a function", parseTopLevelStmt)
 }
 
 func TestParseStmtBlock(t *testing.T) {

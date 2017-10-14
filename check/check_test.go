@@ -69,7 +69,9 @@ func TestCheckReturnStmt(t *testing.T) {
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:30) expected to return nothing, got 'Int'")
 
-	prog, _ = parser.Parse("return;")
+	prog = &parser.Program{Stmts: []parser.Stmt{
+		&parser.ReturnStmt{Tok: makeTok(1, 1)},
+	}}
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:1) return statements must be inside a function")
 }

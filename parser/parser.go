@@ -52,6 +52,7 @@ type PostfixParseFunc func(p *Parser, left Expr) (Expr, error)
 // sequence of Tokens
 type Parser struct {
 	lexer             *lexer.Lexer
+	funcDepth         int
 	precedenceTable   map[lexer.Type]Precedence
 	prefixParseFuncs  map[lexer.Type]PrefixParseFunc
 	postfixParseFuncs map[lexer.Type]PostfixParseFunc
@@ -117,6 +118,7 @@ func makeParser(source string) *Parser {
 	l := lexer.Lex(s)
 	p := &Parser{
 		l,
+		0,
 		make(map[lexer.Type]Precedence),
 		make(map[lexer.Type]PrefixParseFunc),
 		make(map[lexer.Type]PostfixParseFunc),
@@ -154,7 +156,7 @@ func parseProgram(p *Parser) (*Program, error) {
 	stmts := []Stmt{}
 
 	for p.peekTokenIsNot(lexer.Error, lexer.EOF) {
-		stmt, err := parseStmt(p)
+		stmt, err := parseTopLevelStmt(p)
 		if err != nil {
 			return &Program{}, err
 		}
@@ -166,13 +168,37 @@ func parseProgram(p *Parser) (*Program, error) {
 }
 
 func parseStmt(p *Parser) (Stmt, error) {
+	if p.funcDepth == 0 {
+		return parseTopLevelStmt(p)
+	}
+
+	return parseNonTopLevelStmt(p)
+}
+
+func parseTopLevelStmt(p *Parser) (Stmt, error) {
+	switch p.lexer.Peek().Type {
+	case lexer.Return:
+		return nil, SyntaxError{p.lexer.Peek().Loc, "return statements must be inside a function"}
+	default:
+		return parseGeneralStmt(p)
+	}
+}
+
+func parseNonTopLevelStmt(p *Parser) (Stmt, error) {
+	switch p.lexer.Peek().Type {
+	case lexer.Return:
+		return parseReturnStmt(p)
+	default:
+		return parseGeneralStmt(p)
+	}
+}
+
+func parseGeneralStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
 	case lexer.If:
 		return parseIfStmt(p)
 	case lexer.Let:
 		return parseDeclarationStmt(p)
-	case lexer.Return:
-		return parseReturnStmt(p)
 	default:
 		return parseExprStmt(p)
 	}
@@ -458,10 +484,12 @@ func parseFunction(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
+	p.funcDepth++
 	block, err := parseStmtBlock(p)
 	if err != nil {
 		return nil, err
 	}
+	p.funcDepth--
 
 	return &FunctionExpr{tok, params, ret, block, nil}, nil
 }
