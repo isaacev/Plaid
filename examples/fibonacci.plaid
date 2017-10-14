@@ -12,7 +12,7 @@ let fib := fn (N: Int, cb: (Int) => Void): Void {
 
 let printFib := fn(N: Int): Int {
   fib(N, fn(n: Int): Void {
-    print(intToStr(n));
+    print(n);
   });
 };
 
@@ -25,4 +25,4 @@ let sumFib := fn(N: Int): Int {
 };
 
 printFib(10);
-print(intToStr(sumFib(10)));
+print(sumFib(10));

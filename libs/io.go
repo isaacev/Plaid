@@ -13,7 +13,7 @@ var IO = &vm.Module{
 		"print": &vm.Export{
 			Type: types.Function{
 				Params: types.Tuple{Children: []types.Type{
-					types.Str,
+					types.Any{},
 				}},
 				Ret: types.Void{},
 			},
@@ -22,7 +22,7 @@ var IO = &vm.Module{
 				Val: &vm.Builtin{
 					Type: types.Function{
 						Params: types.Tuple{Children: []types.Type{
-							types.Str,
+							types.Any{},
 						}},
 						Ret: types.Void{},
 					},
@@ -32,13 +32,8 @@ var IO = &vm.Module{
 							return &vm.ObjectNone{}, err
 						}
 
-						if str, ok := args[0].(*vm.ObjectStr); ok {
-							fmt.Println(str.String())
-							return &vm.ObjectNone{}, nil
-						}
-
-						err := fmt.Errorf("wanted Str, got %T", args[0])
-						return &vm.ObjectNone{}, err
+						fmt.Println(args[0].String())
+						return &vm.ObjectNone{}, nil
 					},
 				},
 			},
