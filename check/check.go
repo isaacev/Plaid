@@ -87,7 +87,7 @@ func checkStmtBlock(s scope.Scope, block *parser.StmtBlock) {
 
 func checkIfStmt(s scope.Scope, stmt *parser.IfStmt) {
 	typ := checkExpr(s, stmt.Cond)
-	if typ.Equals(types.Bool) == false {
+	if types.Bool.Equals(typ) == false {
 		addTypeError(s, stmt.Cond.Start(), "condition must resolve to a boolean")
 	}
 
@@ -121,7 +121,7 @@ func checkReturnStmt(s scope.Scope, stmt *parser.ReturnStmt) {
 		return
 	}
 
-	if ret.Equals(types.Void{}) {
+	if (types.Void{}).Equals(ret) {
 		msg := fmt.Sprintf("expected a return type of '%s', got nothing", s.GetSelfReference().Ret)
 		addTypeError(s, stmt.Start(), msg)
 		return
@@ -166,7 +166,7 @@ func checkExprAllowVoid(s scope.Scope, expr parser.Expr) types.Type {
 func checkExpr(s scope.Scope, expr parser.Expr) types.Type {
 	typ := checkExprAllowVoid(s, expr)
 
-	if typ.Equals(types.Void{}) {
+	if (types.Void{}).Equals(typ) {
 		addTypeError(s, expr.Start(), "cannot use void types in an expression")
 		return types.Error{}
 	}
@@ -228,7 +228,7 @@ func checkDispatchExpr(s scope.Scope, expr *parser.DispatchExpr) types.Type {
 
 			if argType.IsError() {
 				retType = types.Error{}
-			} else if argType.Equals(paramType) == false {
+			} else if paramType.Equals(argType) == false {
 				msg := fmt.Sprintf("expected '%s', got '%s'", paramType, argType)
 				addTypeError(s, expr.Args[i].Start(), msg)
 				retType = types.Error{}
