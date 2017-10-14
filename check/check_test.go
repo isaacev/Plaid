@@ -220,39 +220,54 @@ func TestCheckAssignExpr(t *testing.T) {
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
+	good := func(left types.Type, oper string, right types.Type, exp types.Type) {
+		source := "let c := a " + oper + " b;"
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			s := scope.MakeGlobalScope()
+			s.NewVariable("a", left)
+			s.NewVariable("b", right)
+			checkProgram(s, prog)
+			expectNoErrors(t, s)
+			expectEquivalentType(t, s.GetVariableType("c"), exp)
+		}
+	}
+
+	bad := func(source string, s scope.Scope, errs ...string) {
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			checkProgram(s, prog)
+			for n, err := range errs {
+				expectNthError(t, s, n, err)
+			}
+			expectEquivalentType(t, s.GetVariableType("c"), types.Error{})
+		}
+	}
+
+	good(types.Int, "+", types.Int, types.Int)
+	good(types.Int, "-", types.Int, types.Int)
+
 	s := scope.MakeGlobalScope()
+	s.NewVariable("b", types.Int)
+	bad("let c := a + b;", s,
+		"(1:10) variable 'a' was used before it was declared")
+
+	s = scope.MakeGlobalScope()
+	bad("let c := a + b;", s,
+		"(1:10) variable 'a' was used before it was declared",
+		"(1:14) variable 'b' was used before it was declared")
+
+	s = scope.MakeGlobalScope()
 	s.NewVariable("a", types.Int)
 	s.NewVariable("b", types.Int)
-	leftExpr := &parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr := &parser.IdentExpr{Tok: nop, Name: "b"}
-	expr := &parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
+	oper := lexer.Token{Loc: lexer.Loc{Line: 10, Col: 4}}
+	leftExpr := &parser.IdentExpr{Name: "a"}
+	rightExpr := &parser.IdentExpr{Name: "b"}
+	expr := &parser.BinaryExpr{Tok: oper, Oper: "@", Left: leftExpr, Right: rightExpr}
 	typ := checkBinaryExpr(s, expr, defaultBinopsLUT)
-	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.Int)
-
-	s = scope.MakeGlobalScope()
-	s.NewVariable("a", types.Int)
-	s.NewVariable("b", types.Int)
-	leftExpr = &parser.IdentExpr{Tok: nop, Name: "a"}
-	rightExpr = &parser.IdentExpr{Tok: nop, Name: "b"}
-	expr = &parser.BinaryExpr{Tok: nop, Oper: "-", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
-	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.Int)
-
-	s = scope.MakeGlobalScope()
-	expr = &parser.BinaryExpr{Tok: nop, Oper: "+", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
-	expectNthError(t, s, 0, "variable 'a' was used before it was declared")
-	expectNthError(t, s, 1, "variable 'b' was used before it was declared")
-	expectBool(t, typ.IsError(), true)
-
-	s = scope.MakeGlobalScope()
-	s.NewVariable("a", types.Int)
-	s.NewVariable("b", types.Int)
-	expr = &parser.BinaryExpr{Tok: nop, Oper: "@", Left: leftExpr, Right: rightExpr}
-	typ = checkBinaryExpr(s, expr, defaultBinopsLUT)
-	expectNthError(t, s, 0, "unknown infix operator '@'")
+	expectNthError(t, s, 0, "(10:4) unknown infix operator '@'")
 	expectBool(t, typ.IsError(), true)
 }
 
