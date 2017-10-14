@@ -16,7 +16,7 @@ type Type interface {
 // had a semantic error that made proper evaluation impossible
 type Error struct{}
 
-// Equals returns true for every other type
+// Equals returns false for every other type
 func (t Error) Equals(other Type) bool {
 	if _, ok := other.(Error); ok {
 		return true
