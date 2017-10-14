@@ -60,6 +60,13 @@ func TestExprStmt(t *testing.T) {
 	expectString(t, ExprStmt{IdentExpr{nop, "abc"}}, "abc")
 }
 
+func TestTypeNoteAny(t *testing.T) {
+	expectStart(t, TypeNoteAny{}, 0, 0)
+	expectString(t, TypeNoteAny{}, "Any")
+	(TypeNoteAny{}).isNode()
+	(TypeNoteAny{}).isType()
+}
+
 func TestTypeNoteVoid(t *testing.T) {
 	expectStart(t, TypeNoteVoid{}, 0, 0)
 	expectString(t, TypeNoteVoid{}, "Void")

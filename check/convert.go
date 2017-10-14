@@ -9,6 +9,8 @@ import (
 // type notation) into a Type struct (used internally to represent a type)
 func ConvertTypeNote(note parser.TypeNote) types.Type {
 	switch note := note.(type) {
+	case parser.TypeNoteAny:
+		return types.Any{}
 	case parser.TypeNoteVoid:
 		return types.Void{}
 	case parser.TypeNoteFunction:

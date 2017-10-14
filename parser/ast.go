@@ -137,6 +137,17 @@ type TypeNote interface {
 	isType()
 }
 
+// TypeNoteAny describes a type that matches everything
+type TypeNoteAny struct {
+	Tok lexer.Token
+}
+
+// Start returns a location that this node can be considered to start at
+func (ta TypeNoteAny) Start() lexer.Loc { return ta.Tok.Loc }
+func (ta TypeNoteAny) String() string   { return "Any" }
+func (ta TypeNoteAny) isNode()          {}
+func (ta TypeNoteAny) isType()          {}
+
 // TypeNoteVoid describes a missing type annotation
 type TypeNoteVoid struct {
 	Tok lexer.Token

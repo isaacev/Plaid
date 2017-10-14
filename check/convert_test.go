@@ -14,6 +14,9 @@ func TestConvertTypeNote(t *testing.T) {
 	note = parser.TypeNoteVoid{}
 	expectConversion(t, note, "Void")
 
+	note = parser.TypeNoteAny{}
+	expectConversion(t, note, "Any")
+
 	note = parser.TypeNoteFunction{
 		Params: parser.TypeNoteTuple{Tok: nop, Elems: []parser.TypeNote{}},
 		Ret:    parser.TypeNoteVoid{},

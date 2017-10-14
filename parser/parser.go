@@ -337,6 +337,8 @@ func parseTypeNoteIdent(p *Parser) (TypeNote, error) {
 	}
 
 	switch tok.Lexeme {
+	case "Any":
+		return TypeNoteAny{tok}, nil
 	case "Void":
 		return TypeNoteVoid{tok}, nil
 	default:

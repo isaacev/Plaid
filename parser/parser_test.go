@@ -319,6 +319,7 @@ func TestParseTypeSig(t *testing.T) {
 
 func TestParseTypeIdent(t *testing.T) {
 	expectTypeNote(t, parseTypeNoteIdent, "Int", "Int")
+	expectTypeNote(t, parseTypeNoteIdent, "Any", "Any")
 	expectTypeNoteError(t, parseTypeNoteIdent, "123", "(1:1) expected identifier")
 }
 
