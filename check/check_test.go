@@ -137,92 +137,54 @@ func TestCheckFunctionExpr(t *testing.T) {
 }
 
 func TestCheckDispatchExpr(t *testing.T) {
-	s := scope.MakeGlobalScope()
-	s.NewVariable("add", types.Function{
+	good := func(source string, name string, typ types.Type) {
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			s := scope.MakeGlobalScope()
+			s.NewVariable(name, typ)
+			checkProgram(s, prog)
+			expectNoErrors(t, s)
+		}
+	}
+
+	bad := func(source string, name string, typ types.Type, errs ...string) {
+		if prog, err := parser.Parse(source); err != nil {
+			t.Fatal(err)
+		} else {
+			s := scope.MakeGlobalScope()
+			s.NewVariable(name, typ)
+			checkProgram(s, prog)
+			for i, err := range errs {
+				expectNthError(t, s, i, err)
+			}
+		}
+	}
+
+	good("add(2, 5);", "add", types.Function{
 		Params: types.Tuple{Children: []types.Type{
 			types.Ident{Name: "Int"},
 			types.Ident{Name: "Int"},
 		}},
 		Ret: types.Ident{Name: "Int"},
 	})
-	expr := &parser.DispatchExpr{
-		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
-		Args: []parser.Expr{
-			&parser.NumberExpr{Tok: nop, Val: 2},
-			&parser.NumberExpr{Tok: nop, Val: 5},
-		},
-	}
-	typ := checkDispatchExpr(s, expr)
-	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.Int)
 
-	s = scope.MakeGlobalScope()
-	s.NewVariable("add", types.Int)
-	expr = &parser.DispatchExpr{
-		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
-		Args: []parser.Expr{
-			&parser.NumberExpr{Tok: nop, Val: 2},
-			&parser.NumberExpr{Tok: nop, Val: 5},
-		},
-	}
-	typ = checkDispatchExpr(s, expr)
-	expectNthError(t, s, 0, "cannot call function on type 'Int'")
-	expectBool(t, typ.IsError(), true)
-
-	s = scope.MakeGlobalScope()
-	s.NewVariable("add", types.Function{
+	bad("add(2, 5);", "add", types.Int, "(1:1) cannot call function on type 'Int'")
+	bad("add(2);", "add", types.Function{
 		Params: types.Tuple{Children: []types.Type{
 			types.Ident{Name: "Int"},
 			types.Ident{Name: "Int"},
 		}},
 		Ret: types.Ident{Name: "Int"},
-	})
-	expr = &parser.DispatchExpr{
-		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
-		Args: []parser.Expr{
-			&parser.NumberExpr{Tok: nop, Val: 2},
-		},
-	}
-	typ = checkDispatchExpr(s, expr)
-	expectNthError(t, s, 0, "expected 2 arguments, got 1")
-	expectBool(t, typ.IsError(), true)
-
-	s = scope.MakeGlobalScope()
-	s.NewVariable("foo", types.Function{
-		Params: types.Tuple{Children: []types.Type{
-			types.Ident{Name: "Int"},
-		}},
-		Ret: types.Ident{Name: "Int"},
-	})
-	expr = &parser.DispatchExpr{
-		Callee: &parser.IdentExpr{Tok: nop, Name: "foo"},
-		Args: []parser.Expr{
-			&parser.SelfExpr{Tok: nop},
-		},
-	}
-	typ = checkDispatchExpr(s, expr)
-	expectNthError(t, s, 0, "self references must be inside a function")
-	expectBool(t, typ.IsError(), true)
-
-	s = scope.MakeGlobalScope()
-	s.NewVariable("add", types.Function{
+	}, "(1:1) expected 2 arguments, got 1")
+	bad("self();", "", nil, "(1:1) self references must be inside a function")
+	bad(`add("2", "4");`, "add", types.Function{
 		Params: types.Tuple{Children: []types.Type{
 			types.Ident{Name: "Int"},
 			types.Ident{Name: "Int"},
 		}},
 		Ret: types.Ident{Name: "Int"},
-	})
-	expr = &parser.DispatchExpr{
-		Callee: &parser.IdentExpr{Tok: nop, Name: "add"},
-		Args: []parser.Expr{
-			&parser.StringExpr{Tok: nop, Val: "2"},
-			&parser.StringExpr{Tok: nop, Val: "4"},
-		},
-	}
-	typ = checkDispatchExpr(s, expr)
-	expectNthError(t, s, 0, "expected 'Int', got 'Str'")
-	expectNthError(t, s, 1, "expected 'Int', got 'Str'")
-	expectBool(t, typ.IsError(), true)
+	}, "(1:5) expected 'Int', got 'Str'", "(1:10) expected 'Int', got 'Str'")
 }
 
 func TestCheckAssignExpr(t *testing.T) {
