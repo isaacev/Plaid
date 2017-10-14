@@ -1,0 +1,2 @@
+- `const` statements with enforced read-only status
+- errors when unknown type is used
