@@ -138,6 +138,12 @@ func TestParseProgram(t *testing.T) {
 	expectNoErrors(t, "", prog, err)
 	expectStart(t, prog, 1, 1)
 
+	p = makeParser(`use "foo"; use "bar";`)
+	loadGrammar(p)
+	prog, err = parseProgram(p)
+	expectNoErrors(t, "(use \"foo\")\n(use \"bar\")", prog, err)
+	expectStart(t, prog, 1, 1)
+
 	p = makeParser("let a = 123; let b := 456;")
 	loadGrammar(p)
 	prog, err = parseProgram(p)
@@ -167,6 +173,7 @@ func TestParseStmt(t *testing.T) {
 	expectStmtError("123 + 456", "(1:1) expected start of statement", parseTopLevelStmt)
 	expectStmtError("123 + 456", "(1:1) expected start of statement", parseNonTopLevelStmt)
 	expectStmtError("return 123;", "(1:1) return statements must be inside a function", parseTopLevelStmt)
+	expectStmtError(`use 'foo';`, "(1:1) use statements must be outside any other statement", parseStmt)
 }
 
 func TestParseStmtBlock(t *testing.T) {
@@ -189,6 +196,30 @@ func TestParseStmtBlock(t *testing.T) {
 	expectStmtBlockError("let a := 123; }", "(1:1) expected left brace")
 	expectStmtBlockError("{ let a := 123 }", "(1:16) expected semicolon")
 	expectStmtBlockError("{ let a := 123;", "(1:15) expected right brace")
+}
+
+func TestParseUseStmt(t *testing.T) {
+	good := func(source string, ast string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		stmt, err := parseUseStmt(p)
+		expectNoErrors(t, ast, stmt, err)
+		expectStart(t, stmt, 1, 1)
+	}
+
+	bad := func(source string, msg string) {
+		p := makeParser(source)
+		loadGrammar(p)
+		stmt, err := parseUseStmt(p)
+		expectAnError(t, msg, stmt, err)
+	}
+
+	good(`use "foo";`, `(use "foo")`)
+	good(`use "bar.plaid";`, `(use "bar.plaid")`)
+
+	bad(`ues "foo";`, "(1:1) expected USE keyword")
+	bad(`use 123;`, "(1:5) expected string literal")
+	bad(`use "foo"`, "(1:9) expected semicolon")
 }
 
 func TestParseIfStmt(t *testing.T) {

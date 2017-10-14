@@ -156,7 +156,14 @@ func parseProgram(p *Parser) (*Program, error) {
 	stmts := []Stmt{}
 
 	for p.peekTokenIsNot(lexer.Error, lexer.EOF) {
-		stmt, err := parseTopLevelStmt(p)
+		var stmt Stmt
+		var err error
+		if p.lexer.Peek().Type == lexer.Use {
+			stmt, err = parseUseStmt(p)
+		} else {
+			stmt, err = parseTopLevelStmt(p)
+		}
+
 		if err != nil {
 			return &Program{}, err
 		}
@@ -195,6 +202,8 @@ func parseNonTopLevelStmt(p *Parser) (Stmt, error) {
 
 func parseGeneralStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
+	case lexer.Use:
+		return nil, SyntaxError{p.lexer.Peek().Loc, "use statements must be outside any other statement"}
 	case lexer.If:
 		return parseIfStmt(p)
 	case lexer.Let:
@@ -227,6 +236,27 @@ func parseStmtBlock(p *Parser) (*StmtBlock, error) {
 	}
 
 	return &StmtBlock{left, stmts, right}, nil
+}
+
+func parseUseStmt(p *Parser) (Stmt, error) {
+	tok, err := p.expectNextToken(lexer.Use, "expected USE keyword")
+	if err != nil {
+		return nil, err
+	}
+
+	var expr Expr
+	if expr, err = parseString(p); err != nil {
+		return nil, err
+	}
+
+	path := expr.(*StringExpr)
+
+	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
+	if err != nil {
+		return nil, err
+	}
+
+	return &UseStmt{tok, path}, nil
 }
 
 func parseIfStmt(p *Parser) (Stmt, error) {
