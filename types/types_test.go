@@ -5,6 +5,7 @@ import (
 )
 
 var tError = Error{}
+var tAny = Any{}
 var tInt = Ident{"Int"}
 var tBool = Ident{"Bool"}
 var tOpt = Optional{tBool}
@@ -15,6 +16,8 @@ var tFunc = Function{tTuple, tList}
 func TestTypeError(t *testing.T) {
 	expectEquivalentType(t, tError, tError)
 	expectNotEquivalentType(t, tError, tInt)
+	expectBool(t, tError.Equals(tAny), false)
+	expectBool(t, tAny.Equals(tError), false)
 
 	expectString(t, tError.String(), "ERROR")
 	expectBool(t, tError.IsError(), true)
@@ -23,6 +26,7 @@ func TestTypeError(t *testing.T) {
 
 func TestTypeAny(t *testing.T) {
 	expectEquivalentType(t, Any{}, Any{})
+	expectBool(t, tAny.Equals(tAny), true)
 
 	expectString(t, (Any{}).String(), "Any")
 	expectBool(t, (Any{}).IsError(), false)
@@ -33,6 +37,7 @@ func TestTypeVoid(t *testing.T) {
 	expectEquivalentType(t, Void{}, Void{})
 	expectNotEquivalentType(t, Void{}, Error{})
 	expectNotEquivalentType(t, Void{}, tInt)
+	expectBool(t, (Void{}).Equals(tAny), false)
 
 	expectString(t, (Void{}).String(), "Void")
 	expectBool(t, (Void{}).IsError(), false)
@@ -45,6 +50,8 @@ func TestTypeFunction(t *testing.T) {
 	expectNotEquivalentType(t, tFunc, tError)
 	expectNotEquivalentType(t, tFunc, Function{tTuple, tBool})
 	expectNotEquivalentType(t, tFunc, Function{Tuple{}, tList})
+	expectBool(t, tFunc.Equals(tAny), false)
+	expectBool(t, tAny.Equals(tFunc), true)
 
 	expectString(t, tFunc.String(), "(Int Bool Bool? [Int]) => [Int]")
 	expectBool(t, tFunc.IsError(), false)
@@ -57,6 +64,8 @@ func TestTypeTuple(t *testing.T) {
 	expectNotEquivalentType(t, tTuple, tError)
 	expectNotEquivalentType(t, tTuple, Tuple{[]Type{tInt, tBool, tOpt}})
 	expectNotEquivalentType(t, tTuple, Tuple{[]Type{tInt, tBool, tOpt, tOpt}})
+	expectBool(t, tTuple.Equals(tAny), false)
+	expectBool(t, tAny.Equals(tTuple), true)
 
 	expectString(t, tTuple.String(), "(Int Bool Bool? [Int])")
 	expectBool(t, tTuple.IsError(), false)
@@ -69,6 +78,8 @@ func TestTypeList(t *testing.T) {
 	expectNotEquivalentType(t, List{tInt}, tInt)
 	expectNotEquivalentType(t, List{tInt}, tError)
 	expectNotEquivalentType(t, List{tInt}, List{tBool})
+	expectBool(t, List{tInt}.Equals(tAny), false)
+	expectBool(t, tAny.Equals(List{tInt}), true)
 
 	expectString(t, List{tOpt}.String(), "[Bool?]")
 	expectBool(t, tList.IsError(), false)
@@ -80,6 +91,8 @@ func TestTypeOptional(t *testing.T) {
 	expectNotEquivalentType(t, Optional{tInt}, tInt)
 	expectNotEquivalentType(t, Optional{tInt}, tError)
 	expectNotEquivalentType(t, Optional{tInt}, Optional{tBool})
+	expectBool(t, Optional{tInt}.Equals(tAny), false)
+	expectBool(t, tAny.Equals(Optional{tInt}), true)
 
 	expectString(t, tOpt.String(), "Bool?")
 	expectBool(t, tOpt.IsError(), false)
@@ -91,6 +104,8 @@ func TestTypeIdent(t *testing.T) {
 	expectNotEquivalentType(t, tInt, tError)
 	expectNotEquivalentType(t, tInt, tBool)
 	expectNotEquivalentType(t, tInt, tOpt)
+	expectBool(t, tInt.Equals(tAny), false)
+	expectBool(t, tAny.Equals(tInt), true)
 
 	expectString(t, tInt.String(), "Int")
 	expectString(t, tBool.String(), "Bool")
