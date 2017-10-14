@@ -324,25 +324,25 @@ func TestCheckSubscriptExpr(t *testing.T) {
 
 	s = scope.MakeGlobalScope()
 	str = &parser.StringExpr{Tok: nop, Val: "foo"}
-	badRef := &parser.IdentExpr{Tok: nop, Name: "x"}
+	badRef := &parser.IdentExpr{Tok: makeTok(5, 2), Name: "x"}
 	expr = &parser.SubscriptExpr{ListLike: str, Index: badRef}
 	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
-	expectNthError(t, s, 0, "variable 'x' was used before it was declared")
+	expectNthError(t, s, 0, "(5:2) variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 
 	s = scope.MakeGlobalScope()
 	str = &parser.StringExpr{Tok: nop, Val: "foo"}
-	badIndex := &parser.StringExpr{Tok: nop, Val: "0"}
+	badIndex := &parser.StringExpr{Tok: makeTok(2, 9), Val: "0"}
 	expr = &parser.SubscriptExpr{ListLike: str, Index: badIndex}
 	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
-	expectNthError(t, s, 0, "subscript operator does not support Str[Str]")
+	expectNthError(t, s, 0, "(2:9) subscript operator does not support Str[Str]")
 	expectBool(t, typ.IsError(), true)
 
 	s = scope.MakeGlobalScope()
-	str = &parser.StringExpr{Tok: nop, Val: "foo"}
+	str = &parser.StringExpr{Tok: makeTok(4, 2), Val: "foo"}
 	expr = &parser.SubscriptExpr{ListLike: str, Index: index}
 	typ = checkSubscriptExpr(s, expr, make(binopsLUT))
-	expectNthError(t, s, 0, "unknown infix operator '['")
+	expectNthError(t, s, 0, "(4:2) unknown infix operator '['")
 	expectBool(t, typ.IsError(), true)
 }
 
