@@ -331,6 +331,7 @@ func TestParseTypeSig(t *testing.T) {
 	expectTypeNote(t, parseTypeNote, "() => Void", "() => Void")
 
 	expectTypeNoteError(t, parseTypeNote, "[?]", "(1:2) unexpected symbol")
+	expectTypeNoteError(t, parseTypeNote, `[@]`, "(1:2) unexpected symbol")
 	expectTypeNoteError(t, parseTypeNote, "[Int", "(1:4) expected right bracket")
 	expectTypeNoteError(t, parseTypeNote, "?", "(1:1) unexpected symbol")
 }
@@ -791,7 +792,7 @@ func TestParseNumber(t *testing.T) {
 	expectAnError(t, "(1:1) expected number literal", expr, err)
 
 	loc := lexer.Loc{Line: 1, Col: 1}
-	expr, err = evalNumber(lexer.Token{Type: lexer.Number, Lexeme: "abc", Loc: loc})
+	expr, err = evalNumber(parser, lexer.Token{Type: lexer.Number, Lexeme: "abc", Loc: loc})
 	expectAnError(t, "(1:1) malformed number literal", expr, err)
 }
 
@@ -830,7 +831,7 @@ func TestParseBoolean(t *testing.T) {
 	expectAnError(t, "(1:1) expected boolean literal", expr, err)
 
 	loc := lexer.Loc{Line: 1, Col: 1}
-	expr, err = evalBoolean(lexer.Token{Type: lexer.Boolean, Lexeme: "ture", Loc: loc})
+	expr, err = evalBoolean(p, lexer.Token{Type: lexer.Boolean, Lexeme: "ture", Loc: loc})
 	expectAnError(t, "(1:1) malformed boolean literal", expr, err)
 }
 

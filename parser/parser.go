@@ -39,6 +39,14 @@ type Parser struct {
 	postfixParseFuncs map[lexer.Type]PostfixParseFunc
 }
 
+func (p *Parser) errorFromPeekToken(message string) error {
+	return p.errorFromLocation(p.lexer.Peek().Loc, message)
+}
+
+func (p *Parser) errorFromLocation(loc lexer.Loc, message string) error {
+	return SyntaxError{p.lexer.Filepath, loc, message}
+}
+
 func (p *Parser) peekTokenIsNot(first lexer.Type, rest ...lexer.Type) bool {
 	peek := p.lexer.Peek().Type
 
@@ -58,7 +66,7 @@ func (p *Parser) peekTokenIsNot(first lexer.Type, rest ...lexer.Type) bool {
 func (p *Parser) expectNextToken(which lexer.Type, otherwise string) (lexer.Token, error) {
 	if p.peekTokenIsNot(which) {
 		peek := p.lexer.Peek()
-		return peek, makeSyntaxError(peek, otherwise, false)
+		return peek, p.errorFromPeekToken(otherwise)
 	}
 
 	return p.lexer.Next(), nil
@@ -166,7 +174,7 @@ func parseStmt(p *Parser) (Stmt, error) {
 func parseTopLevelStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
 	case lexer.Return:
-		return nil, SyntaxError{p.lexer.Peek().Loc, "return statements must be inside a function"}
+		return nil, p.errorFromPeekToken("return statements must be inside a function")
 	default:
 		return parseGeneralStmt(p)
 	}
@@ -184,7 +192,7 @@ func parseNonTopLevelStmt(p *Parser) (Stmt, error) {
 func parseGeneralStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
 	case lexer.Use:
-		return nil, SyntaxError{p.lexer.Peek().Loc, "use statements must be outside any other statement"}
+		return nil, p.errorFromPeekToken("use statements must be outside any other statement")
 	case lexer.If:
 		return parseIfStmt(p)
 	case lexer.Let:
@@ -329,7 +337,7 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 	case *AssignExpr:
 		stmt = &ExprStmt{expr}
 	default:
-		return nil, SyntaxError{expr.Start(), "expected start of statement"}
+		return nil, p.errorFromLocation(expr.Start(), "expected start of statement")
 	}
 
 	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
@@ -351,8 +359,10 @@ func parseTypeNote(p *Parser) (TypeNote, error) {
 		child, err = parseTypeNoteList(p)
 	case lexer.ParenL:
 		child, err = parseTypeNoteTuple(p)
+	case lexer.Error:
+		return nil, p.errorFromPeekToken(p.lexer.Peek().Lexeme)
 	default:
-		return nil, makeSyntaxError(p.lexer.Peek(), "unexpected symbol", true)
+		return nil, p.errorFromPeekToken("unexpected symbol")
 	}
 
 	if err != nil {
@@ -464,7 +474,11 @@ func parseTypeNoteFunction(p *Parser, tuple TypeNoteTuple) (TypeNote, error) {
 func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	prefix, exists := p.prefixParseFuncs[p.lexer.Peek().Type]
 	if exists == false {
-		return nil, makeSyntaxError(p.lexer.Peek(), "unexpected symbol", true)
+		peek := p.lexer.Peek()
+		if peek.Type == lexer.Error {
+			return nil, p.errorFromPeekToken(peek.Lexeme)
+		}
+		return nil, p.errorFromPeekToken("unexpected symbol")
 	}
 
 	left, err := prefix(p)
@@ -636,8 +650,7 @@ func parseSubscript(p *Parser, left Expr) (Expr, error) {
 	}
 
 	if p.lexer.Peek().Type == lexer.BracketR {
-		err = makeSyntaxError(p.lexer.Peek(), "expected index expression", false)
-		return nil, err
+		return nil, p.errorFromPeekToken("expected index expression")
 	}
 
 	index, err := parseExpr(p, Lowest)
@@ -686,7 +699,7 @@ func parseDispatch(p *Parser, left Expr) (Expr, error) {
 func parseAssign(p *Parser, left Expr) (Expr, error) {
 	leftIdent, ok := left.(*IdentExpr)
 	if ok == false {
-		return nil, SyntaxError{left.Start(), "left hand must be an identifier"}
+		return nil, p.errorFromLocation(left.Start(), "left hand must be an identifier")
 	}
 
 	level := p.peekPrecedence()
@@ -760,13 +773,13 @@ func parseNumber(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return evalNumber(tok)
+	return evalNumber(p, tok)
 }
 
-func evalNumber(tok lexer.Token) (*NumberExpr, error) {
+func evalNumber(p *Parser, tok lexer.Token) (*NumberExpr, error) {
 	val, err := strconv.ParseUint(tok.Lexeme, 10, 64)
 	if err != nil {
-		return &NumberExpr{}, makeSyntaxError(tok, "malformed number literal", false)
+		return nil, p.errorFromLocation(tok.Loc, "malformed number literal")
 	}
 
 	return &NumberExpr{tok, int(val)}, nil
@@ -795,15 +808,15 @@ func parseBoolean(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	return evalBoolean(tok)
+	return evalBoolean(p, tok)
 }
 
-func evalBoolean(tok lexer.Token) (*BooleanExpr, error) {
+func evalBoolean(p *Parser, tok lexer.Token) (*BooleanExpr, error) {
 	if tok.Lexeme == "true" {
 		return &BooleanExpr{tok, true}, nil
 	} else if tok.Lexeme == "false" {
 		return &BooleanExpr{tok, false}, nil
 	}
 
-	return &BooleanExpr{}, makeSyntaxError(tok, "malformed boolean literal", false)
+	return nil, p.errorFromLocation(tok.Loc, "malformed boolean literal")
 }
