@@ -48,8 +48,9 @@ type Token struct {
 
 // Lexer contains methods for generating a sequence of Tokens
 type Lexer struct {
-	buffer  []Token
-	scanner *Scanner
+	Filepath string
+	buffer   []Token
+	scanner  *Scanner
 }
 
 // Peek returns the next token but does not advance the Lexer
@@ -76,7 +77,7 @@ func (l *Lexer) Next() Token {
 
 // Lex creates a new Lexer struct given a Scanner
 func Lex(scanner *Scanner) *Lexer {
-	return &Lexer{[]Token{}, scanner}
+	return &Lexer{"", []Token{}, scanner}
 }
 
 func isEOF(r rune) bool {
