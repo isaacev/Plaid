@@ -6,7 +6,7 @@ import (
 )
 
 func TestLexerPeekNext(t *testing.T) {
-	lexer := Lex(Scan("abc def"))
+	lexer := Lex("", Scan("abc def"))
 
 	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.Peek())
 	expectToken(t, Token{Ident, "abc", Loc{1, 1}}, lexer.buffer[0])

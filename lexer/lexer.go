@@ -76,8 +76,8 @@ func (l *Lexer) Next() Token {
 }
 
 // Lex creates a new Lexer struct given a Scanner
-func Lex(scanner *Scanner) *Lexer {
-	return &Lexer{"", []Token{}, scanner}
+func Lex(filepath string, scanner *Scanner) *Lexer {
+	return &Lexer{filepath, []Token{}, scanner}
 }
 
 func isEOF(r rune) bool {

@@ -34,7 +34,7 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 	}
 
 	src := string(buf)
-	ast, err := parser.Parse(src)
+	ast, err := parser.Parse(filename, src)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

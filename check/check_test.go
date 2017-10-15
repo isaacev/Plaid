@@ -29,43 +29,43 @@ func TestCheckMain(t *testing.T) {
 }
 
 func TestCheckProgram(t *testing.T) {
-	prog, _ := parser.Parse("let a := 123;")
+	prog, _ := parser.Parse("", "let a := 123;")
 	s := scope.MakeGlobalScope()
 	checkProgram(s, prog)
 	expectNoErrors(t, s)
 }
 
 func TestCheckStmt(t *testing.T) {
-	prog, _ := parser.Parse("let a := 123;")
+	prog, _ := parser.Parse("", "let a := 123;")
 	s := scope.MakeGlobalScope()
 	checkStmt(s, prog.Stmts[0])
 	expectNoErrors(t, s)
 }
 
 func TestCheckIfStmt(t *testing.T) {
-	prog, _ := parser.Parse("if true {};")
+	prog, _ := parser.Parse("", "if true {};")
 	s := Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("if 123 {};")
+	prog, _ = parser.Parse("", "if 123 {};")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:4) condition must resolve to a boolean")
 }
 
 func TestCheckReturnStmt(t *testing.T) {
-	prog, _ := parser.Parse("let a := fn (): Int { return \"abc\"; };")
+	prog, _ := parser.Parse("", "let a := fn (): Int { return \"abc\"; };")
 	s := Check(prog)
 	expectNthError(t, s, 0, "(1:30) expected to return 'Int', got 'Str'")
 
-	prog, _ = parser.Parse("let a := fn (): Int { return x; };")
+	prog, _ = parser.Parse("", "let a := fn (): Int { return x; };")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:30) variable 'x' was used before it was declared")
 
-	prog, _ = parser.Parse("let a := fn (): Int { return; };")
+	prog, _ = parser.Parse("", "let a := fn (): Int { return; };")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:23) expected a return type of 'Int', got nothing")
 
-	prog, _ = parser.Parse("let a := fn ():Void { return 123; };")
+	prog, _ = parser.Parse("", "let a := fn ():Void { return 123; };")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:30) expected to return nothing, got 'Int'")
 
@@ -77,59 +77,59 @@ func TestCheckReturnStmt(t *testing.T) {
 }
 
 func TestCheckExpr(t *testing.T) {
-	prog, _ := parser.Parse("let a := 2 + 1;")
+	prog, _ := parser.Parse("", "let a := 2 + 1;")
 	s := Check(prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), types.Int)
 
-	prog, _ = parser.Parse("let a := 1;")
+	prog, _ = parser.Parse("", "let a := 1;")
 	s = Check(prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), types.Int)
 
-	prog, _ = parser.Parse("let a := \"abc\";")
+	prog, _ = parser.Parse("", "let a := \"abc\";")
 	s = Check(prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), types.Str)
 
-	prog, _ = parser.Parse("let a := fn () {};")
+	prog, _ = parser.Parse("", "let a := fn () {};")
 	s = Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("let a := true;")
+	prog, _ = parser.Parse("", "let a := true;")
 	s = Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("let a := false;")
+	prog, _ = parser.Parse("", "let a := false;")
 	s = Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("let a := [1, 2, 3];")
+	prog, _ = parser.Parse("", "let a := [1, 2, 3];")
 	s = Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("let a := \"abc\"[0];")
+	prog, _ = parser.Parse("", "let a := \"abc\"[0];")
 	s = Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("let a := add(2, 2);")
+	prog, _ = parser.Parse("", "let a := add(2, 2);")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:10) variable 'add' was used before it was declared")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
-	prog, _ = parser.Parse("let f := fn():Void{}; let a := f();")
+	prog, _ = parser.Parse("", "let f := fn():Void{}; let a := f();")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:32) cannot use void types in an expression")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
-	prog, _ = parser.Parse("let a := -5;")
+	prog, _ = parser.Parse("", "let a := -5;")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:10) unknown expression type")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
-	prog, _ := parser.Parse("let f := fn (a: Int): Int { };")
+	prog, _ := parser.Parse("", "let f := fn (a: Int): Int { };")
 	s := Check(prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("f"), types.Function{
@@ -140,7 +140,7 @@ func TestCheckFunctionExpr(t *testing.T) {
 
 func TestCheckDispatchExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := scope.MakeGlobalScope()
@@ -151,7 +151,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 	}
 
 	bad := func(source string, name string, typ types.Type, errs ...string) {
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := scope.MakeGlobalScope()
@@ -198,7 +198,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 
 func TestCheckAssignExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := scope.MakeGlobalScope()
@@ -209,7 +209,7 @@ func TestCheckAssignExpr(t *testing.T) {
 	}
 
 	bad := func(source string, name string, typ types.Type, exp string) {
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := scope.MakeGlobalScope()
@@ -231,7 +231,7 @@ func TestCheckAssignExpr(t *testing.T) {
 func TestCheckBinaryExpr(t *testing.T) {
 	good := func(left types.Type, oper string, right types.Type, exp types.Type) {
 		source := "let c := a " + oper + " b;"
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := scope.MakeGlobalScope()
@@ -244,7 +244,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 	}
 
 	bad := func(source string, s scope.Scope, errs ...string) {
-		if prog, err := parser.Parse(source); err != nil {
+		if prog, err := parser.Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
 			checkProgram(s, prog)
@@ -356,11 +356,11 @@ func TestCheckSubscriptExpr(t *testing.T) {
 }
 
 func TestCheckSelfExpr(t *testing.T) {
-	prog, _ := parser.Parse("let f := fn(): Void { self(); };")
+	prog, _ := parser.Parse("", "let f := fn(): Void { self(); };")
 	s := Check(prog)
 	expectNoErrors(t, s)
 
-	prog, _ = parser.Parse("self();")
+	prog, _ = parser.Parse("", "self();")
 	s = Check(prog)
 	expectNthError(t, s, 0, "(1:1) self references must be inside a function")
 }

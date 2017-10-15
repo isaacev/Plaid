@@ -96,15 +96,15 @@ func (p *Parser) peekPrecedence() Precedence {
 }
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(source string) (*Program, error) {
-	p := makeParser(source)
+func Parse(filepath string, source string) (*Program, error) {
+	p := makeParser(filepath, source)
 	loadGrammar(p)
 	return parseProgram(p)
 }
 
-func makeParser(source string) *Parser {
+func makeParser(filepath string, source string) *Parser {
 	s := lexer.Scan(source)
-	l := lexer.Lex(s)
+	l := lexer.Lex(filepath, s)
 	p := &Parser{
 		l,
 		0,

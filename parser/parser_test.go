@@ -7,7 +7,7 @@ import (
 
 func TestPeekTokenIsNot(t *testing.T) {
 	expectTokenToMatch := func(source string, tests ...lexer.Type) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		got := p.peekTokenIsNot(tests[0], tests[1:]...)
 
 		if got != false {
@@ -16,7 +16,7 @@ func TestPeekTokenIsNot(t *testing.T) {
 	}
 
 	expectTokenToNotMatch := func(source string, tests ...lexer.Type) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		got := p.peekTokenIsNot(tests[0], tests[1:]...)
 
 		if got != true {
@@ -33,7 +33,7 @@ func TestPeekTokenIsNot(t *testing.T) {
 }
 
 func TestExpectNextToken(t *testing.T) {
-	p := makeParser("foo 123")
+	p := makeParser("", "foo 123")
 	tok, err := p.expectNextToken(lexer.Ident, "expected an identifier")
 	if err != nil {
 		t.Errorf("Expected no error, got %s\n", err)
@@ -41,7 +41,7 @@ func TestExpectNextToken(t *testing.T) {
 		t.Errorf("Expected '%s', got '%s'\n", lexer.Ident, tok.Type)
 	}
 
-	p = makeParser("123 foo")
+	p = makeParser("", "123 foo")
 	tok, err = p.expectNextToken(lexer.Ident, "expected an identifier")
 	exp := "(1:1) expected an identifier"
 	if err != nil {
@@ -54,7 +54,7 @@ func TestExpectNextToken(t *testing.T) {
 }
 
 func TestRegisterPrecedence(t *testing.T) {
-	parser := makeParser("")
+	parser := makeParser("", "")
 	parser.registerPrecedence(lexer.Ident, Sum)
 
 	got := parser.precedenceTable[lexer.Ident]
@@ -64,7 +64,7 @@ func TestRegisterPrecedence(t *testing.T) {
 }
 
 func TestRegisterPrefix(t *testing.T) {
-	parser := makeParser("")
+	parser := makeParser("", "")
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	if _, exists := parser.prefixParseFuncs[lexer.Ident]; exists == false {
@@ -73,7 +73,7 @@ func TestRegisterPrefix(t *testing.T) {
 }
 
 func TestRegisterPostfix(t *testing.T) {
-	parser := makeParser("")
+	parser := makeParser("", "")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
 
 	if _, exists := parser.postfixParseFuncs[lexer.Plus]; exists == false {
@@ -87,7 +87,7 @@ func TestRegisterPostfix(t *testing.T) {
 }
 
 func TestPeekPrecedence(t *testing.T) {
-	parser := makeParser("+*")
+	parser := makeParser("", "+*")
 	parser.registerPrecedence(lexer.Plus, Sum)
 
 	level := parser.peekPrecedence()
@@ -104,31 +104,31 @@ func TestPeekPrecedence(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	prog, err := Parse("let a := 123; let b := 456;")
+	prog, err := Parse("", "let a := 123; let b := 456;")
 	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
 	expectStart(t, prog, 1, 1)
 }
 
 func TestParseProgram(t *testing.T) {
-	p := makeParser("let a := 123; let b := 456;")
+	p := makeParser("", "let a := 123; let b := 456;")
 	loadGrammar(p)
 	prog, err := parseProgram(p)
 	expectNoErrors(t, "(let a 123)\n(let b 456)", prog, err)
 	expectStart(t, prog, 1, 1)
 
-	p = makeParser("")
+	p = makeParser("", "")
 	loadGrammar(p)
 	prog, err = parseProgram(p)
 	expectNoErrors(t, "", prog, err)
 	expectStart(t, prog, 1, 1)
 
-	p = makeParser(`use "foo"; use "bar";`)
+	p = makeParser("", `use "foo"; use "bar";`)
 	loadGrammar(p)
 	prog, err = parseProgram(p)
 	expectNoErrors(t, "(use \"foo\")\n(use \"bar\")", prog, err)
 	expectStart(t, prog, 1, 1)
 
-	p = makeParser("let a = 123; let b := 456;")
+	p = makeParser("", "let a = 123; let b := 456;")
 	loadGrammar(p)
 	prog, err = parseProgram(p)
 	expectAnError(t, "(1:7) expected :=", prog, err)
@@ -136,7 +136,7 @@ func TestParseProgram(t *testing.T) {
 
 func TestParseStmt(t *testing.T) {
 	expectStmt := func(source string, ast string, fn func(*Parser) (Stmt, error)) {
-		parser := makeParser(source)
+		parser := makeParser("", source)
 		loadGrammar(parser)
 		stmt, err := fn(parser)
 		expectNoErrors(t, ast, stmt, err)
@@ -144,7 +144,7 @@ func TestParseStmt(t *testing.T) {
 	}
 
 	expectStmtError := func(source string, msg string, fn func(*Parser) (Stmt, error)) {
-		parser := makeParser(source)
+		parser := makeParser("", source)
 		loadGrammar(parser)
 		stmt, err := fn(parser)
 		expectAnError(t, msg, stmt, err)
@@ -162,7 +162,7 @@ func TestParseStmt(t *testing.T) {
 
 func TestParseStmtBlock(t *testing.T) {
 	expectStmtBlock := func(source string, ast string) {
-		parser := makeParser(source)
+		parser := makeParser("", source)
 		loadGrammar(parser)
 		block, err := parseStmtBlock(parser)
 		expectNoErrors(t, ast, block, err)
@@ -170,7 +170,7 @@ func TestParseStmtBlock(t *testing.T) {
 	}
 
 	expectStmtBlockError := func(source string, msg string) {
-		parser := makeParser(source)
+		parser := makeParser("", source)
 		loadGrammar(parser)
 		block, err := parseStmtBlock(parser)
 		expectAnError(t, msg, block, err)
@@ -184,7 +184,7 @@ func TestParseStmtBlock(t *testing.T) {
 
 func TestParseUseStmt(t *testing.T) {
 	good := func(source string, ast string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseUseStmt(p)
 		expectNoErrors(t, ast, stmt, err)
@@ -192,7 +192,7 @@ func TestParseUseStmt(t *testing.T) {
 	}
 
 	bad := func(source string, msg string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseUseStmt(p)
 		expectAnError(t, msg, stmt, err)
@@ -208,7 +208,7 @@ func TestParseUseStmt(t *testing.T) {
 
 func TestParseIfStmt(t *testing.T) {
 	expectIf := func(source string, ast string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseIfStmt(p)
 		expectNoErrors(t, ast, stmt, err)
@@ -216,7 +216,7 @@ func TestParseIfStmt(t *testing.T) {
 	}
 
 	expectIfError := func(source string, msg string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseIfStmt(p)
 		expectAnError(t, msg, stmt, err)
@@ -231,87 +231,87 @@ func TestParseIfStmt(t *testing.T) {
 }
 
 func TestParseDeclarationStmt(t *testing.T) {
-	p := makeParser("let a := 123;")
+	p := makeParser("", "let a := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err := parseDeclarationStmt(p)
 	expectNoErrors(t, "(let a 123)", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
-	p = makeParser("a := 123;")
+	p = makeParser("", "a := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:1) expected LET keyword", stmt, err)
 
-	p = makeParser("let 0 := 123;")
+	p = makeParser("", "let 0 := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:5) expected identifier", stmt, err)
 
-	p = makeParser("let a = 123;")
+	p = makeParser("", "let a = 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:7) expected :=", stmt, err)
 
-	p = makeParser("let a :=;")
+	p = makeParser("", "let a :=;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:9) unexpected symbol", stmt, err)
 
-	p = makeParser("let a := 123")
+	p = makeParser("", "let a := 123")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseDeclarationStmt(p)
 	expectAnError(t, "(1:12) expected semicolon", stmt, err)
 }
 
 func TestParseReturnStmt(t *testing.T) {
-	p := makeParser("return;")
+	p := makeParser("", "return;")
 	stmt, err := parseReturnStmt(p)
 	expectNoErrors(t, "(return)", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
-	p = makeParser("return 123;")
+	p = makeParser("", "return 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseReturnStmt(p)
 	expectNoErrors(t, "(return 123)", stmt, err)
 
-	p = makeParser("123;")
+	p = makeParser("", "123;")
 	stmt, err = parseReturnStmt(p)
 	expectAnError(t, "(1:1) expected RETURN keyword", stmt, err)
 
-	p = makeParser("return")
+	p = makeParser("", "return")
 	stmt, err = parseReturnStmt(p)
 	expectAnError(t, "(1:6) expected semicolon", stmt, err)
 
-	p = makeParser("return let := 123;")
+	p = makeParser("", "return let := 123;")
 	p.registerPrefix(lexer.Number, parseNumber)
 	stmt, err = parseReturnStmt(p)
 	expectAnError(t, "(1:8) unexpected symbol", stmt, err)
 }
 
 func TestParseExprStmt(t *testing.T) {
-	p := makeParser("a := 123;")
+	p := makeParser("", "a := 123;")
 	loadGrammar(p)
 	stmt, err := parseExprStmt(p)
 	expectNoErrors(t, "(= a 123)", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
-	p = makeParser("callee(1, 2);")
+	p = makeParser("", "callee(1, 2);")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)
 	expectNoErrors(t, "(callee (1 2))", stmt, err)
 	expectStart(t, stmt, 1, 1)
 
-	p = makeParser("a := 123")
+	p = makeParser("", "a := 123")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)
 	expectAnError(t, "(1:8) expected semicolon", stmt, err)
 
-	p = makeParser("let a := 123")
+	p = makeParser("", "let a := 123")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)
 	expectAnError(t, "(1:1) unexpected symbol", stmt, err)
 
-	p = makeParser("2 + 2")
+	p = makeParser("", "2 + 2")
 	loadGrammar(p)
 	stmt, err = parseExprStmt(p)
 	expectAnError(t, "(1:1) expected start of statement", stmt, err)
@@ -350,7 +350,7 @@ func TestParseTypeList(t *testing.T) {
 
 func TestParseTypeOptional(t *testing.T) {
 	expectTypeOpt := func(fn typeNoteParser, source string, ast string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
@@ -359,7 +359,7 @@ func TestParseTypeOptional(t *testing.T) {
 	}
 
 	expectTypeOptError := func(fn typeNoteParser, source string, msg string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		sig, err := fn(p)
 		expectNoErrors(t, sig.String(), sig, err)
@@ -389,39 +389,39 @@ func TestParseTypeFunction(t *testing.T) {
 	expectTypeNote(t, parseTypeNoteTuple, "(a, b, c,)=>[Int]", "(a b c) => [Int]")
 	expectTypeNoteError(t, parseTypeNoteTuple, "() => 123", "(1:7) unexpected symbol")
 
-	p := makeParser("= > Int")
+	p := makeParser("", "= > Int")
 	tuple := TypeNoteTuple{nop, []TypeNote{}}
 	sig, err := parseTypeNoteFunction(p, tuple)
 	expectAnError(t, "(1:1) expected arrow", sig, err)
 }
 
 func TestParseExpr(t *testing.T) {
-	p := makeParser("+a")
+	p := makeParser("", "+a")
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err := parseExpr(p, Lowest)
 	expectNoErrors(t, "(+ a)", expr, err)
 
-	p = makeParser("+")
+	p = makeParser("", "+")
 	p.registerPrefix(lexer.Plus, parsePrefix)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
 	expectAnError(t, "(1:1) unexpected symbol", expr, err)
 
-	p = makeParser("a + b + c")
+	p = makeParser("", "a + b + c")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
 	expectNoErrors(t, "(+ (+ a b) c)", expr, err)
 
-	p = makeParser("a + b * c")
+	p = makeParser("", "a + b * c")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPostfix(lexer.Star, parseInfix, Product)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
 	expectNoErrors(t, "(+ a (* b c))", expr, err)
 
-	p = makeParser("a +")
+	p = makeParser("", "a +")
 	p.registerPostfix(lexer.Plus, parseInfix, Sum)
 	p.registerPrefix(lexer.Ident, parseIdent)
 	expr, err = parseExpr(p, Lowest)
@@ -429,48 +429,48 @@ func TestParseExpr(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	p := makeParser("fn ():Void {}")
+	p := makeParser("", "fn ():Void {}")
 	expr, err := parseFunction(p)
 	expectNoErrors(t, "(fn ():Void {})", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("fn ():Void {}")
+	p = makeParser("", "fn ():Void {}")
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn ():Void {})", expr, err)
 
-	p = makeParser("fn ():Int {}")
+	p = makeParser("", "fn ():Int {}")
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn ():Int {})", expr, err)
 
-	p = makeParser("fn ():[Int?]? {}")
+	p = makeParser("", "fn ():[Int?]? {}")
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn ():[Int?]? {})", expr, err)
 
-	p = makeParser("fn (a:Int):Void { let x := 123; }")
+	p = makeParser("", "fn (a:Int):Void { let x := 123; }")
 	loadGrammar(p)
 	expr, err = parseFunction(p)
 	expectNoErrors(t, "(fn (a:Int):Void {\n  (let x 123)})", expr, err)
 
-	p = makeParser("func (a) { let x := 123; }")
+	p = makeParser("", "func (a) { let x := 123; }")
 	expr, err = parseFunction(p)
 	expectAnError(t, "(1:1) expected FN keyword", expr, err)
 
-	p = makeParser("fn (,) { let x := 123; }")
+	p = makeParser("", "fn (,) { let x := 123; }")
 	expr, err = parseFunction(p)
 	expectAnError(t, "(1:5) expected identifier", expr, err)
 
-	p = makeParser("fn (): { let x := 123; }")
+	p = makeParser("", "fn (): { let x := 123; }")
 	expr, err = parseFunction(p)
 	expectAnError(t, "(1:8) unexpected symbol", expr, err)
 
-	p = makeParser("fn ():Void { let x = 123; }")
+	p = makeParser("", "fn ():Void { let x = 123; }")
 	expr, err = parseFunction(p)
 	expectAnError(t, "(1:20) expected :=", expr, err)
 }
 
 func TestParseFunctionParams(t *testing.T) {
 	expectParams := func(prog string, exp string) {
-		p := makeParser(prog)
+		p := makeParser("", prog)
 		params, err := parseFunctionParams(p)
 
 		if err != nil {
@@ -488,7 +488,7 @@ func TestParseFunctionParams(t *testing.T) {
 	}
 
 	expectParamError := func(prog string, msg string) {
-		p := makeParser(prog)
+		p := makeParser("", prog)
 		params, err := parseFunctionParams(p)
 
 		if err == nil {
@@ -520,36 +520,36 @@ func TestParseFunctionParams(t *testing.T) {
 }
 
 func TestParseFunctionParam(t *testing.T) {
-	p := makeParser("a:Int")
+	p := makeParser("", "a:Int")
 	param, err := parseFunctionParam(p)
 	expectNoErrors(t, "a:Int", param, err)
 	expectStart(t, param, 1, 1)
 
-	p = makeParser("0:Int")
+	p = makeParser("", "0:Int")
 	param, err = parseFunctionParam(p)
 	expectAnError(t, "(1:1) expected identifier", param, err)
 
-	p = makeParser("a:456")
+	p = makeParser("", "a:456")
 	param, err = parseFunctionParam(p)
 	expectAnError(t, "(1:3) unexpected symbol", param, err)
 }
 
 func TestParseFunctionReturnSig(t *testing.T) {
-	p := makeParser(": Int")
+	p := makeParser("", ": Int")
 	sig, err := parseFunctionReturnSig(p)
 	expectNoErrors(t, "Int", sig, err)
 
-	p = makeParser("Void")
+	p = makeParser("", "Void")
 	sig, err = parseFunctionReturnSig(p)
 	expectAnError(t, "(1:1) expected colon between parameters and return type", sig, err)
 
-	p = makeParser(": 456")
+	p = makeParser("", ": 456")
 	sig, err = parseFunctionReturnSig(p)
 	expectAnError(t, "(1:3) unexpected symbol", sig, err)
 }
 
 func TestParseInfix(t *testing.T) {
-	parser := makeParser("a + b")
+	parser := makeParser("", "a + b")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -565,7 +565,7 @@ func TestParseInfix(t *testing.T) {
 	expectNoErrors(t, "(+ a b)", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	parser = makeParser("a +")
+	parser = makeParser("", "a +")
 	parser.registerPostfix(lexer.Plus, parseInfix, Sum)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -579,7 +579,7 @@ func TestParseInfix(t *testing.T) {
 
 func TestParseList(t *testing.T) {
 	good := func(source string, exp string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		expr, err := parseList(p)
 		expectNoErrors(t, exp, expr, err)
@@ -587,7 +587,7 @@ func TestParseList(t *testing.T) {
 	}
 
 	bad := func(source string, exp string) {
-		p := makeParser(source)
+		p := makeParser("", source)
 		loadGrammar(p)
 		expr, err := parseList(p)
 		expectAnError(t, exp, expr, err)
@@ -605,32 +605,32 @@ func TestParseList(t *testing.T) {
 }
 
 func TestParseSubscript(t *testing.T) {
-	p := makeParser("abc[0]")
+	p := makeParser("", "abc[0]")
 	loadGrammar(p)
 	ident, _ := parseIdent(p)
 	expr, err := parseSubscript(p, ident)
 	expectNoErrors(t, "abc[0]", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("abc]")
+	p = makeParser("", "abc]")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseSubscript(p, ident)
 	expectAnError(t, "(1:4) expect left bracket", expr, err)
 
-	p = makeParser("abc[]")
+	p = makeParser("", "abc[]")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseSubscript(p, ident)
 	expectAnError(t, "(1:5) expected index expression", expr, err)
 
-	p = makeParser("abc[let]")
+	p = makeParser("", "abc[let]")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseSubscript(p, ident)
 	expectAnError(t, "(1:5) unexpected symbol", expr, err)
 
-	p = makeParser("abc[0")
+	p = makeParser("", "abc[0")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseSubscript(p, ident)
@@ -638,31 +638,31 @@ func TestParseSubscript(t *testing.T) {
 }
 
 func TestParseDispatchExpr(t *testing.T) {
-	p := makeParser("callee()")
+	p := makeParser("", "callee()")
 	loadGrammar(p)
 	ident, _ := parseIdent(p)
 	expr, err := parseDispatch(p, ident)
 	expectNoErrors(t, "(callee ())", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("callee(1, 2, 3)")
+	p = makeParser("", "callee(1, 2, 3)")
 	loadGrammar(p)
 	expr, err = parseExpr(p, Lowest)
 	expectNoErrors(t, "(callee (1 2 3))", expr, err)
 
-	p = makeParser("callee)")
+	p = makeParser("", "callee)")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseDispatch(p, ident)
 	expectAnError(t, "(1:7) expected left paren", expr, err)
 
-	p = makeParser("callee(let")
+	p = makeParser("", "callee(let")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseDispatch(p, ident)
 	expectAnError(t, "(1:8) unexpected symbol", expr, err)
 
-	p = makeParser("callee(123")
+	p = makeParser("", "callee(123")
 	loadGrammar(p)
 	ident, _ = parseIdent(p)
 	expr, err = parseDispatch(p, ident)
@@ -670,25 +670,25 @@ func TestParseDispatchExpr(t *testing.T) {
 }
 
 func TestParseAssignExpr(t *testing.T) {
-	p := makeParser("a := 123")
+	p := makeParser("", "a := 123")
 	loadGrammar(p)
 	expr, err := parseExpr(p, Lowest)
 	expectNoErrors(t, "(= a 123)", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("foo() := 123")
+	p = makeParser("", "foo() := 123")
 	loadGrammar(p)
 	expr, err = parseExpr(p, Lowest)
 	expectAnError(t, "(1:1) left hand must be an identifier", expr, err)
 
-	p = makeParser("a :=")
+	p = makeParser("", "a :=")
 	loadGrammar(p)
 	expr, err = parseExpr(p, Lowest)
 	expectAnError(t, "(1:4) unexpected symbol", expr, err)
 }
 
 func TestParsePostfix(t *testing.T) {
-	parser := makeParser("a+")
+	parser := makeParser("", "a+")
 	parser.registerPostfix(lexer.Plus, parsePostfix, Postfix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -706,7 +706,7 @@ func TestParsePostfix(t *testing.T) {
 }
 
 func TestParsePrefix(t *testing.T) {
-	parser := makeParser("+a")
+	parser := makeParser("", "+a")
 	parser.registerPrefix(lexer.Plus, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -714,7 +714,7 @@ func TestParsePrefix(t *testing.T) {
 	expectNoErrors(t, "(+ a)", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	parser = makeParser("+")
+	parser = makeParser("", "+")
 	parser.registerPrefix(lexer.Plus, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -723,7 +723,7 @@ func TestParsePrefix(t *testing.T) {
 }
 
 func TestParseGroup(t *testing.T) {
-	parser := makeParser("(a)")
+	parser := makeParser("", "(a)")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -731,21 +731,21 @@ func TestParseGroup(t *testing.T) {
 	expectNoErrors(t, "a", expr, err)
 	expectStart(t, expr, 1, 2)
 
-	parser = makeParser("a)")
+	parser = makeParser("", "a)")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parseGroup(parser)
 	expectAnError(t, "(1:1) expected left paren", expr, err)
 
-	parser = makeParser("(")
+	parser = makeParser("", "(")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
 	expr, err = parseGroup(parser)
 	expectAnError(t, "(1:1) unexpected symbol", expr, err)
 
-	parser = makeParser("(a")
+	parser = makeParser("", "(a")
 	parser.registerPrefix(lexer.ParenL, parsePrefix)
 	parser.registerPrefix(lexer.Ident, parseIdent)
 
@@ -754,39 +754,39 @@ func TestParseGroup(t *testing.T) {
 }
 
 func TestParseSelf(t *testing.T) {
-	parser := makeParser("self")
+	parser := makeParser("", "self")
 
 	expr, err := parseSelf(parser)
 	expectNoErrors(t, "self", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	parser = makeParser("selfx")
+	parser = makeParser("", "selfx")
 
 	expr, err = parseSelf(parser)
 	expectAnError(t, "(1:1) expected self", expr, err)
 }
 
 func TestParseIdent(t *testing.T) {
-	parser := makeParser("abc")
+	parser := makeParser("", "abc")
 
 	expr, err := parseIdent(parser)
 	expectNoErrors(t, "abc", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	parser = makeParser("123")
+	parser = makeParser("", "123")
 
 	expr, err = parseIdent(parser)
 	expectAnError(t, "(1:1) expected identifier", expr, err)
 }
 
 func TestParseNumber(t *testing.T) {
-	parser := makeParser("123")
+	parser := makeParser("", "123")
 
 	expr, err := parseNumber(parser)
 	expectNoErrors(t, "123", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	parser = makeParser("abc")
+	parser = makeParser("", "abc")
 
 	expr, err = parseNumber(parser)
 	expectAnError(t, "(1:1) expected number literal", expr, err)
@@ -797,36 +797,36 @@ func TestParseNumber(t *testing.T) {
 }
 
 func TestParseString(t *testing.T) {
-	p := makeParser(`"foo"`)
+	p := makeParser("", `"foo"`)
 	expr, err := parseString(p)
 	expectNoErrors(t, `"foo"`, expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("123")
+	p = makeParser("", "123")
 	expr, err = parseString(p)
 	expectAnError(t, "(1:1) expected string literal", expr, err)
 
-	p = makeParser("\"foo\n\"")
+	p = makeParser("", "\"foo\n\"")
 	expr, err = parseExpr(p, Lowest)
 	expectAnError(t, "(1:5) unclosed string", expr, err)
 
-	p = makeParser("\"foo")
+	p = makeParser("", "\"foo")
 	expr, err = parseExpr(p, Lowest)
 	expectAnError(t, "(1:4) unclosed string", expr, err)
 }
 
 func TestParseBoolean(t *testing.T) {
-	p := makeParser("true")
+	p := makeParser("", "true")
 	expr, err := parseBoolean(p)
 	expectNoErrors(t, "true", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("false")
+	p = makeParser("", "false")
 	expr, err = parseBoolean(p)
 	expectNoErrors(t, "false", expr, err)
 	expectStart(t, expr, 1, 1)
 
-	p = makeParser("flase")
+	p = makeParser("", "flase")
 	expr, err = parseBoolean(p)
 	expectAnError(t, "(1:1) expected boolean literal", expr, err)
 
@@ -838,7 +838,7 @@ func TestParseBoolean(t *testing.T) {
 type typeNoteParser func(p *Parser) (TypeNote, error)
 
 func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) {
-	p := makeParser(source)
+	p := makeParser("", source)
 	loadGrammar(p)
 	sig, err := fn(p)
 	expectNoErrors(t, ast, sig, err)
@@ -846,7 +846,7 @@ func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) 
 }
 
 func expectTypeNoteError(t *testing.T, fn typeNoteParser, source string, msg string) {
-	p := makeParser(source)
+	p := makeParser("", source)
 	loadGrammar(p)
 	sig, err := fn(p)
 	expectAnError(t, msg, sig, err)
