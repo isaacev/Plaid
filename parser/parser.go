@@ -147,9 +147,12 @@ func parseProgram(p *Parser) (*Program, error) {
 	for p.peekTokenIsNot(lexer.Error, lexer.EOF) {
 		var stmt Stmt
 		var err error
-		if p.lexer.Peek().Type == lexer.Use {
+		switch p.lexer.Peek().Type {
+		case lexer.Use:
 			stmt, err = parseUseStmt(p)
-		} else {
+		case lexer.Pub:
+			stmt, err = parsePubStmt(p)
+		default:
 			stmt, err = parseTopLevelStmt(p)
 		}
 
@@ -246,6 +249,22 @@ func parseUseStmt(p *Parser) (Stmt, error) {
 	}
 
 	return &UseStmt{tok, path}, nil
+}
+
+func parsePubStmt(p *Parser) (Stmt, error) {
+	tok, err := p.expectNextToken(lexer.Pub, "expected PUB keyword")
+	if err != nil {
+		return nil, err
+	}
+
+	var decl *DeclarationStmt
+	if stmt, err := parseDeclarationStmt(p); err == nil {
+		decl = stmt.(*DeclarationStmt)
+	} else {
+		return nil, err
+	}
+
+	return &PubStmt{tok, decl}, nil
 }
 
 func parseIfStmt(p *Parser) (Stmt, error) {

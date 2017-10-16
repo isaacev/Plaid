@@ -84,6 +84,18 @@ func (s UseStmt) String() string   { return fmt.Sprintf("(use %s)", s.Path) }
 func (s UseStmt) isNode()          {}
 func (s UseStmt) isStmt()          {}
 
+// PubStmt describes a file or module import
+type PubStmt struct {
+	Tok  lexer.Token
+	Stmt *DeclarationStmt
+}
+
+// Start returns a location that this node can be considered to start at
+func (s PubStmt) Start() lexer.Loc { return s.Tok.Loc }
+func (s PubStmt) String() string   { return fmt.Sprintf("(pub %s)", s.Stmt) }
+func (s PubStmt) isNode()          {}
+func (s PubStmt) isStmt()          {}
+
 // IfStmt describes a condition expression and an associated clause
 type IfStmt struct {
 	Tok    lexer.Token

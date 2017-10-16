@@ -128,6 +128,12 @@ func TestParseProgram(t *testing.T) {
 	expectNoErrors(t, "(use \"foo\")\n(use \"bar\")", prog, err)
 	expectStart(t, prog, 1, 1)
 
+	p = makeParser("", `pub let a := 123;`)
+	loadGrammar(p)
+	prog, err = parseProgram(p)
+	expectNoErrors(t, "(pub (let a 123))", prog, err)
+	expectStart(t, prog, 1, 1)
+
 	p = makeParser("", "let a = 123; let b := 456;")
 	loadGrammar(p)
 	prog, err = parseProgram(p)
@@ -204,6 +210,29 @@ func TestParseUseStmt(t *testing.T) {
 	bad(`ues "foo";`, "(1:1) expected USE keyword")
 	bad(`use 123;`, "(1:5) expected string literal")
 	bad(`use "foo"`, "(1:9) expected semicolon")
+}
+
+func TestParsePubStmt(t *testing.T) {
+	good := func(source string, ast string) {
+		p := makeParser("", source)
+		loadGrammar(p)
+		stmt, err := parsePubStmt(p)
+		expectNoErrors(t, ast, stmt, err)
+		expectStart(t, stmt, 1, 1)
+	}
+
+	bad := func(source string, msg string) {
+		p := makeParser("", source)
+		loadGrammar(p)
+		stmt, err := parsePubStmt(p)
+		expectAnError(t, msg, stmt, err)
+	}
+
+	good(`pub let a := 123;`, `(pub (let a 123))`)
+	good(`pub let x := "abc";`, `(pub (let x "abc"))`)
+
+	bad(`pbu let a := 123;`, "(1:1) expected PUB keyword")
+	bad(`pub a := 123;`, "(1:5) expected LET keyword")
 }
 
 func TestParseIfStmt(t *testing.T) {

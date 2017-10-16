@@ -39,6 +39,15 @@ func TestUseStmt(t *testing.T) {
 	expectStart(t, UseStmt{Path: path}, 0, 0)
 }
 
+func TestPubStmt(t *testing.T) {
+	(PubStmt{}).isNode()
+	(PubStmt{}).isStmt()
+
+	decl := &DeclarationStmt{Name: &IdentExpr{Name: "foo"}, Expr: &IdentExpr{Name: "bar"}}
+	expectString(t, PubStmt{Stmt: decl}, `(pub (let foo bar))`)
+	expectStart(t, PubStmt{Stmt: decl}, 0, 0)
+}
+
 func TestIfStmt(t *testing.T) {
 	(IfStmt{}).isNode()
 	(IfStmt{}).isStmt()
