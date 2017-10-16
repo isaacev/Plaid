@@ -33,6 +33,7 @@ const (
 	Return        = "return"
 	Self          = "self"
 	Use           = "use"
+	Pub           = "pub"
 	Ident         = "Ident"
 	Number        = "Number"
 	String        = "String"
@@ -316,6 +317,8 @@ func eatWordToken(scanner *Scanner) Token {
 		return Token{Self, "self", loc}
 	case "use":
 		return Token{Use, "use", loc}
+	case "pub":
+		return Token{Pub, "pub", loc}
 	case "true":
 		return Token{Boolean, "true", loc}
 	case "false":
