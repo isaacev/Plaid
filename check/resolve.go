@@ -29,7 +29,7 @@ func (g *graph) resetFlags() {
 // Resolve determines if a module has any dependency cycles
 func Resolve(path string, ast *parser.Program) {
 	n := &node{path: path, ast: ast}
-	g, err := buildGraph(n)
+	g, err := buildGraph(n, loadDependency)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -141,7 +141,7 @@ func extractCycle(route []*node) (cycle []*node) {
 	return nil
 }
 
-func buildGraph(n *node) (g *graph, err error) {
+func buildGraph(n *node, load func(string) (*node, error)) (g *graph, err error) {
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
@@ -158,7 +158,7 @@ func buildGraph(n *node) (g *graph, err error) {
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
-			} else if dep, err = loadDependency(path); err == nil {
+			} else if dep, err = load(path); err == nil {
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
