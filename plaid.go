@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"plaid/check"
 	"plaid/codegen"
 	"plaid/debug"
@@ -15,6 +16,7 @@ import (
 
 func main() {
 	showAST := flag.Bool("ast", false, "output abstract syntax tree")
+	showDeps := flag.Bool("deps", false, "output resolved dependency tree")
 	showCheck := flag.Bool("check", false, "output type checker results")
 	showIR := flag.Bool("ir", false, "output intermediate representation")
 	showBC := flag.Bool("bytecode", false, "output bytecode")
@@ -22,11 +24,11 @@ func main() {
 	flag.Parse()
 
 	for _, filename := range flag.Args() {
-		processFile(filename, *showAST, *showCheck, *showIR, *showBC, *showOut)
+		processFile(filename, *showAST, *showDeps, *showCheck, *showIR, *showBC, *showOut)
 	}
 }
 
-func processFile(filename string, showAST bool, showCheck bool, showIR bool, showBC bool, showOut bool) {
+func processFile(filename string, showAST bool, showDeps bool, showCheck bool, showIR bool, showBC bool, showOut bool) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -42,6 +44,11 @@ func processFile(filename string, showAST bool, showCheck bool, showIR bool, sho
 
 	if showAST {
 		fmt.Println(ast.String())
+	}
+
+	if showDeps {
+		abs, _ := filepath.Abs(filename)
+		check.Resolve(abs, ast)
 	}
 
 	if showCheck || showIR || showBC || showOut {
