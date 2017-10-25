@@ -198,8 +198,12 @@ func (s *GlobalScope) String() (out string) {
 	var padding int
 	var names []string
 	for name := range s.registers {
-		if len(name) > padding {
+		if len(name) >= padding {
 			padding = len(name)
+
+			if s.HasExport(name) {
+				padding++
+			}
 		}
 		names = append(names, name)
 	}
@@ -211,6 +215,9 @@ func (s *GlobalScope) String() (out string) {
 			out += "\n"
 		}
 		typ := s.types[name]
+		if s.HasExport(name) {
+			name = "@" + name
+		}
 		out += fmt.Sprintf(pattern, name, typ)
 	}
 
