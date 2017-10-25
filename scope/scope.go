@@ -53,6 +53,7 @@ func (s *GlobalScope) Import(module *vm.Module) {
 	s.imports = append(s.imports, module)
 }
 
+// HasExport returns true if a given name has been mapped to a *vm.Export struct
 func (s *GlobalScope) HasExport(name string) bool {
 	if _, exists := s.exports[name]; exists {
 		return true
