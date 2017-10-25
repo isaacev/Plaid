@@ -264,7 +264,7 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 
 	/**
 	 * Filter parsing loop:
-	 * 1. if token is right-paren, exit loop
+	 * 1. if token is NOT an identifier, exit loop
 	 * 2. parse a single filter identifier
 	 * 3. if token is comma, eat comma and goto (1)
 	 * 4. exit loop
