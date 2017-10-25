@@ -32,6 +32,7 @@ type Scope interface {
 // GlobalScope exists at the top of the scope tree
 type GlobalScope struct {
 	imports   []*vm.Module
+	exports   map[string]*vm.Export
 	children  []Scope
 	errors    []error
 	types     map[string]types.Type
@@ -41,6 +42,7 @@ type GlobalScope struct {
 // MakeGlobalScope is a helper function to quickly build a global scope
 func MakeGlobalScope() *GlobalScope {
 	return &GlobalScope{
+		exports:   make(map[string]*vm.Export),
 		types:     make(map[string]types.Type),
 		registers: make(map[string]*vm.RegisterTemplate),
 	}
@@ -49,6 +51,22 @@ func MakeGlobalScope() *GlobalScope {
 // Import exposes another module's exports to the global scope
 func (s *GlobalScope) Import(module *vm.Module) {
 	s.imports = append(s.imports, module)
+}
+
+func (s *GlobalScope) HasExport(name string) bool {
+	if _, exists := s.exports[name]; exists {
+		return true
+	}
+
+	return false
+}
+
+// Export exposes global definitions for use by other modules
+func (s *GlobalScope) Export(name string, typ types.Type) {
+	s.exports[name] = &vm.Export{
+		Type:     typ,
+		Register: s.GetLocalVariableRegister(name),
+	}
 }
 
 // HasParent returns true if the current scope has a parent scope
