@@ -74,15 +74,40 @@ func (sb StmtBlock) isNode() {}
 
 // UseStmt describes a file or module import
 type UseStmt struct {
-	Tok  lexer.Token
-	Path *StringExpr
+	Tok    lexer.Token
+	Path   *StringExpr
+	Filter []*UseFilter
 }
 
 // Start returns a location that this node can be considered to start at
 func (s UseStmt) Start() lexer.Loc { return s.Tok.Loc }
-func (s UseStmt) String() string   { return fmt.Sprintf("(use %s)", s.Path) }
-func (s UseStmt) isNode()          {}
-func (s UseStmt) isStmt()          {}
+func (s UseStmt) String() string {
+	var filter string
+	if len(s.Filter) > 0 {
+		filter = " ("
+		for i, f := range s.Filter {
+			if i > 0 {
+				filter += " "
+			}
+			filter += f.String()
+		}
+		filter += ")"
+	}
+
+	return fmt.Sprintf("(use %s%s)", s.Path, filter)
+}
+func (s UseStmt) isNode() {}
+func (s UseStmt) isStmt() {}
+
+// UseFilter describes a named import
+type UseFilter struct {
+	Name *IdentExpr
+}
+
+// Start returns a location that this node can be considered to start at
+func (s UseFilter) Start() lexer.Loc { return s.Name.Start() }
+func (s UseFilter) String() string   { return s.Name.String() }
+func (s UseFilter) isNode()          {}
 
 // PubStmt describes a file or module import
 type PubStmt struct {

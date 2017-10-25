@@ -243,12 +243,60 @@ func parseUseStmt(p *Parser) (Stmt, error) {
 
 	path := expr.(*StringExpr)
 
+	var filter []*UseFilter
+	if p.lexer.Peek().Type == lexer.ParenL {
+		filter, err = parseUseFilters(p)
+	}
+
 	_, err = p.expectNextToken(lexer.Semi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
 
-	return &UseStmt{tok, path}, nil
+	return &UseStmt{tok, path, filter}, nil
+}
+
+func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
+	_, err = p.expectNextToken(lexer.ParenL, "expected left paren")
+	if err != nil {
+		return nil, err
+	}
+
+	/**
+	 * Filter parsing loop:
+	 * 1. if token is right-paren, exit loop
+	 * 2. parse a single filter identifier
+	 * 3. if token is comma, eat comma and goto (1)
+	 * 4. exit loop
+	 */
+
+	for {
+		// If the next token is a right-paren, exit loop.
+		if p.lexer.Peek().Type != lexer.Ident {
+			break
+		}
+
+		// Parse the next filter.
+		expr, _ := parseIdent(p)
+		name := expr.(*IdentExpr)
+		filter = append(filter, &UseFilter{name})
+
+		// If the next token is a comma, eat the comma and goto beginning of loop.
+		if p.lexer.Peek().Type == lexer.Comma {
+			p.lexer.Next()
+			continue
+		}
+
+		// If the next token isn't a comma, quit parsing filters.
+		break
+	}
+
+	_, err = p.expectNextToken(lexer.ParenR, "expected right paren")
+	if err != nil {
+		return nil, err
+	}
+
+	return filter, nil
 }
 
 func parsePubStmt(p *Parser) (Stmt, error) {

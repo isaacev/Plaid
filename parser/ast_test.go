@@ -34,9 +34,25 @@ func TestUseStmt(t *testing.T) {
 	(UseStmt{}).isNode()
 	(UseStmt{}).isStmt()
 
-	path := &StringExpr{Val: "fancy_module"}
-	expectString(t, UseStmt{Path: path}, `(use "fancy_module")`)
+	path := &StringExpr{Val: "lib"}
+	filter := []*UseFilter{}
+	expectString(t, UseStmt{Path: path}, `(use "lib")`)
+	expectString(t, UseStmt{Path: path, Filter: filter}, `(use "lib")`)
 	expectStart(t, UseStmt{Path: path}, 0, 0)
+
+	filter = append(filter, &UseFilter{&IdentExpr{Name: "fn1"}})
+	expectString(t, UseStmt{Path: path, Filter: filter}, `(use "lib" (fn1))`)
+
+	filter = append(filter, &UseFilter{&IdentExpr{Name: "fn2"}})
+	expectString(t, UseStmt{Path: path, Filter: filter}, `(use "lib" (fn1 fn2))`)
+}
+
+func TestUseFilter(t *testing.T) {
+	(UseFilter{}).isNode()
+
+	filter := UseFilter{&IdentExpr{Name: "func1"}}
+	expectString(t, filter, `func1`)
+	expectStart(t, filter, 0, 0)
 }
 
 func TestPubStmt(t *testing.T) {

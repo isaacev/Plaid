@@ -206,10 +206,27 @@ func TestParseUseStmt(t *testing.T) {
 
 	good(`use "foo";`, `(use "foo")`)
 	good(`use "bar.plaid";`, `(use "bar.plaid")`)
+	good(`use "foo" (a);`, `(use "foo" (a))`)
+	good(`use "foo" (a, b);`, `(use "foo" (a b))`)
+	good(`use "foo" (a, b,);`, `(use "foo" (a b))`)
 
 	bad(`ues "foo";`, "(1:1) expected USE keyword")
 	bad(`use 123;`, "(1:5) expected string literal")
 	bad(`use "foo"`, "(1:9) expected semicolon")
+}
+
+func TestParseUseFilter(t *testing.T) {
+	bad := func(source string, msg string) {
+		p := makeParser("", source)
+		loadGrammar(p)
+		_, err := parseUseFilters(p)
+		expectAnError(t, msg, nil, err)
+	}
+
+	bad(`a)`, `(1:1) expected left paren`)
+	bad(`(`, `(1:1) expected right paren`)
+	bad(`(123`, `(1:2) expected right paren`)
+	bad(`(a b)`, `(1:4) expected right paren`)
 }
 
 func TestParsePubStmt(t *testing.T) {
