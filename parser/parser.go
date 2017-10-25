@@ -269,25 +269,24 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 	 * 3. if token is comma, eat comma and goto (1)
 	 * 4. exit loop
 	 */
-
 	for {
-		// If the next token is a right-paren, exit loop.
+		// 1.
 		if p.lexer.Peek().Type != lexer.Ident {
 			break
 		}
 
-		// Parse the next filter.
+		// 2.
 		expr, _ := parseIdent(p)
 		name := expr.(*IdentExpr)
 		filter = append(filter, &UseFilter{name})
 
-		// If the next token is a comma, eat the comma and goto beginning of loop.
+		// 3.
 		if p.lexer.Peek().Type == lexer.Comma {
 			p.lexer.Next()
 			continue
 		}
 
-		// If the next token isn't a comma, quit parsing filters.
+		// 4.
 		break
 	}
 
