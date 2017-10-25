@@ -64,6 +64,9 @@ func checkProgram(s scope.Scope, prog *parser.Program) {
 
 func checkStmt(s scope.Scope, stmt parser.Stmt) {
 	switch stmt := stmt.(type) {
+	case *parser.PubStmt:
+		checkPubStmt(s, stmt)
+		break
 	case *parser.IfStmt:
 		checkIfStmt(s, stmt)
 		break
@@ -83,6 +86,21 @@ func checkStmtBlock(s scope.Scope, block *parser.StmtBlock) {
 	for _, stmt := range block.Stmts {
 		checkStmt(s, stmt)
 	}
+}
+
+func checkPubStmt(s scope.Scope, stmt *parser.PubStmt) {
+	checkStmt(s, stmt.Stmt)
+
+	var g *scope.GlobalScope
+	var ok bool
+	if g, ok = s.(*scope.GlobalScope); ok == false {
+		addTypeError(s, stmt.Start(), "pub statement must be a top-level statement")
+		return
+	}
+
+	name := stmt.Stmt.Name.Name
+	typ := g.GetVariableType(name)
+	g.Export(name, typ)
 }
 
 func checkIfStmt(s scope.Scope, stmt *parser.IfStmt) {
