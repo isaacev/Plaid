@@ -19,6 +19,48 @@ func TestGraphResetFlags(t *testing.T) {
 	expectInt(t, n2.flag, 0)
 }
 
+func TestOrderDependencies(t *testing.T) {
+	good := func(g *graph, exp string) {
+		order := orderDependencies(g)
+		got := routeToString(order)
+		expectString(t, got, exp)
+	}
+
+	bad := func(g *graph, exp string) {
+		defer func() {
+			if got := recover(); got == nil {
+				t.Errorf("Expected failure when ordering cycle")
+			} else if got != exp {
+				t.Errorf("Expected panic '%s', got '%s'", exp, got)
+			}
+		}()
+		orderDependencies(g)
+	}
+
+	n6 := testNode("n6")
+	n5 := testNode("n5", n6)
+	n4 := testNode("n4", n5, n6)
+	n3 := testNode("n3", n4)
+	n2 := testNode("n2", n3)
+	n1 := testNode("n1", n2, n3)
+	g := &graph{
+		root: n1,
+		nodes: map[string]*node{
+			"n1": n1,
+			"n2": n2,
+			"n3": n3,
+			"n4": n4,
+			"n5": n5,
+			"n6": n6,
+		},
+	}
+
+	good(g, "n6 <- n5 <- n4 <- n3 <- n2 <- n1")
+
+	n6.children = append(n6.children, n1)
+	bad(g, "not a DAG")
+}
+
 func TestRouteToString(t *testing.T) {
 	n1 := &node{path: "n1"}
 	n2 := &node{path: "n2"}
