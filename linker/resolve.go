@@ -47,7 +47,7 @@ func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error
 // resolve determines if a module has any dependency cycles
 func resolve(path string, ast *parser.Program) ([]*node, error) {
 	n := makeNode(path, ast)
-	g, err := buildGraph(n, loadDependency)
+	g, err := buildGraph(n, getDependencyPaths, loadDependency)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func extractCycle(route []*node) (cycle []*node) {
 	return nil
 }
 
-func buildGraph(n *node, load func(string) (*node, error)) (g *graph, err error) {
+func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, error)) (g *graph, err error) {
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
@@ -160,7 +160,7 @@ func buildGraph(n *node, load func(string) (*node, error)) (g *graph, err error)
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
-		for _, path := range getDependencyPaths(n) {
+		for _, path := range branch(n) {
 			if dep := done[path]; dep != nil {
 				addParent(dep, n)
 				addChild(n, dep)
