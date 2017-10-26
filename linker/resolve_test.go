@@ -33,6 +33,39 @@ func TestRouteToString(t *testing.T) {
 	expectString(t, routeToString(r3), "empty route")
 }
 
+func TestFindCycle(t *testing.T) {
+	expectNoCycle := func(n *node) {
+		got := findCycle(n, nil)
+		if got != nil {
+			t.Errorf("Expected to detect no cycle, got %s", routeToString(got))
+		}
+	}
+
+	expectCycle := func(n *node, exp string) {
+		got := findCycle(n, nil)
+		if got == nil {
+			t.Errorf("Expected to detect cycle, got nothing")
+		} else {
+			expectString(t, routeToString(got), exp)
+		}
+	}
+
+	n5 := testNode("n5")
+	n4 := testNode("n4", n5)
+	n3 := testNode("n3", n4)
+	n2 := testNode("n2", n3)
+	n1 := testNode("n1", n2)
+	expectNoCycle(n1)
+
+	n5 = testNode("n5")
+	n4 = testNode("n4", n5)
+	n3 = testNode("n3", n4)
+	n2 = testNode("n2", n3)
+	n1 = testNode("n1", n2)
+	n4.children = append(n4.children, n2)
+	expectCycle(n1, "n2 <- n4 <- n3 <- n2")
+}
+
 func TestContainsNode(t *testing.T) {
 	n1 := &node{path: "foo"}
 	n2 := &node{path: "foo"}
