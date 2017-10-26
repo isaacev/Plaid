@@ -60,19 +60,6 @@ func resolve(path string, ast *parser.Program) ([]*node, error) {
 	return order, nil
 }
 
-func nodesToModules(route []*node) (mods []*Module) {
-	for _, n := range route {
-		mod := n.module
-		for _, dep := range n.children {
-			if containsNode(route, dep) == false {
-
-			}
-		}
-		mods = append(mods, mod)
-	}
-	return mods
-}
-
 func orderDependencies(g *graph) (order []*node) {
 	const FlagTemp = 1
 	const FlagPerm = 2
