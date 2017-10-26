@@ -139,6 +139,9 @@ func containsNode(list []*node, goal *node) bool {
 	return false
 }
 
+// extractCycle takes a slice of nodes and--assuming the last node in the slice
+// is the start of a cycle--works backward through the slice trying to find a
+// repetition of the node route[len(route)-1].
 func extractCycle(route []*node) (cycle []*node) {
 	for i := len(route) - 1; i >= 0; i-- {
 		if len(cycle) > 0 && route[i] == cycle[0] {
