@@ -114,6 +114,20 @@ func TestBuildGraph(t *testing.T) {
 	expectAnError(t, err, "random error")
 }
 
+func TestGetDependencyPaths(t *testing.T) {
+	n := &node{path: "a/b/c.plaid", ast: &parser.Program{Stmts: []parser.Stmt{
+		&parser.UseStmt{Path: &parser.StringExpr{Val: "foo"}},
+		&parser.UseStmt{Path: &parser.StringExpr{Val: "../bar"}},
+		&parser.ExprStmt{},
+		&parser.UseStmt{Path: &parser.StringExpr{Val: "baz/quux"}},
+	}}}
+
+	got := getDependencyPaths(n)
+	expectString(t, got[0], "a/b/foo")
+	expectString(t, got[1], "a/bar")
+	expectString(t, got[2], "a/b/baz/quux")
+}
+
 func TestAddParent(t *testing.T) {
 	p := &node{}
 	c := &node{}
