@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"plaid/check"
 	"plaid/codegen"
 	"plaid/debug"
 	"plaid/libs"
 	"plaid/parser"
+	"plaid/typechecker"
 	"plaid/vm"
 )
 
@@ -47,7 +47,7 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 	}
 
 	abs, _ := filepath.Abs(filename)
-	mod, err := check.Link(abs, ast)
+	mod, err := typechecker.Link(abs, ast)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -58,9 +58,9 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 	}
 
 	if showCheck || showIR || showBC || showOut {
-		check.Check(mod,
-			check.ConvertModule(libs.IO),
-			check.ConvertModule(libs.Conv))
+		typechecker.Check(mod,
+			typechecker.ConvertModule(libs.IO),
+			typechecker.ConvertModule(libs.Conv))
 		if mod.Scope.HasErrors() {
 			for _, err := range mod.Scope.GetErrors() {
 				fmt.Println(err)

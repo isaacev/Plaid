@@ -1,4 +1,4 @@
-package check
+package typechecker
 
 import (
 	"plaid/lexer"
