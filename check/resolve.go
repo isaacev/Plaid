@@ -13,6 +13,7 @@ type node struct {
 	ast      *parser.Program
 	children []*node
 	parents  []*node
+	module   *Module
 }
 
 type graph struct {
@@ -26,42 +27,55 @@ func (g *graph) resetFlags() {
 	}
 }
 
-// Resolve determines if a module has any dependency cycles
-func Resolve(path string, ast *parser.Program) {
-	n := &node{path: path, ast: ast}
+// Link does some stuff
+func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error) {
+	order, err := resolve(path, ast)
+	if err != nil {
+		return nil, err
+	}
+
+	// Link ordered modules.
+	for _, n := range order {
+		for _, child := range n.children {
+			n.module.Imports = append(n.module.Imports, child.module)
+		}
+	}
+
+	// Perform type-checking on the ordered modules.
+	for _, n := range order {
+		Check(n.module, builtins...)
+	}
+
+	return order[len(order)-1].module, nil
+}
+
+// resolve determines if a module has any dependency cycles
+func resolve(path string, ast *parser.Program) ([]*node, error) {
+	n := makeNode(path, ast)
 	g, err := buildGraph(n, loadDependency)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, err
 	}
 
-	// Analyze dependency graph
-	for path, n := range g.nodes {
-		fmt.Println(filepath.Base(path))
-		if len(n.parents) == 0 {
-			fmt.Println("  no parents")
-		} else {
-			for _, p := range n.parents {
-				fmt.Printf("  <- %s\n", filepath.Base(p.path))
-			}
-		}
-		if len(n.children) == 0 {
-			fmt.Println("  no children ")
-		} else {
-			for _, c := range n.children {
-				fmt.Printf("  -> %s\n", filepath.Base(c.path))
-			}
-		}
+	if cycle := findCycle(g.root, nil); cycle != nil {
+		return nil, fmt.Errorf("Dependency cycle: %s", routeToString(cycle))
 	}
 
-	// Analyze any dependency cycles
-	if cycle := findCycle(g.root, nil); cycle == nil {
-		fmt.Println("order:")
-		printRoute(orderDependencies(g))
-	} else {
-		fmt.Println("cycle:")
-		printRoute(cycle)
+	order := orderDependencies(g)
+	return order, nil
+}
+
+func nodesToModules(route []*node) (mods []*Module) {
+	for _, n := range route {
+		mod := n.module
+		for _, dep := range n.children {
+			if containsNode(route, dep) == false {
+
+			}
+		}
+		mods = append(mods, mod)
 	}
+	return mods
 }
 
 func orderDependencies(g *graph) (order []*node) {
@@ -89,18 +103,19 @@ func orderDependencies(g *graph) (order []*node) {
 	return order
 }
 
-func printRoute(route []*node) {
+func routeToString(route []*node) (out string) {
 	if len(route) == 0 {
-		fmt.Println("empty route")
-	} else {
-		for i, n := range route {
-			if i == len(route)-1 {
-				fmt.Println(filepath.Base(n.path))
-			} else {
-				fmt.Printf("%s <- ", filepath.Base(n.path))
-			}
+		return "empty route"
+	}
+
+	for i, n := range route {
+		if i == len(route)-1 {
+			out += filepath.Base(n.path)
+		} else {
+			out += fmt.Sprintf("%s <- ", filepath.Base(n.path))
 		}
 	}
+	return out
 }
 
 func findCycle(n *node, route []*node) (cycle []*node) {
@@ -212,5 +227,16 @@ func loadDependency(path string) (n *node, err error) {
 		return nil, err
 	}
 
-	return &node{path: path, ast: ast}, nil
+	return makeNode(path, ast), nil
+}
+
+func makeNode(path string, ast *parser.Program) *node {
+	return &node{
+		path: path,
+		ast:  ast,
+		module: &Module{
+			Name: path,
+			AST:  ast,
+		},
+	}
 }

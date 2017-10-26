@@ -31,7 +31,7 @@ type Scope interface {
 
 // GlobalScope exists at the top of the scope tree
 type GlobalScope struct {
-	imports   []*vm.Module
+	imports   []*GlobalScope
 	exports   map[string]*vm.Export
 	children  []Scope
 	errors    []error
@@ -48,8 +48,16 @@ func MakeGlobalScope() *GlobalScope {
 	}
 }
 
-// Import exposes another module's exports to the global scope
-func (s *GlobalScope) Import(module *vm.Module) {
+// MakeGlobalScopeFromModule converts a *vm.Module to a *GlobalScope that can be
+// used for cross-module type resolution during the type-checking phase.
+func MakeGlobalScopeFromModule(module *vm.Module) *GlobalScope {
+	return &GlobalScope{
+		exports: module.Exports,
+	}
+}
+
+// AddImport exposes another module's exports to the global scope
+func (s *GlobalScope) AddImport(module *GlobalScope) {
 	s.imports = append(s.imports, module)
 }
 
@@ -60,6 +68,16 @@ func (s *GlobalScope) HasExport(name string) bool {
 	}
 
 	return false
+}
+
+// GetExport returns an Export struct if the given variable is exported, returns
+// nil otherwise
+func (s *GlobalScope) GetExport(name string) *vm.Export {
+	if s.HasExport(name) {
+		return s.exports[name]
+	}
+
+	return nil
 }
 
 // Export exposes global definitions for use by other modules

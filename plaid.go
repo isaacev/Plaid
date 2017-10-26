@@ -46,20 +46,28 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 		fmt.Println(ast.String())
 	}
 
+	abs, _ := filepath.Abs(filename)
+	mod, err := check.Link(abs, ast)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
 	if showDeps {
-		abs, _ := filepath.Abs(filename)
-		check.Resolve(abs, ast)
+		fmt.Println(mod.Imports)
 	}
 
 	if showCheck || showIR || showBC || showOut {
-		scope := check.Check(ast, libs.IO, libs.Conv)
-		if scope.HasErrors() {
-			for _, err := range scope.GetErrors() {
+		check.Check(mod,
+			check.ConvertModule(libs.IO),
+			check.ConvertModule(libs.Conv))
+		if mod.Scope.HasErrors() {
+			for _, err := range mod.Scope.GetErrors() {
 				fmt.Println(err)
 			}
 			os.Exit(1)
 		} else if showCheck {
-			fmt.Println(debug.PrettyTree(scope))
+			fmt.Println(debug.PrettyTree(mod.Scope))
 		}
 
 		if showIR || showBC || showOut {

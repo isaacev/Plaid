@@ -6,7 +6,6 @@ import (
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/types"
-	"plaid/vm"
 )
 
 type binopsLUT map[string]map[types.Type]map[types.Type]types.Type
@@ -44,22 +43,28 @@ var defaultBinopsLUT = binopsLUT{
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(prog *parser.Program, modules ...*vm.Module) *scope.GlobalScope {
-	global := scope.MakeGlobalScope()
+func Check(root *Module, builtins ...*Module) *Module {
+	root.Scope = scope.MakeGlobalScope()
 
-	for _, module := range modules {
-		global.Import(module)
+	for _, mod := range builtins {
+		root.Scope.AddImport(mod.Scope)
 	}
 
-	checkProgram(global, prog)
-	prog.Scope = global
-	return global
+	for _, mod := range root.Imports {
+		root.Scope.AddImport(mod.Scope)
+	}
+
+	checkProgram(root.Scope, root.AST)
+	return root
 }
 
-func checkProgram(s scope.Scope, prog *parser.Program) {
+func checkProgram(s *scope.GlobalScope, prog *parser.Program) scope.Scope {
 	for _, stmt := range prog.Stmts {
 		checkStmt(s, stmt)
 	}
+
+	prog.Scope = s
+	return s
 }
 
 func checkStmt(s scope.Scope, stmt parser.Stmt) {
