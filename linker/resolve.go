@@ -1,4 +1,4 @@
-package typechecker
+package linker
 
 import (
 	"fmt"
@@ -39,11 +39,6 @@ func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error
 		for _, child := range n.children {
 			n.module.Imports = append(n.module.Imports, child.module)
 		}
-	}
-
-	// Perform type-checking on the ordered modules.
-	for _, n := range order {
-		Check(n.module, builtins...)
 	}
 
 	return order[len(order)-1].module, nil

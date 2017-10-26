@@ -1,4 +1,4 @@
-package typechecker
+package linker
 
 import "testing"
 

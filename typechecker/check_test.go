@@ -2,6 +2,7 @@ package typechecker
 
 import (
 	"plaid/lexer"
+	"plaid/linker"
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/types"
@@ -11,7 +12,7 @@ import (
 var nop = lexer.Token{}
 
 func TestCheckMain(t *testing.T) {
-	mod := Check(&Module{AST: &parser.Program{}})
+	mod := Check(&linker.Module{AST: &parser.Program{}})
 	expectNoErrors(t, mod.Scope)
 
 	// mod1 := &vm.Module{

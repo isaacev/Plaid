@@ -3,6 +3,7 @@ package typechecker
 import (
 	"fmt"
 	"plaid/lexer"
+	"plaid/linker"
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/types"
@@ -40,10 +41,19 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
+// CheckModules type-checks a list of modules ordered from lowest dependencies to
+// highest dependencies, type checking along
+func CheckModules(modules []*linker.Module, builtins ...*linker.Module) {
+	// Perform type-checking on the ordered modules.
+	for _, mod := range modules {
+		Check(mod, builtins...)
+	}
+}
+
 // Check takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(root *Module, builtins ...*Module) *Module {
+func Check(root *linker.Module, builtins ...*linker.Module) *linker.Module {
 	root.Scope = scope.MakeGlobalScope()
 
 	for _, mod := range builtins {

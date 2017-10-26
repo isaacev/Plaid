@@ -9,6 +9,7 @@ import (
 	"plaid/codegen"
 	"plaid/debug"
 	"plaid/libs"
+	"plaid/linker"
 	"plaid/parser"
 	"plaid/typechecker"
 	"plaid/vm"
@@ -47,7 +48,7 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 	}
 
 	abs, _ := filepath.Abs(filename)
-	mod, err := typechecker.Link(abs, ast)
+	mod, err := linker.Link(abs, ast)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -59,8 +60,8 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 
 	if showCheck || showIR || showBC || showOut {
 		typechecker.Check(mod,
-			typechecker.ConvertModule(libs.IO),
-			typechecker.ConvertModule(libs.Conv))
+			linker.ConvertModule(libs.IO),
+			linker.ConvertModule(libs.Conv))
 		if mod.Scope.HasErrors() {
 			for _, err := range mod.Scope.GetErrors() {
 				fmt.Println(err)
