@@ -1,6 +1,7 @@
 package linker
 
 import (
+	"fmt"
 	"plaid/parser"
 	"plaid/scope"
 	"plaid/vm"
@@ -21,7 +22,7 @@ func (m *Module) AddImport(mod *Module) {
 }
 
 func (m *Module) String() string {
-	return "<module>"
+	return fmt.Sprintf("<module %s>", m.Name)
 }
 
 // ConvertModule transforms a Module used by the VM into a Module used by the
