@@ -1,48 +1,48 @@
 package lexer
 
-// Type classifies the different Tokens
-type Type string
+// TokenType classifies the different Tokens
+type TokenType string
 
 // Token classifications
 const (
-	Error    Type = "Error"
-	EOF           = "EOF"
-	Plus          = "+"
-	Dash          = "-"
-	Star          = "*"
-	Slash         = "/"
-	Question      = "?"
-	Semi          = ";"
-	Comma         = ","
-	ParenL        = "("
-	ParenR        = ")"
-	BraceL        = "{"
-	BraceR        = "}"
-	BracketL      = "["
-	BracketR      = "]"
-	Colon         = ":"
-	Assign        = ":="
-	Arrow         = "=>"
-	LT            = "<"
-	GT            = ">"
-	LTEquals      = "<="
-	GTEquals      = ">="
-	Fn            = "fn"
-	If            = "if"
-	Let           = "let"
-	Return        = "return"
-	Self          = "self"
-	Use           = "use"
-	Pub           = "pub"
-	Ident         = "Ident"
-	Number        = "Number"
-	String        = "String"
-	Boolean       = "Boolean"
+	TokError    TokenType = "Error"
+	TokEOF                = "EOF"
+	TokPlus               = "+"
+	TokDash               = "-"
+	TokStar               = "*"
+	TokSlash              = "/"
+	TokQuestion           = "?"
+	TokSemi               = ";"
+	TokComma              = ","
+	TokParenL             = "("
+	TokParenR             = ")"
+	TokBraceL             = "{"
+	TokBraceR             = "}"
+	TokBracketL           = "["
+	TokBracketR           = "]"
+	TokColon              = ":"
+	TokAssign             = ":="
+	TokArrow              = "=>"
+	TokLT                 = "<"
+	TokGT                 = ">"
+	TokLTEquals           = "<="
+	TokGTEquals           = ">="
+	TokFn                 = "fn"
+	TokIf                 = "if"
+	TokLet                = "let"
+	TokReturn             = "return"
+	TokSelf               = "self"
+	TokUse                = "use"
+	TokPub                = "pub"
+	TokIdent              = "Ident"
+	TokNumber             = "Number"
+	TokString             = "String"
+	TokBoolean            = "Boolean"
 )
 
 // Token is a basic syntactic unit
 type Token struct {
-	Type   Type
+	Type   TokenType
 	Lexeme string
 	Loc    Loc
 }
@@ -173,12 +173,12 @@ func eatToken(scanner *Scanner) Token {
 	case isDoubleQuote(peek.char):
 		return eatStringToken(scanner)
 	default:
-		return Token{Error, "unexpected symbol", peek.loc}
+		return Token{TokError, "unexpected symbol", peek.loc}
 	}
 }
 
 func eatEOF(scanner *Scanner) Token {
-	return Token{EOF, "", scanner.Peek().loc}
+	return Token{TokEOF, "", scanner.Peek().loc}
 }
 
 func eatWhitespace(scanner *Scanner) Token {
@@ -192,22 +192,22 @@ func eatWhitespace(scanner *Scanner) Token {
 func eatOperatorToken(scanner *Scanner) Token {
 	switch scanner.Peek().char {
 	case '+':
-		return Token{Plus, "+", scanner.Next().loc}
+		return Token{TokPlus, "+", scanner.Next().loc}
 	case '-':
-		return Token{Dash, "-", scanner.Next().loc}
+		return Token{TokDash, "-", scanner.Next().loc}
 	case '*':
-		return Token{Star, "*", scanner.Next().loc}
+		return Token{TokStar, "*", scanner.Next().loc}
 	case '/':
-		return Token{Slash, "/", scanner.Next().loc}
+		return Token{TokSlash, "/", scanner.Next().loc}
 	case '?':
-		return Token{Question, "?", scanner.Next().loc}
+		return Token{TokQuestion, "?", scanner.Next().loc}
 	case ':':
 		colon := scanner.Next()
-		tok := Token{Colon, ":", colon.loc}
+		tok := Token{TokColon, ":", colon.loc}
 
 		if scanner.Peek().char == '=' {
 			scanner.Next()
-			tok = Token{Assign, ":=", colon.loc}
+			tok = Token{TokAssign, ":=", colon.loc}
 		}
 
 		return tok
@@ -216,79 +216,79 @@ func eatOperatorToken(scanner *Scanner) Token {
 
 		if scanner.Peek().char == '>' {
 			scanner.Next()
-			return Token{Arrow, "=>", equals.loc}
+			return Token{TokArrow, "=>", equals.loc}
 		}
 
-		return Token{Error, "expected operator", equals.loc}
+		return Token{TokError, "expected operator", equals.loc}
 	case '<':
 		lt := scanner.Next()
 
 		if scanner.Peek().char == '=' {
 			scanner.Next()
-			return Token{LTEquals, "<=", lt.loc}
+			return Token{TokLTEquals, "<=", lt.loc}
 		}
 
-		return Token{LT, "<", lt.loc}
+		return Token{TokLT, "<", lt.loc}
 	case '>':
 		gt := scanner.Next()
 
 		if scanner.Peek().char == '=' {
 			scanner.Next()
-			return Token{GTEquals, ">=", gt.loc}
+			return Token{TokGTEquals, ">=", gt.loc}
 		}
 
-		return Token{GT, ">", gt.loc}
+		return Token{TokGT, ">", gt.loc}
 	default:
-		return Token{Error, "expected operator", scanner.Next().loc}
+		return Token{TokError, "expected operator", scanner.Next().loc}
 	}
 }
 
 func eatSemicolonToken(scanner *Scanner) Token {
 	if scanner.Peek().char != ';' {
-		return Token{Error, "expected semicolon", scanner.Next().loc}
+		return Token{TokError, "expected semicolon", scanner.Next().loc}
 	}
 
-	return Token{Semi, ";", scanner.Next().loc}
+	return Token{TokSemi, ";", scanner.Next().loc}
 }
 
 func eatCommaToken(scanner *Scanner) Token {
 	if scanner.Peek().char != ',' {
-		return Token{Error, "expected comma", scanner.Next().loc}
+		return Token{TokError, "expected comma", scanner.Next().loc}
 	}
 
-	return Token{Comma, ",", scanner.Next().loc}
+	return Token{TokComma, ",", scanner.Next().loc}
 }
 
 func eatParenToken(scanner *Scanner) Token {
 	switch scanner.Peek().char {
 	case '(':
-		return Token{ParenL, "(", scanner.Next().loc}
+		return Token{TokParenL, "(", scanner.Next().loc}
 	case ')':
-		return Token{ParenR, ")", scanner.Next().loc}
+		return Token{TokParenR, ")", scanner.Next().loc}
 	default:
-		return Token{Error, "expected paren", scanner.Next().loc}
+		return Token{TokError, "expected paren", scanner.Next().loc}
 	}
 }
 
 func eatBraceToken(scanner *Scanner) Token {
 	switch scanner.Peek().char {
 	case '{':
-		return Token{BraceL, "{", scanner.Next().loc}
+		return Token{TokBraceL, "{", scanner.Next().loc}
 	case '}':
-		return Token{BraceR, "}", scanner.Next().loc}
+		return Token{TokBraceR, "}", scanner.Next().loc}
 	default:
-		return Token{Error, "expected brace", scanner.Next().loc}
+		return Token{TokError, "expected brace", scanner.Next().loc}
 	}
 }
 
 func eatBracketToken(scanner *Scanner) Token {
 	switch scanner.Peek().char {
 	case '[':
-		return Token{BracketL, "[", scanner.Next().loc}
+		return Token{TokBracketL, "[", scanner.Next().loc}
 	case ']':
-		return Token{BracketR, "]", scanner.Next().loc}
+		return Token{TokBracketR, "]", scanner.Next().loc}
 	default:
-		return Token{Error, "expected bracket", scanner.Next().loc}
+		return Token{TokError, "expected bracket", scanner.Next().loc}
 	}
 }
 
@@ -297,7 +297,7 @@ func eatWordToken(scanner *Scanner) Token {
 	lexeme := ""
 
 	if isLetter(scanner.Peek().char) == false {
-		return Token{Error, "expected word", loc}
+		return Token{TokError, "expected word", loc}
 	}
 
 	for isLetter(scanner.Peek().char) {
@@ -306,25 +306,25 @@ func eatWordToken(scanner *Scanner) Token {
 
 	switch lexeme {
 	case "fn":
-		return Token{Fn, "fn", loc}
+		return Token{TokFn, "fn", loc}
 	case "if":
-		return Token{If, "if", loc}
+		return Token{TokIf, "if", loc}
 	case "let":
-		return Token{Let, "let", loc}
+		return Token{TokLet, "let", loc}
 	case "return":
-		return Token{Return, "return", loc}
+		return Token{TokReturn, "return", loc}
 	case "self":
-		return Token{Self, "self", loc}
+		return Token{TokSelf, "self", loc}
 	case "use":
-		return Token{Use, "use", loc}
+		return Token{TokUse, "use", loc}
 	case "pub":
-		return Token{Pub, "pub", loc}
+		return Token{TokPub, "pub", loc}
 	case "true":
-		return Token{Boolean, "true", loc}
+		return Token{TokBoolean, "true", loc}
 	case "false":
-		return Token{Boolean, "false", loc}
+		return Token{TokBoolean, "false", loc}
 	default:
-		return Token{Ident, lexeme, loc}
+		return Token{TokIdent, lexeme, loc}
 	}
 }
 
@@ -333,14 +333,14 @@ func eatNumberToken(scanner *Scanner) Token {
 	lexeme := ""
 
 	if isDigit(scanner.Peek().char) == false {
-		return Token{Error, "expected number", loc}
+		return Token{TokError, "expected number", loc}
 	}
 
 	for isDigit(scanner.Peek().char) {
 		lexeme += string(scanner.Next().char)
 	}
 
-	return Token{Number, lexeme, loc}
+	return Token{TokNumber, lexeme, loc}
 }
 
 func eatStringToken(scanner *Scanner) Token {
@@ -348,7 +348,7 @@ func eatStringToken(scanner *Scanner) Token {
 	lexeme := ""
 
 	if isDoubleQuote(scanner.Peek().char) == false {
-		return Token{Error, "expected string", loc}
+		return Token{TokError, "expected string", loc}
 	}
 
 	lexeme += string(scanner.Next().char)
@@ -356,11 +356,11 @@ func eatStringToken(scanner *Scanner) Token {
 		switch scanner.Peek().char {
 		case '"':
 			lexeme += string(scanner.Next().char)
-			return Token{String, lexeme, loc}
+			return Token{TokString, lexeme, loc}
 		case '\000':
 			fallthrough
 		case '\n':
-			return Token{Error, "unclosed string", scanner.Peek().loc}
+			return Token{TokError, "unclosed string", scanner.Peek().loc}
 		default:
 			lexeme += string(scanner.Next().char)
 		}
