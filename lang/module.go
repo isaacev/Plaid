@@ -26,7 +26,7 @@ func BuildNativeModule(name string, exports map[string]Type) *NativeModule {
 
 type VirtualModule struct {
 	name    string
-	syntax  *Program
+	ast     *RootNode
 	scope   *GlobalScope
 	imports []Module
 }

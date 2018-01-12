@@ -189,7 +189,7 @@ func TestBuildGraph(t *testing.T) {
 }
 
 func TestGetDependencyPaths(t *testing.T) {
-	n := &node{path: "a/b/c.plaid", ast: &Program{Stmts: []Stmt{
+	n := &node{path: "a/b/c.plaid", ast: &RootNode{Stmts: []Stmt{
 		&UseStmt{Path: &StringExpr{Val: "foo"}},
 		&UseStmt{Path: &StringExpr{Val: "../bar"}},
 		&ExprStmt{},
@@ -240,7 +240,7 @@ func TestAddDone(t *testing.T) {
 
 func TestMakeNode(t *testing.T) {
 	path := "foo bar"
-	ast := &Program{}
+	ast := &RootNode{}
 	n := makeNode(path, ast)
 
 	expectBool(t, n.path == path, true)

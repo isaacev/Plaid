@@ -5,7 +5,7 @@ import (
 )
 
 func TestCheckMain(t *testing.T) {
-	mod := Check(&VirtualModule{syntax: &Program{}})
+	mod := Check(&VirtualModule{ast: &RootNode{}})
 	expectNoErrors(t, mod.Scope())
 
 	// mod1 := &vm.Module{
@@ -62,7 +62,7 @@ func TestCheckReturnStmt(t *testing.T) {
 	s = checkProgram(MakeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:30) expected to return nothing, got 'Int'")
 
-	prog = &Program{Stmts: []Stmt{
+	prog = &RootNode{Stmts: []Stmt{
 		&ReturnStmt{Tok: makeTok(1, 1)},
 	}}
 	s = checkProgram(MakeGlobalScope(), prog)

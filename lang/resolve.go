@@ -9,7 +9,7 @@ import (
 type node struct {
 	flag     int
 	path     string
-	ast      *Program
+	ast      *RootNode
 	children []*node
 	parents  []*node
 	module   Module
@@ -27,7 +27,7 @@ func (g *graph) resetFlags() {
 }
 
 // Link does some stuff
-func Link(path string, ast *Program, builtins ...Module) (Module, error) {
+func Link(path string, ast *RootNode, builtins ...Module) (Module, error) {
 	order, err := resolve(path, ast)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func Link(path string, ast *Program, builtins ...Module) (Module, error) {
 }
 
 // resolve determines if a module has any dependency cycles
-func resolve(path string, ast *Program) ([]*node, error) {
+func resolve(path string, ast *RootNode) ([]*node, error) {
 	n := makeNode(path, ast)
 	g, err := buildGraph(n, getDependencyPaths, loadDependency)
 	if err != nil {
@@ -215,13 +215,13 @@ func loadDependency(path string) (n *node, err error) {
 	return makeNode(path, ast), nil
 }
 
-func makeNode(path string, ast *Program) *node {
+func makeNode(path string, ast *RootNode) *node {
 	return &node{
 		path: path,
 		ast:  ast,
 		module: &VirtualModule{
 			name:    path,
-			syntax:  ast,
+			ast:     ast,
 			scope:   nil,
 			imports: nil,
 		},

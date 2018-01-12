@@ -13,23 +13,23 @@ type Node interface {
 	isNode()
 }
 
-// Program describes all top-level statements within a script
-type Program struct {
+// RootNode describes all top-level statements within a script
+type RootNode struct {
 	Stmts []Stmt
 }
 
 // Start returns a location that this node can be considered to start at
-func (p Program) Start() Loc {
-	if len(p.Stmts) > 0 {
-		return p.Stmts[0].Start()
+func (r RootNode) Start() Loc {
+	if len(r.Stmts) > 0 {
+		return r.Stmts[0].Start()
 	}
 
 	return Loc{Line: 1, Col: 1}
 }
 
-func (p Program) String() string {
+func (r RootNode) String() string {
 	out := ""
-	for i, stmt := range p.Stmts {
+	for i, stmt := range r.Stmts {
 		if i > 0 {
 			out += "\n"
 		}
@@ -39,7 +39,7 @@ func (p Program) String() string {
 	return out
 }
 
-func (p Program) isNode() {}
+func (r RootNode) isNode() {}
 
 // Stmt describes all constructs that return no value
 type Stmt interface {

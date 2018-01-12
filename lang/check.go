@@ -61,12 +61,12 @@ func Check(root *VirtualModule, builtins ...Module) Module {
 		root.scope.AddImport(mod.Scope())
 	}
 
-	checkProgram(root.scope, root.syntax)
+	checkProgram(root.scope, root.ast)
 	return root
 }
 
-func checkProgram(s *GlobalScope, prog *Program) Scope {
-	for _, stmt := range prog.Stmts {
+func checkProgram(s *GlobalScope, ast *RootNode) Scope {
+	for _, stmt := range ast.Stmts {
 		checkStmt(s, stmt)
 	}
 
