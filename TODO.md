@@ -1,2 +1,14 @@
 - `const` statements with enforced read-only status
 - errors when unknown type is used
+- further consolidation within the `lang` package
+  - group Type related functionality into `lang/types` package
+  	- lang/types.go -> lang/types/types.go
+  	- lang/native.go -> lang/types/native.go
+  - combine error reporting and debug rendering into a single file
+- privatize as many interfaces and types as possible
+  - should expose:
+  	- `lang.Parse(string)`          -> `lang.RootNode`
+  	- `lang.Link(lang.RootNode)`    -> `lang.Module` (links module to its dependencies)
+  	- `lang.TypeCheck(lang.Module)` -> `lang.Module` (binds scope tree to module)
+  	- `lang.Compile(lang.Module)`   -> `lang.Bytecode`
+  	- `lang.Run(lang.Bytecode)`     -> output stream
