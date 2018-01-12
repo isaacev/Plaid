@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Node is the ancestor of all AST nodes
-type Node interface {
+// ASTNode is the ancestor of all AST nodes
+type ASTNode interface {
 	Start() Loc
 	String() string
 	isNode()

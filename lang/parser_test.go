@@ -897,7 +897,7 @@ func expectTypeNoteError(t *testing.T, fn typeNoteParser, source string, msg str
 	expectParserError(t, msg, sig, err)
 }
 
-func expectNoParserErrors(t *testing.T, ast string, node Node, err error) {
+func expectNoParserErrors(t *testing.T, ast string, node ASTNode, err error) {
 	if err != nil {
 		t.Fatalf("Expected no errors, got '%s'\n", err)
 	} else {
@@ -905,7 +905,7 @@ func expectNoParserErrors(t *testing.T, ast string, node Node, err error) {
 	}
 }
 
-func expectParserError(t *testing.T, msg string, node Node, err error) {
+func expectParserError(t *testing.T, msg string, node ASTNode, err error) {
 	if err == nil {
 		t.Errorf("Expected an error, got %s\n", node)
 	} else if err.Error() != msg {
@@ -913,13 +913,13 @@ func expectParserError(t *testing.T, msg string, node Node, err error) {
 	}
 }
 
-func expectAST(t *testing.T, ast string, got Node) {
+func expectAST(t *testing.T, ast string, got ASTNode) {
 	if ast != got.String() {
 		t.Errorf("Expected '%s', got '%s'\n", ast, got)
 	}
 }
 
-func expectStart(t *testing.T, node Node, line int, col int) {
+func expectStart(t *testing.T, node ASTNode, line int, col int) {
 	got := node.Start()
 	exp := Loc{Line: line, Col: col}
 
