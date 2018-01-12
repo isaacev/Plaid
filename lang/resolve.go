@@ -1,19 +1,18 @@
-package linker
+package lang
 
 import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"plaid/parser"
 )
 
 type node struct {
 	flag     int
 	path     string
-	ast      *parser.Program
+	ast      *Program
 	children []*node
 	parents  []*node
-	module   *Module
+	module   Module
 }
 
 type graph struct {
@@ -28,7 +27,7 @@ func (g *graph) resetFlags() {
 }
 
 // Link does some stuff
-func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error) {
+func Link(path string, ast *Program, builtins ...Module) (Module, error) {
 	order, err := resolve(path, ast)
 	if err != nil {
 		return nil, err
@@ -37,7 +36,8 @@ func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error
 	// Link ordered modules.
 	for _, n := range order {
 		for _, child := range n.children {
-			n.module.Imports = append(n.module.Imports, child.module)
+			mod := n.module.(*VirtualModule)
+			mod.imports = append(mod.imports, child.module)
 		}
 	}
 
@@ -45,7 +45,7 @@ func Link(path string, ast *parser.Program, builtins ...*Module) (*Module, error
 }
 
 // resolve determines if a module has any dependency cycles
-func resolve(path string, ast *parser.Program) ([]*node, error) {
+func resolve(path string, ast *Program) ([]*node, error) {
 	n := makeNode(path, ast)
 	g, err := buildGraph(n, getDependencyPaths, loadDependency)
 	if err != nil {
@@ -175,7 +175,7 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 
 func getDependencyPaths(n *node) (paths []string) {
 	for _, stmt := range n.ast.Stmts {
-		if stmt, ok := stmt.(*parser.UseStmt); ok {
+		if stmt, ok := stmt.(*UseStmt); ok {
 			dir := filepath.Dir(n.path)
 			path := filepath.Join(dir, stmt.Path.Val)
 			paths = append(paths, path)
@@ -207,7 +207,7 @@ func loadDependency(path string) (n *node, err error) {
 		return nil, err
 	}
 
-	ast, err := parser.Parse(path, string(buf))
+	ast, err := Parse(path, string(buf))
 	if err != nil {
 		return nil, err
 	}
@@ -215,13 +215,15 @@ func loadDependency(path string) (n *node, err error) {
 	return makeNode(path, ast), nil
 }
 
-func makeNode(path string, ast *parser.Program) *node {
+func makeNode(path string, ast *Program) *node {
 	return &node{
 		path: path,
 		ast:  ast,
-		module: &Module{
-			Name: path,
-			AST:  ast,
+		module: &VirtualModule{
+			name:    path,
+			syntax:  ast,
+			scope:   nil,
+			imports: nil,
 		},
 	}
 }

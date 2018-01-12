@@ -1,4 +1,4 @@
-package lexer
+package lang
 
 import (
 	"fmt"
@@ -22,55 +22,55 @@ func TestLexerPeekNext(t *testing.T) {
 }
 
 func TestIsWhitespace(t *testing.T) {
-	expectBool(t, isWhitespace, ' ', true)
-	expectBool(t, isWhitespace, '\n', true)
-	expectBool(t, isWhitespace, '\t', true)
-	expectBool(t, isWhitespace, '\000', false)
-	expectBool(t, isWhitespace, 'a', false)
+	expectRunePredicateBool(t, isWhitespace, ' ', true)
+	expectRunePredicateBool(t, isWhitespace, '\n', true)
+	expectRunePredicateBool(t, isWhitespace, '\t', true)
+	expectRunePredicateBool(t, isWhitespace, '\000', false)
+	expectRunePredicateBool(t, isWhitespace, 'a', false)
 }
 
 func TestIsOperator(t *testing.T) {
-	expectBool(t, isOperator, '+', true)
-	expectBool(t, isOperator, '-', true)
-	expectBool(t, isOperator, '*', true)
-	expectBool(t, isOperator, '/', true)
-	expectBool(t, isOperator, '?', true)
-	expectBool(t, isOperator, ':', true)
-	expectBool(t, isOperator, '=', true)
-	expectBool(t, isOperator, '<', true)
-	expectBool(t, isOperator, '>', true)
-	expectBool(t, isOperator, '#', false)
+	expectRunePredicateBool(t, isOperator, '+', true)
+	expectRunePredicateBool(t, isOperator, '-', true)
+	expectRunePredicateBool(t, isOperator, '*', true)
+	expectRunePredicateBool(t, isOperator, '/', true)
+	expectRunePredicateBool(t, isOperator, '?', true)
+	expectRunePredicateBool(t, isOperator, ':', true)
+	expectRunePredicateBool(t, isOperator, '=', true)
+	expectRunePredicateBool(t, isOperator, '<', true)
+	expectRunePredicateBool(t, isOperator, '>', true)
+	expectRunePredicateBool(t, isOperator, '#', false)
 }
 
 func TestIsParen(t *testing.T) {
-	expectBool(t, isParen, '(', true)
-	expectBool(t, isParen, ')', true)
-	expectBool(t, isParen, '\'', false)
-	expectBool(t, isParen, '*', false)
+	expectRunePredicateBool(t, isParen, '(', true)
+	expectRunePredicateBool(t, isParen, ')', true)
+	expectRunePredicateBool(t, isParen, '\'', false)
+	expectRunePredicateBool(t, isParen, '*', false)
 }
 
 func TestIsLetter(t *testing.T) {
-	expectBool(t, isLetter, '`', false)
-	expectBool(t, isLetter, 'a', true)
-	expectBool(t, isLetter, 'z', true)
-	expectBool(t, isLetter, '{', false)
-	expectBool(t, isLetter, '@', false)
-	expectBool(t, isLetter, 'A', true)
-	expectBool(t, isLetter, 'Z', true)
-	expectBool(t, isLetter, '[', false)
+	expectRunePredicateBool(t, isLetter, '`', false)
+	expectRunePredicateBool(t, isLetter, 'a', true)
+	expectRunePredicateBool(t, isLetter, 'z', true)
+	expectRunePredicateBool(t, isLetter, '{', false)
+	expectRunePredicateBool(t, isLetter, '@', false)
+	expectRunePredicateBool(t, isLetter, 'A', true)
+	expectRunePredicateBool(t, isLetter, 'Z', true)
+	expectRunePredicateBool(t, isLetter, '[', false)
 }
 
 func TestIsDigit(t *testing.T) {
-	expectBool(t, isDigit, '0', true)
-	expectBool(t, isDigit, '9', true)
-	expectBool(t, isDigit, '/', false)
-	expectBool(t, isDigit, ':', false)
+	expectRunePredicateBool(t, isDigit, '0', true)
+	expectRunePredicateBool(t, isDigit, '9', true)
+	expectRunePredicateBool(t, isDigit, '/', false)
+	expectRunePredicateBool(t, isDigit, ':', false)
 }
 
 func TestIsDoubleQuote(t *testing.T) {
-	expectBool(t, isDoubleQuote, '"', true)
-	expectBool(t, isDoubleQuote, '!', false)
-	expectBool(t, isDoubleQuote, '#', false)
+	expectRunePredicateBool(t, isDoubleQuote, '"', true)
+	expectRunePredicateBool(t, isDoubleQuote, '!', false)
+	expectRunePredicateBool(t, isDoubleQuote, '#', false)
 }
 
 func TestEatToken(t *testing.T) {
@@ -187,7 +187,7 @@ func TestEatStringToken(t *testing.T) {
 
 type charPred func(rune) bool
 
-func expectBool(t *testing.T, fn charPred, r rune, exp bool) {
+func expectRunePredicateBool(t *testing.T, fn charPred, r rune, exp bool) {
 	got := fn(r)
 
 	if exp != got {

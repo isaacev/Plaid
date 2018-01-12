@@ -1,7 +1,6 @@
-package parser
+package lang
 
 import (
-	"plaid/lexer"
 	"strconv"
 	"strings"
 )
@@ -32,22 +31,22 @@ type PostfixParseFunc func(p *Parser, left Expr) (Expr, error)
 // Parser contains methods for generating an abstract syntax tree from a
 // sequence of Tokens
 type Parser struct {
-	lexer             *lexer.Lexer
+	lexer             *Lexer
 	funcDepth         int
-	precedenceTable   map[lexer.TokenType]Precedence
-	prefixParseFuncs  map[lexer.TokenType]PrefixParseFunc
-	postfixParseFuncs map[lexer.TokenType]PostfixParseFunc
+	precedenceTable   map[TokenType]Precedence
+	prefixParseFuncs  map[TokenType]PrefixParseFunc
+	postfixParseFuncs map[TokenType]PostfixParseFunc
 }
 
 func (p *Parser) errorFromPeekToken(message string) error {
 	return p.errorFromLocation(p.lexer.Peek().Loc, message)
 }
 
-func (p *Parser) errorFromLocation(loc lexer.Loc, message string) error {
+func (p *Parser) errorFromLocation(loc Loc, message string) error {
 	return SyntaxError{p.lexer.Filepath, loc, message}
 }
 
-func (p *Parser) peekTokenIsNot(first lexer.TokenType, rest ...lexer.TokenType) bool {
+func (p *Parser) peekTokenIsNot(first TokenType, rest ...TokenType) bool {
 	peek := p.lexer.Peek().Type
 
 	if first == peek {
@@ -63,7 +62,7 @@ func (p *Parser) peekTokenIsNot(first lexer.TokenType, rest ...lexer.TokenType) 
 	return true
 }
 
-func (p *Parser) expectNextToken(which lexer.TokenType, otherwise string) (lexer.Token, error) {
+func (p *Parser) expectNextToken(which TokenType, otherwise string) (Token, error) {
 	if p.peekTokenIsNot(which) {
 		peek := p.lexer.Peek()
 		return peek, p.errorFromPeekToken(otherwise)
@@ -72,15 +71,15 @@ func (p *Parser) expectNextToken(which lexer.TokenType, otherwise string) (lexer
 	return p.lexer.Next(), nil
 }
 
-func (p *Parser) registerPrecedence(typ lexer.TokenType, level Precedence) {
+func (p *Parser) registerPrecedence(typ TokenType, level Precedence) {
 	p.precedenceTable[typ] = level
 }
 
-func (p *Parser) registerPrefix(typ lexer.TokenType, fn PrefixParseFunc) {
+func (p *Parser) registerPrefix(typ TokenType, fn PrefixParseFunc) {
 	p.prefixParseFuncs[typ] = fn
 }
 
-func (p *Parser) registerPostfix(typ lexer.TokenType, fn PostfixParseFunc, level Precedence) {
+func (p *Parser) registerPostfix(typ TokenType, fn PostfixParseFunc, level Precedence) {
 	p.registerPrecedence(typ, level)
 	p.postfixParseFuncs[typ] = fn
 }
@@ -103,54 +102,54 @@ func Parse(filepath string, source string) (*Program, error) {
 }
 
 func makeParser(filepath string, source string) *Parser {
-	s := lexer.Scan(source)
-	l := lexer.Lex(filepath, s)
+	s := Scan(source)
+	l := Lex(filepath, s)
 	p := &Parser{
 		l,
 		0,
-		make(map[lexer.TokenType]Precedence),
-		make(map[lexer.TokenType]PrefixParseFunc),
-		make(map[lexer.TokenType]PostfixParseFunc),
+		make(map[TokenType]Precedence),
+		make(map[TokenType]PrefixParseFunc),
+		make(map[TokenType]PostfixParseFunc),
 	}
 
 	return p
 }
 
 func loadGrammar(p *Parser) {
-	p.registerPrefix(lexer.TokFn, parseFunction)
-	p.registerPrefix(lexer.TokBracketL, parseList)
-	p.registerPrefix(lexer.TokParenL, parseGroup)
-	p.registerPrefix(lexer.TokPlus, parsePrefix)
-	p.registerPrefix(lexer.TokDash, parsePrefix)
-	p.registerPrefix(lexer.TokSelf, parseSelf)
-	p.registerPrefix(lexer.TokIdent, parseIdent)
-	p.registerPrefix(lexer.TokNumber, parseNumber)
-	p.registerPrefix(lexer.TokString, parseString)
-	p.registerPrefix(lexer.TokBoolean, parseBoolean)
+	p.registerPrefix(TokFn, parseFunction)
+	p.registerPrefix(TokBracketL, parseList)
+	p.registerPrefix(TokParenL, parseGroup)
+	p.registerPrefix(TokPlus, parsePrefix)
+	p.registerPrefix(TokDash, parsePrefix)
+	p.registerPrefix(TokSelf, parseSelf)
+	p.registerPrefix(TokIdent, parseIdent)
+	p.registerPrefix(TokNumber, parseNumber)
+	p.registerPrefix(TokString, parseString)
+	p.registerPrefix(TokBoolean, parseBoolean)
 
-	p.registerPostfix(lexer.TokBracketL, parseSubscript, Dispatch)
-	p.registerPostfix(lexer.TokParenL, parseDispatch, Dispatch)
-	p.registerPostfix(lexer.TokAssign, parseAssign, Assign)
-	p.registerPostfix(lexer.TokLT, parseInfix, Comparison)
-	p.registerPostfix(lexer.TokLTEquals, parseInfix, Comparison)
-	p.registerPostfix(lexer.TokGT, parseInfix, Comparison)
-	p.registerPostfix(lexer.TokGTEquals, parseInfix, Comparison)
-	p.registerPostfix(lexer.TokPlus, parseInfix, Sum)
-	p.registerPostfix(lexer.TokDash, parseInfix, Sum)
-	p.registerPostfix(lexer.TokStar, parseInfix, Product)
-	p.registerPostfix(lexer.TokSlash, parseInfix, Product)
+	p.registerPostfix(TokBracketL, parseSubscript, Dispatch)
+	p.registerPostfix(TokParenL, parseDispatch, Dispatch)
+	p.registerPostfix(TokAssign, parseAssign, Assign)
+	p.registerPostfix(TokLT, parseInfix, Comparison)
+	p.registerPostfix(TokLTEquals, parseInfix, Comparison)
+	p.registerPostfix(TokGT, parseInfix, Comparison)
+	p.registerPostfix(TokGTEquals, parseInfix, Comparison)
+	p.registerPostfix(TokPlus, parseInfix, Sum)
+	p.registerPostfix(TokDash, parseInfix, Sum)
+	p.registerPostfix(TokStar, parseInfix, Product)
+	p.registerPostfix(TokSlash, parseInfix, Product)
 }
 
 func parseProgram(p *Parser) (*Program, error) {
 	stmts := []Stmt{}
 
-	for p.peekTokenIsNot(lexer.TokError, lexer.TokEOF) {
+	for p.peekTokenIsNot(TokError, TokEOF) {
 		var stmt Stmt
 		var err error
 		switch p.lexer.Peek().Type {
-		case lexer.TokUse:
+		case TokUse:
 			stmt, err = parseUseStmt(p)
-		case lexer.TokPub:
+		case TokPub:
 			stmt, err = parsePubStmt(p)
 		default:
 			stmt, err = parseTopLevelStmt(p)
@@ -163,7 +162,7 @@ func parseProgram(p *Parser) (*Program, error) {
 		stmts = append(stmts, stmt)
 	}
 
-	return &Program{stmts, nil}, nil
+	return &Program{stmts}, nil
 }
 
 func parseStmt(p *Parser) (Stmt, error) {
@@ -176,7 +175,7 @@ func parseStmt(p *Parser) (Stmt, error) {
 
 func parseTopLevelStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
-	case lexer.TokReturn:
+	case TokReturn:
 		return nil, p.errorFromPeekToken("return statements must be inside a function")
 	default:
 		return parseGeneralStmt(p)
@@ -185,7 +184,7 @@ func parseTopLevelStmt(p *Parser) (Stmt, error) {
 
 func parseNonTopLevelStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
-	case lexer.TokReturn:
+	case TokReturn:
 		return parseReturnStmt(p)
 	default:
 		return parseGeneralStmt(p)
@@ -194,11 +193,11 @@ func parseNonTopLevelStmt(p *Parser) (Stmt, error) {
 
 func parseGeneralStmt(p *Parser) (Stmt, error) {
 	switch p.lexer.Peek().Type {
-	case lexer.TokUse:
+	case TokUse:
 		return nil, p.errorFromPeekToken("use statements must be outside any other statement")
-	case lexer.TokIf:
+	case TokIf:
 		return parseIfStmt(p)
-	case lexer.TokLet:
+	case TokLet:
 		return parseDeclarationStmt(p)
 	default:
 		return parseExprStmt(p)
@@ -206,13 +205,13 @@ func parseGeneralStmt(p *Parser) (Stmt, error) {
 }
 
 func parseStmtBlock(p *Parser) (*StmtBlock, error) {
-	left, err := p.expectNextToken(lexer.TokBraceL, "expected left brace")
+	left, err := p.expectNextToken(TokBraceL, "expected left brace")
 	if err != nil {
 		return &StmtBlock{}, err
 	}
 
 	stmts := []Stmt{}
-	for p.peekTokenIsNot(lexer.TokBraceR, lexer.TokEOF, lexer.TokError) {
+	for p.peekTokenIsNot(TokBraceR, TokEOF, TokError) {
 		var stmt Stmt
 		stmt, err = parseStmt(p)
 		if err != nil {
@@ -222,7 +221,7 @@ func parseStmtBlock(p *Parser) (*StmtBlock, error) {
 		stmts = append(stmts, stmt)
 	}
 
-	right, err := p.expectNextToken(lexer.TokBraceR, "expected right brace")
+	right, err := p.expectNextToken(TokBraceR, "expected right brace")
 	if err != nil {
 		return &StmtBlock{}, err
 	}
@@ -231,7 +230,7 @@ func parseStmtBlock(p *Parser) (*StmtBlock, error) {
 }
 
 func parseUseStmt(p *Parser) (Stmt, error) {
-	tok, err := p.expectNextToken(lexer.TokUse, "expected USE keyword")
+	tok, err := p.expectNextToken(TokUse, "expected USE keyword")
 	if err != nil {
 		return nil, err
 	}
@@ -244,11 +243,11 @@ func parseUseStmt(p *Parser) (Stmt, error) {
 	path := expr.(*StringExpr)
 
 	var filter []*UseFilter
-	if p.lexer.Peek().Type == lexer.TokParenL {
+	if p.lexer.Peek().Type == TokParenL {
 		filter, err = parseUseFilters(p)
 	}
 
-	_, err = p.expectNextToken(lexer.TokSemi, "expected semicolon")
+	_, err = p.expectNextToken(TokSemi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +256,7 @@ func parseUseStmt(p *Parser) (Stmt, error) {
 }
 
 func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
-	_, err = p.expectNextToken(lexer.TokParenL, "expected left paren")
+	_, err = p.expectNextToken(TokParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +270,7 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 	 */
 	for {
 		// 1.
-		if p.lexer.Peek().Type != lexer.TokIdent {
+		if p.lexer.Peek().Type != TokIdent {
 			break
 		}
 
@@ -281,7 +280,7 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 		filter = append(filter, &UseFilter{name})
 
 		// 3.
-		if p.lexer.Peek().Type == lexer.TokComma {
+		if p.lexer.Peek().Type == TokComma {
 			p.lexer.Next()
 			continue
 		}
@@ -290,7 +289,7 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 		break
 	}
 
-	_, err = p.expectNextToken(lexer.TokParenR, "expected right paren")
+	_, err = p.expectNextToken(TokParenR, "expected right paren")
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +298,7 @@ func parseUseFilters(p *Parser) (filter []*UseFilter, err error) {
 }
 
 func parsePubStmt(p *Parser) (Stmt, error) {
-	tok, err := p.expectNextToken(lexer.TokPub, "expected PUB keyword")
+	tok, err := p.expectNextToken(TokPub, "expected PUB keyword")
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +314,7 @@ func parsePubStmt(p *Parser) (Stmt, error) {
 }
 
 func parseIfStmt(p *Parser) (Stmt, error) {
-	tok, err := p.expectNextToken(lexer.TokIf, "expected IF keyword")
+	tok, err := p.expectNextToken(TokIf, "expected IF keyword")
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +329,7 @@ func parseIfStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokSemi, "expected semicolon")
+	_, err = p.expectNextToken(TokSemi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +338,7 @@ func parseIfStmt(p *Parser) (Stmt, error) {
 }
 
 func parseDeclarationStmt(p *Parser) (Stmt, error) {
-	tok, err := p.expectNextToken(lexer.TokLet, "expected LET keyword")
+	tok, err := p.expectNextToken(TokLet, "expected LET keyword")
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +350,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 
 	name := expr.(*IdentExpr)
 
-	_, err = p.expectNextToken(lexer.TokAssign, "expected :=")
+	_, err = p.expectNextToken(TokAssign, "expected :=")
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +359,7 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 		return nil, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokSemi, "expected semicolon")
+	_, err = p.expectNextToken(TokSemi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
@@ -369,20 +368,20 @@ func parseDeclarationStmt(p *Parser) (Stmt, error) {
 }
 
 func parseReturnStmt(p *Parser) (Stmt, error) {
-	tok, err := p.expectNextToken(lexer.TokReturn, "expected RETURN keyword")
+	tok, err := p.expectNextToken(TokReturn, "expected RETURN keyword")
 	if err != nil {
 		return nil, err
 	}
 
 	var expr Expr
-	if p.peekTokenIsNot(lexer.TokSemi, lexer.TokEOF, lexer.TokError) {
+	if p.peekTokenIsNot(TokSemi, TokEOF, TokError) {
 		expr, err = parseExpr(p, Lowest)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	_, err = p.expectNextToken(lexer.TokSemi, "expected semicolon")
+	_, err = p.expectNextToken(TokSemi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +405,7 @@ func parseExprStmt(p *Parser) (Stmt, error) {
 		return nil, p.errorFromLocation(expr.Start(), "expected start of statement")
 	}
 
-	_, err = p.expectNextToken(lexer.TokSemi, "expected semicolon")
+	_, err = p.expectNextToken(TokSemi, "expected semicolon")
 	if err != nil {
 		return nil, err
 	}
@@ -419,13 +418,13 @@ func parseTypeNote(p *Parser) (TypeNote, error) {
 	var err error
 
 	switch p.lexer.Peek().Type {
-	case lexer.TokIdent:
+	case TokIdent:
 		child, err = parseTypeNoteIdent(p)
-	case lexer.TokBracketL:
+	case TokBracketL:
 		child, err = parseTypeNoteList(p)
-	case lexer.TokParenL:
+	case TokParenL:
 		child, err = parseTypeNoteTuple(p)
-	case lexer.TokError:
+	case TokError:
 		return nil, p.errorFromPeekToken(p.lexer.Peek().Lexeme)
 	default:
 		return nil, p.errorFromPeekToken("unexpected symbol")
@@ -435,7 +434,7 @@ func parseTypeNote(p *Parser) (TypeNote, error) {
 		return nil, err
 	}
 
-	for p.lexer.Peek().Type == lexer.TokQuestion {
+	for p.lexer.Peek().Type == TokQuestion {
 		child, _ = parseTypeNoteOptional(p, child)
 	}
 
@@ -443,9 +442,9 @@ func parseTypeNote(p *Parser) (TypeNote, error) {
 }
 
 func parseTypeNoteIdent(p *Parser) (TypeNote, error) {
-	var tok lexer.Token
+	var tok Token
 	var err error
-	if tok, err = p.expectNextToken(lexer.TokIdent, "expected identifier"); err != nil {
+	if tok, err = p.expectNextToken(TokIdent, "expected identifier"); err != nil {
 		return nil, err
 	}
 
@@ -460,7 +459,7 @@ func parseTypeNoteIdent(p *Parser) (TypeNote, error) {
 }
 
 func parseTypeNoteList(p *Parser) (TypeNote, error) {
-	tok, err := p.expectNextToken(lexer.TokBracketL, "expected left bracket")
+	tok, err := p.expectNextToken(TokBracketL, "expected left bracket")
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +469,7 @@ func parseTypeNoteList(p *Parser) (TypeNote, error) {
 		return nil, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokBracketR, "expected right bracket")
+	_, err = p.expectNextToken(TokBracketR, "expected right bracket")
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +478,7 @@ func parseTypeNoteList(p *Parser) (TypeNote, error) {
 }
 
 func parseTypeNoteOptional(p *Parser, child TypeNote) (TypeNote, error) {
-	tok, err := p.expectNextToken(lexer.TokQuestion, "expected question mark")
+	tok, err := p.expectNextToken(TokQuestion, "expected question mark")
 	if err != nil {
 		return nil, err
 	}
@@ -488,13 +487,13 @@ func parseTypeNoteOptional(p *Parser, child TypeNote) (TypeNote, error) {
 }
 
 func parseTypeNoteTuple(p *Parser) (TypeNote, error) {
-	tok, err := p.expectNextToken(lexer.TokParenL, "expected left paren")
+	tok, err := p.expectNextToken(TokParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
 
 	params := []TypeNote{}
-	for p.peekTokenIsNot(lexer.TokParenR, lexer.TokError, lexer.TokEOF) {
+	for p.peekTokenIsNot(TokParenR, TokError, TokEOF) {
 		var sig TypeNote
 		sig, err = parseTypeNote(p)
 		if err != nil {
@@ -503,20 +502,20 @@ func parseTypeNoteTuple(p *Parser) (TypeNote, error) {
 
 		params = append(params, sig)
 
-		if p.peekTokenIsNot(lexer.TokComma) {
+		if p.peekTokenIsNot(TokComma) {
 			break
 		} else {
 			p.lexer.Next()
 		}
 	}
 
-	_, err = p.expectNextToken(lexer.TokParenR, "expected right paren")
+	_, err = p.expectNextToken(TokParenR, "expected right paren")
 	if err != nil {
 		return nil, err
 	}
 
 	tuple := TypeNoteTuple{tok, params}
-	if p.peekTokenIsNot(lexer.TokArrow) {
+	if p.peekTokenIsNot(TokArrow) {
 		return tuple, nil
 	}
 
@@ -524,7 +523,7 @@ func parseTypeNoteTuple(p *Parser) (TypeNote, error) {
 }
 
 func parseTypeNoteFunction(p *Parser, tuple TypeNoteTuple) (TypeNote, error) {
-	_, err := p.expectNextToken(lexer.TokArrow, "expected arrow")
+	_, err := p.expectNextToken(TokArrow, "expected arrow")
 	if err != nil {
 		return nil, err
 	}
@@ -541,7 +540,7 @@ func parseExpr(p *Parser, level Precedence) (Expr, error) {
 	prefix, exists := p.prefixParseFuncs[p.lexer.Peek().Type]
 	if exists == false {
 		peek := p.lexer.Peek()
-		if peek.Type == lexer.TokError {
+		if peek.Type == TokError {
 			return nil, p.errorFromPeekToken(peek.Lexeme)
 		}
 		return nil, p.errorFromPeekToken("unexpected symbol")
@@ -552,7 +551,7 @@ func parseExpr(p *Parser, level Precedence) (Expr, error) {
 		return nil, err
 	}
 
-	for p.peekTokenIsNot(lexer.TokEOF) && level < p.peekPrecedence() {
+	for p.peekTokenIsNot(TokEOF) && level < p.peekPrecedence() {
 		infix := p.postfixParseFuncs[p.lexer.Peek().Type]
 		left, err = infix(p, left)
 
@@ -565,7 +564,7 @@ func parseExpr(p *Parser, level Precedence) (Expr, error) {
 }
 
 func parseFunction(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokFn, "expected FN keyword")
+	tok, err := p.expectNextToken(TokFn, "expected FN keyword")
 	if err != nil {
 		return nil, err
 	}
@@ -582,7 +581,7 @@ func parseFunction(p *Parser) (Expr, error) {
 	}
 	p.funcDepth--
 
-	return &FunctionExpr{tok, params, ret, block, nil}, nil
+	return &FunctionExpr{tok, params, ret, block}, nil
 }
 
 func parseFunctionSignature(p *Parser) ([]*FunctionParam, TypeNote, error) {
@@ -602,13 +601,13 @@ func parseFunctionSignature(p *Parser) ([]*FunctionParam, TypeNote, error) {
 }
 
 func parseFunctionParams(p *Parser) ([]*FunctionParam, error) {
-	_, err := p.expectNextToken(lexer.TokParenL, "expected left paren")
+	_, err := p.expectNextToken(TokParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
 
 	params := []*FunctionParam{}
-	for p.peekTokenIsNot(lexer.TokParenR, lexer.TokEOF, lexer.TokError) {
+	for p.peekTokenIsNot(TokParenR, TokEOF, TokError) {
 		var param *FunctionParam
 		param, err = parseFunctionParam(p)
 		if err != nil {
@@ -617,14 +616,14 @@ func parseFunctionParams(p *Parser) ([]*FunctionParam, error) {
 
 		params = append(params, param)
 
-		if p.peekTokenIsNot(lexer.TokComma) {
+		if p.peekTokenIsNot(TokComma) {
 			break
 		} else {
 			p.lexer.Next()
 		}
 	}
 
-	_, err = p.expectNextToken(lexer.TokParenR, "expected right paren")
+	_, err = p.expectNextToken(TokParenR, "expected right paren")
 	if err != nil {
 		return nil, err
 	}
@@ -638,7 +637,7 @@ func parseFunctionParam(p *Parser) (*FunctionParam, error) {
 		return &FunctionParam{}, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokColon, "expected colon between parameter name and type")
+	_, err = p.expectNextToken(TokColon, "expected colon between parameter name and type")
 	if err != nil {
 		return &FunctionParam{}, err
 	}
@@ -653,7 +652,7 @@ func parseFunctionParam(p *Parser) (*FunctionParam, error) {
 }
 
 func parseFunctionReturnSig(p *Parser) (TypeNote, error) {
-	_, err := p.expectNextToken(lexer.TokColon, "expected colon between parameters and return type")
+	_, err := p.expectNextToken(TokColon, "expected colon between parameters and return type")
 	if err != nil {
 		return nil, err
 	}
@@ -679,13 +678,13 @@ func parseInfix(p *Parser, left Expr) (Expr, error) {
 }
 
 func parseList(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokBracketL, "expected left bracket")
+	tok, err := p.expectNextToken(TokBracketL, "expected left bracket")
 	if err != nil {
 		return nil, err
 	}
 
 	elements := []Expr{}
-	for p.peekTokenIsNot(lexer.TokBracketR, lexer.TokError, lexer.TokEOF) {
+	for p.peekTokenIsNot(TokBracketR, TokError, TokEOF) {
 		var elem Expr
 		elem, err = parseExpr(p, Lowest)
 		if err != nil {
@@ -694,14 +693,14 @@ func parseList(p *Parser) (Expr, error) {
 
 		elements = append(elements, elem)
 
-		if p.peekTokenIsNot(lexer.TokComma) {
+		if p.peekTokenIsNot(TokComma) {
 			break
 		}
 
 		p.lexer.Next()
 	}
 
-	_, err = p.expectNextToken(lexer.TokBracketR, "expected right bracket")
+	_, err = p.expectNextToken(TokBracketR, "expected right bracket")
 	if err != nil {
 		return nil, err
 	}
@@ -710,12 +709,12 @@ func parseList(p *Parser) (Expr, error) {
 }
 
 func parseSubscript(p *Parser, left Expr) (Expr, error) {
-	_, err := p.expectNextToken(lexer.TokBracketL, "expect left bracket")
+	_, err := p.expectNextToken(TokBracketL, "expect left bracket")
 	if err != nil {
 		return nil, err
 	}
 
-	if p.lexer.Peek().Type == lexer.TokBracketR {
+	if p.lexer.Peek().Type == TokBracketR {
 		return nil, p.errorFromPeekToken("expected index expression")
 	}
 
@@ -724,7 +723,7 @@ func parseSubscript(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokBracketR, "expect right bracket")
+	_, err = p.expectNextToken(TokBracketR, "expect right bracket")
 	if err != nil {
 		return nil, err
 	}
@@ -733,13 +732,13 @@ func parseSubscript(p *Parser, left Expr) (Expr, error) {
 }
 
 func parseDispatch(p *Parser, left Expr) (Expr, error) {
-	_, err := p.expectNextToken(lexer.TokParenL, "expected left paren")
+	_, err := p.expectNextToken(TokParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
 
 	var args []Expr
-	for p.peekTokenIsNot(lexer.TokParenR, lexer.TokError, lexer.TokEOF) {
+	for p.peekTokenIsNot(TokParenR, TokError, TokEOF) {
 		var arg Expr
 		arg, err = parseExpr(p, Lowest)
 		if err != nil {
@@ -747,14 +746,14 @@ func parseDispatch(p *Parser, left Expr) (Expr, error) {
 		}
 
 		args = append(args, arg)
-		if p.peekTokenIsNot(lexer.TokComma) {
+		if p.peekTokenIsNot(TokComma) {
 			break
 		}
 
 		p.lexer.Next()
 	}
 
-	_, err = p.expectNextToken(lexer.TokParenR, "expected right paren")
+	_, err = p.expectNextToken(TokParenR, "expected right paren")
 	if err != nil {
 		return nil, err
 	}
@@ -797,7 +796,7 @@ func parsePrefix(p *Parser) (Expr, error) {
 }
 
 func parseGroup(p *Parser) (Expr, error) {
-	_, err := p.expectNextToken(lexer.TokParenL, "expected left paren")
+	_, err := p.expectNextToken(TokParenL, "expected left paren")
 	if err != nil {
 		return nil, err
 	}
@@ -807,7 +806,7 @@ func parseGroup(p *Parser) (Expr, error) {
 		return nil, err
 	}
 
-	_, err = p.expectNextToken(lexer.TokParenR, "expected right paren")
+	_, err = p.expectNextToken(TokParenR, "expected right paren")
 	if err != nil {
 		return nil, err
 	}
@@ -816,7 +815,7 @@ func parseGroup(p *Parser) (Expr, error) {
 }
 
 func parseSelf(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokSelf, "expected self")
+	tok, err := p.expectNextToken(TokSelf, "expected self")
 	if err != nil {
 		return nil, err
 	}
@@ -825,7 +824,7 @@ func parseSelf(p *Parser) (Expr, error) {
 }
 
 func parseIdent(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokIdent, "expected identifier")
+	tok, err := p.expectNextToken(TokIdent, "expected identifier")
 	if err != nil {
 		return nil, err
 	}
@@ -834,7 +833,7 @@ func parseIdent(p *Parser) (Expr, error) {
 }
 
 func parseNumber(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokNumber, "expected number literal")
+	tok, err := p.expectNextToken(TokNumber, "expected number literal")
 	if err != nil {
 		return nil, err
 	}
@@ -842,7 +841,7 @@ func parseNumber(p *Parser) (Expr, error) {
 	return evalNumber(p, tok)
 }
 
-func evalNumber(p *Parser, tok lexer.Token) (*NumberExpr, error) {
+func evalNumber(p *Parser, tok Token) (*NumberExpr, error) {
 	val, err := strconv.ParseUint(tok.Lexeme, 10, 64)
 	if err != nil {
 		return nil, p.errorFromLocation(tok.Loc, "malformed number literal")
@@ -852,7 +851,7 @@ func evalNumber(p *Parser, tok lexer.Token) (*NumberExpr, error) {
 }
 
 func parseString(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokString, "expected string literal")
+	tok, err := p.expectNextToken(TokString, "expected string literal")
 	if err != nil {
 		return nil, err
 	}
@@ -860,7 +859,7 @@ func parseString(p *Parser) (Expr, error) {
 	return evalString(tok)
 }
 
-func evalString(tok lexer.Token) (*StringExpr, error) {
+func evalString(tok Token) (*StringExpr, error) {
 	dblQuote := "\""
 	remSuffix := strings.TrimSuffix(tok.Lexeme, dblQuote)
 	remBoth := strings.TrimPrefix(remSuffix, dblQuote)
@@ -869,7 +868,7 @@ func evalString(tok lexer.Token) (*StringExpr, error) {
 }
 
 func parseBoolean(p *Parser) (Expr, error) {
-	tok, err := p.expectNextToken(lexer.TokBoolean, "expected boolean literal")
+	tok, err := p.expectNextToken(TokBoolean, "expected boolean literal")
 	if err != nil {
 		return nil, err
 	}
@@ -877,7 +876,7 @@ func parseBoolean(p *Parser) (Expr, error) {
 	return evalBoolean(p, tok)
 }
 
-func evalBoolean(p *Parser, tok lexer.Token) (*BooleanExpr, error) {
+func evalBoolean(p *Parser, tok Token) (*BooleanExpr, error) {
 	if tok.Lexeme == "true" {
 		return &BooleanExpr{tok, true}, nil
 	} else if tok.Lexeme == "false" {

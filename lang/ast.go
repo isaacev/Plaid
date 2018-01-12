@@ -1,16 +1,14 @@
-package parser
+package lang
 
 import (
 	"fmt"
-	"plaid/lexer"
-	"plaid/scope"
 	"strconv"
 	"strings"
 )
 
 // Node is the ancestor of all AST nodes
 type Node interface {
-	Start() lexer.Loc
+	Start() Loc
 	String() string
 	isNode()
 }
@@ -18,16 +16,15 @@ type Node interface {
 // Program describes all top-level statements within a script
 type Program struct {
 	Stmts []Stmt
-	Scope *scope.GlobalScope
 }
 
 // Start returns a location that this node can be considered to start at
-func (p Program) Start() lexer.Loc {
+func (p Program) Start() Loc {
 	if len(p.Stmts) > 0 {
 		return p.Stmts[0].Start()
 	}
 
-	return lexer.Loc{Line: 1, Col: 1}
+	return Loc{Line: 1, Col: 1}
 }
 
 func (p Program) String() string {
@@ -46,7 +43,7 @@ func (p Program) isNode() {}
 
 // Stmt describes all constructs that return no value
 type Stmt interface {
-	Start() lexer.Loc
+	Start() Loc
 	String() string
 	isNode()
 	isStmt()
@@ -54,13 +51,13 @@ type Stmt interface {
 
 // StmtBlock describes any series of statements bounded by curly braces
 type StmtBlock struct {
-	Left  lexer.Token
+	Left  Token
 	Stmts []Stmt
-	Right lexer.Token
+	Right Token
 }
 
 // Start returns a location that this node can be considered to start at
-func (sb StmtBlock) Start() lexer.Loc { return sb.Left.Loc }
+func (sb StmtBlock) Start() Loc { return sb.Left.Loc }
 
 func (sb StmtBlock) String() string {
 	out := "{"
@@ -74,13 +71,13 @@ func (sb StmtBlock) isNode() {}
 
 // UseStmt describes a file or module import
 type UseStmt struct {
-	Tok    lexer.Token
+	Tok    Token
 	Path   *StringExpr
 	Filter []*UseFilter
 }
 
 // Start returns a location that this node can be considered to start at
-func (s UseStmt) Start() lexer.Loc { return s.Tok.Loc }
+func (s UseStmt) Start() Loc { return s.Tok.Loc }
 func (s UseStmt) String() string {
 	var filter string
 	if len(s.Filter) > 0 {
@@ -105,56 +102,56 @@ type UseFilter struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (s UseFilter) Start() lexer.Loc { return s.Name.Start() }
-func (s UseFilter) String() string   { return s.Name.String() }
-func (s UseFilter) isNode()          {}
+func (s UseFilter) Start() Loc     { return s.Name.Start() }
+func (s UseFilter) String() string { return s.Name.String() }
+func (s UseFilter) isNode()        {}
 
 // PubStmt describes a file or module import
 type PubStmt struct {
-	Tok  lexer.Token
+	Tok  Token
 	Stmt *DeclarationStmt
 }
 
 // Start returns a location that this node can be considered to start at
-func (s PubStmt) Start() lexer.Loc { return s.Tok.Loc }
-func (s PubStmt) String() string   { return fmt.Sprintf("(pub %s)", s.Stmt) }
-func (s PubStmt) isNode()          {}
-func (s PubStmt) isStmt()          {}
+func (s PubStmt) Start() Loc     { return s.Tok.Loc }
+func (s PubStmt) String() string { return fmt.Sprintf("(pub %s)", s.Stmt) }
+func (s PubStmt) isNode()        {}
+func (s PubStmt) isStmt()        {}
 
 // IfStmt describes a condition expression and an associated clause
 type IfStmt struct {
-	Tok    lexer.Token
+	Tok    Token
 	Cond   Expr
 	Clause *StmtBlock
 }
 
 // Start returns a location that this node can be considered to start at
-func (is IfStmt) Start() lexer.Loc { return is.Tok.Loc }
-func (is IfStmt) String() string   { return fmt.Sprintf("(if %s %s)", is.Cond, is.Clause) }
-func (is IfStmt) isNode()          {}
-func (is IfStmt) isStmt()          {}
+func (is IfStmt) Start() Loc     { return is.Tok.Loc }
+func (is IfStmt) String() string { return fmt.Sprintf("(if %s %s)", is.Cond, is.Clause) }
+func (is IfStmt) isNode()        {}
+func (is IfStmt) isStmt()        {}
 
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
-	Tok  lexer.Token
+	Tok  Token
 	Name *IdentExpr
 	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ds DeclarationStmt) Start() lexer.Loc { return ds.Tok.Loc }
-func (ds DeclarationStmt) String() string   { return fmt.Sprintf("(let %s %s)", ds.Name, ds.Expr) }
-func (ds DeclarationStmt) isNode()          {}
-func (ds DeclarationStmt) isStmt()          {}
+func (ds DeclarationStmt) Start() Loc     { return ds.Tok.Loc }
+func (ds DeclarationStmt) String() string { return fmt.Sprintf("(let %s %s)", ds.Name, ds.Expr) }
+func (ds DeclarationStmt) isNode()        {}
+func (ds DeclarationStmt) isStmt()        {}
 
 // ReturnStmt describes a return keyword and an optional returned expression.
 type ReturnStmt struct {
-	Tok  lexer.Token
+	Tok  Token
 	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (rs ReturnStmt) Start() lexer.Loc { return rs.Tok.Loc }
+func (rs ReturnStmt) Start() Loc { return rs.Tok.Loc }
 
 func (rs ReturnStmt) String() string {
 	if rs.Expr != nil {
@@ -173,14 +170,14 @@ type ExprStmt struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (es ExprStmt) Start() lexer.Loc { return es.Expr.Start() }
-func (es ExprStmt) String() string   { return es.Expr.String() }
-func (es ExprStmt) isNode()          {}
-func (es ExprStmt) isStmt()          {}
+func (es ExprStmt) Start() Loc     { return es.Expr.Start() }
+func (es ExprStmt) String() string { return es.Expr.String() }
+func (es ExprStmt) isNode()        {}
+func (es ExprStmt) isStmt()        {}
 
 // TypeNote describes a syntax type annotation
 type TypeNote interface {
-	Start() lexer.Loc
+	Start() Loc
 	String() string
 	isNode()
 	isType()
@@ -188,34 +185,34 @@ type TypeNote interface {
 
 // TypeNoteAny describes a type that matches everything
 type TypeNoteAny struct {
-	Tok lexer.Token
+	Tok Token
 }
 
 // Start returns a location that this node can be considered to start at
-func (ta TypeNoteAny) Start() lexer.Loc { return ta.Tok.Loc }
-func (ta TypeNoteAny) String() string   { return "Any" }
-func (ta TypeNoteAny) isNode()          {}
-func (ta TypeNoteAny) isType()          {}
+func (ta TypeNoteAny) Start() Loc     { return ta.Tok.Loc }
+func (ta TypeNoteAny) String() string { return "Any" }
+func (ta TypeNoteAny) isNode()        {}
+func (ta TypeNoteAny) isType()        {}
 
 // TypeNoteVoid describes a missing type annotation
 type TypeNoteVoid struct {
-	Tok lexer.Token
+	Tok Token
 }
 
 // Start returns a location that this node can be considered to start at
-func (tv TypeNoteVoid) Start() lexer.Loc { return tv.Tok.Loc }
-func (tv TypeNoteVoid) String() string   { return "Void" }
-func (tv TypeNoteVoid) isNode()          {}
-func (tv TypeNoteVoid) isType()          {}
+func (tv TypeNoteVoid) Start() Loc     { return tv.Tok.Loc }
+func (tv TypeNoteVoid) String() string { return "Void" }
+func (tv TypeNoteVoid) isNode()        {}
+func (tv TypeNoteVoid) isType()        {}
 
 // TypeNoteTuple describes a set of 0 or more types wrapped in parentheses
 type TypeNoteTuple struct {
-	Tok   lexer.Token
+	Tok   Token
 	Elems []TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (tt TypeNoteTuple) Start() lexer.Loc { return tt.Tok.Loc }
+func (tt TypeNoteTuple) Start() Loc { return tt.Tok.Loc }
 
 func (tt TypeNoteTuple) String() string {
 	out := "("
@@ -239,7 +236,7 @@ type TypeNoteFunction struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (tf TypeNoteFunction) Start() lexer.Loc { return tf.Params.Start() }
+func (tf TypeNoteFunction) Start() Loc { return tf.Params.Start() }
 
 func (tf TypeNoteFunction) String() string {
 	out := tf.Params.String()
@@ -253,43 +250,43 @@ func (tf TypeNoteFunction) isType() {}
 
 // TypeNoteIdent describes a named reference to a type
 type TypeNoteIdent struct {
-	Tok  lexer.Token
+	Tok  Token
 	Name string
 }
 
 // Start returns a location that this node can be considered to start at
-func (ti TypeNoteIdent) Start() lexer.Loc { return ti.Tok.Loc }
-func (ti TypeNoteIdent) String() string   { return ti.Name }
-func (ti TypeNoteIdent) isNode()          {}
-func (ti TypeNoteIdent) isType()          {}
+func (ti TypeNoteIdent) Start() Loc     { return ti.Tok.Loc }
+func (ti TypeNoteIdent) String() string { return ti.Name }
+func (ti TypeNoteIdent) isNode()        {}
+func (ti TypeNoteIdent) isType()        {}
 
 // TypeNoteList describes a list type
 type TypeNoteList struct {
-	Tok   lexer.Token
+	Tok   Token
 	Child TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (tl TypeNoteList) Start() lexer.Loc { return tl.Tok.Loc }
-func (tl TypeNoteList) String() string   { return fmt.Sprintf("[%s]", tl.Child) }
-func (tl TypeNoteList) isNode()          {}
-func (tl TypeNoteList) isType()          {}
+func (tl TypeNoteList) Start() Loc     { return tl.Tok.Loc }
+func (tl TypeNoteList) String() string { return fmt.Sprintf("[%s]", tl.Child) }
+func (tl TypeNoteList) isNode()        {}
+func (tl TypeNoteList) isType()        {}
 
 // TypeNoteOptional describes a list type
 type TypeNoteOptional struct {
-	Tok   lexer.Token
+	Tok   Token
 	Child TypeNote
 }
 
 // Start returns a location that this node can be considered to start at
-func (to TypeNoteOptional) Start() lexer.Loc { return to.Child.Start() }
-func (to TypeNoteOptional) String() string   { return fmt.Sprintf("%s?", to.Child) }
-func (to TypeNoteOptional) isNode()          {}
-func (to TypeNoteOptional) isType()          {}
+func (to TypeNoteOptional) Start() Loc     { return to.Child.Start() }
+func (to TypeNoteOptional) String() string { return fmt.Sprintf("%s?", to.Child) }
+func (to TypeNoteOptional) isNode()        {}
+func (to TypeNoteOptional) isType()        {}
 
 // Expr describes all constructs that resolve to a value
 type Expr interface {
-	Start() lexer.Loc
+	Start() Loc
 	String() string
 	isNode()
 	isExpr()
@@ -297,15 +294,14 @@ type Expr interface {
 
 // FunctionExpr describes a function's entire type signature and body
 type FunctionExpr struct {
-	Tok    lexer.Token
+	Tok    Token
 	Params []*FunctionParam
 	Ret    TypeNote
 	Block  *StmtBlock
-	Scope  scope.Scope
 }
 
 // Start returns a location that this node can be considered to start at
-func (fe FunctionExpr) Start() lexer.Loc { return fe.Tok.Loc }
+func (fe FunctionExpr) Start() Loc { return fe.Tok.Loc }
 
 func (fe FunctionExpr) String() string {
 	out := "(fn ("
@@ -333,7 +329,7 @@ type FunctionParam struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (fp FunctionParam) Start() lexer.Loc { return fp.Name.Start() }
+func (fp FunctionParam) Start() Loc { return fp.Name.Start() }
 
 func (fp FunctionParam) String() string {
 	if fp.Note != nil {
@@ -352,7 +348,7 @@ type DispatchExpr struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (de DispatchExpr) Start() lexer.Loc { return de.Callee.Start() }
+func (de DispatchExpr) Start() Loc { return de.Callee.Start() }
 
 func (de DispatchExpr) String() string {
 	out := "("
@@ -373,25 +369,25 @@ func (de DispatchExpr) isExpr() {}
 
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
-	Tok   lexer.Token
+	Tok   Token
 	Left  *IdentExpr
 	Right Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ae AssignExpr) Start() lexer.Loc { return ae.Left.Start() }
-func (ae AssignExpr) String() string   { return fmt.Sprintf("(= %s %s)", ae.Left, ae.Right) }
-func (ae AssignExpr) isNode()          {}
-func (ae AssignExpr) isExpr()          {}
+func (ae AssignExpr) Start() Loc     { return ae.Left.Start() }
+func (ae AssignExpr) String() string { return fmt.Sprintf("(= %s %s)", ae.Left, ae.Right) }
+func (ae AssignExpr) isNode()        {}
+func (ae AssignExpr) isExpr()        {}
 
 // ListExpr describes a listeral list constructor
 type ListExpr struct {
-	Tok      lexer.Token
+	Tok      Token
 	Elements []Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (le ListExpr) Start() lexer.Loc { return le.Tok.Loc }
+func (le ListExpr) Start() Loc { return le.Tok.Loc }
 func (le ListExpr) String() string {
 	out := "[ "
 	for _, elem := range le.Elements {
@@ -409,93 +405,93 @@ type SubscriptExpr struct {
 }
 
 // Start returns a location that this node can be considered to start at
-func (se SubscriptExpr) Start() lexer.Loc { return se.ListLike.Start() }
-func (se SubscriptExpr) String() string   { return fmt.Sprintf("%s[%s]", se.ListLike, se.Index) }
-func (se SubscriptExpr) isNode()          {}
-func (se SubscriptExpr) isExpr()          {}
+func (se SubscriptExpr) Start() Loc     { return se.ListLike.Start() }
+func (se SubscriptExpr) String() string { return fmt.Sprintf("%s[%s]", se.ListLike, se.Index) }
+func (se SubscriptExpr) isNode()        {}
+func (se SubscriptExpr) isExpr()        {}
 
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	Oper  string
-	Tok   lexer.Token
+	Tok   Token
 	Left  Expr
 	Right Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (be BinaryExpr) Start() lexer.Loc { return be.Left.Start() }
-func (be BinaryExpr) String() string   { return fmt.Sprintf("(%s %s %s)", be.Oper, be.Left, be.Right) }
-func (be BinaryExpr) isNode()          {}
-func (be BinaryExpr) isExpr()          {}
+func (be BinaryExpr) Start() Loc     { return be.Left.Start() }
+func (be BinaryExpr) String() string { return fmt.Sprintf("(%s %s %s)", be.Oper, be.Left, be.Right) }
+func (be BinaryExpr) isNode()        {}
+func (be BinaryExpr) isExpr()        {}
 
 // UnaryExpr describes any single expression associated to an operator
 type UnaryExpr struct {
 	Oper string
-	Tok  lexer.Token
+	Tok  Token
 	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ue UnaryExpr) Start() lexer.Loc { return lexer.SmallerLoc(ue.Tok.Loc, ue.Expr.Start()) }
-func (ue UnaryExpr) String() string   { return fmt.Sprintf("(%s %s)", ue.Oper, ue.Expr) }
-func (ue UnaryExpr) isNode()          {}
-func (ue UnaryExpr) isExpr()          {}
+func (ue UnaryExpr) Start() Loc     { return SmallerLoc(ue.Tok.Loc, ue.Expr.Start()) }
+func (ue UnaryExpr) String() string { return fmt.Sprintf("(%s %s)", ue.Oper, ue.Expr) }
+func (ue UnaryExpr) isNode()        {}
+func (ue UnaryExpr) isExpr()        {}
 
 // SelfExpr describes a reflexive reference to a function from within that function
 type SelfExpr struct {
-	Tok lexer.Token
+	Tok Token
 }
 
 // Start returns a location that this node can be considered to start at
-func (se SelfExpr) Start() lexer.Loc { return se.Tok.Loc }
-func (se SelfExpr) String() string   { return "self" }
-func (se SelfExpr) isNode()          {}
-func (se SelfExpr) isExpr()          {}
+func (se SelfExpr) Start() Loc     { return se.Tok.Loc }
+func (se SelfExpr) String() string { return "self" }
+func (se SelfExpr) isNode()        {}
+func (se SelfExpr) isExpr()        {}
 
 // IdentExpr describes an identifier
 type IdentExpr struct {
-	Tok  lexer.Token
+	Tok  Token
 	Name string
 }
 
 // Start returns a location that this node can be considered to start at
-func (ie IdentExpr) Start() lexer.Loc { return ie.Tok.Loc }
-func (ie IdentExpr) String() string   { return ie.Name }
-func (ie IdentExpr) isNode()          {}
-func (ie IdentExpr) isExpr()          {}
+func (ie IdentExpr) Start() Loc     { return ie.Tok.Loc }
+func (ie IdentExpr) String() string { return ie.Name }
+func (ie IdentExpr) isNode()        {}
+func (ie IdentExpr) isExpr()        {}
 
 // StringExpr describes a string literal
 type StringExpr struct {
-	Tok lexer.Token
+	Tok Token
 	Val string
 }
 
 // Start returns a location that this node can be considered to start at
-func (se StringExpr) Start() lexer.Loc { return se.Tok.Loc }
-func (se StringExpr) String() string   { return fmt.Sprintf("\"%s\"", se.Val) }
-func (se StringExpr) isNode()          {}
-func (se StringExpr) isExpr()          {}
+func (se StringExpr) Start() Loc     { return se.Tok.Loc }
+func (se StringExpr) String() string { return fmt.Sprintf("\"%s\"", se.Val) }
+func (se StringExpr) isNode()        {}
+func (se StringExpr) isExpr()        {}
 
 // NumberExpr describes a string literal
 type NumberExpr struct {
-	Tok lexer.Token
+	Tok Token
 	Val int
 }
 
 // Start returns a location that this node can be considered to start at
-func (ne NumberExpr) Start() lexer.Loc { return ne.Tok.Loc }
-func (ne NumberExpr) String() string   { return strconv.Itoa(ne.Val) }
-func (ne NumberExpr) isNode()          {}
-func (ne NumberExpr) isExpr()          {}
+func (ne NumberExpr) Start() Loc     { return ne.Tok.Loc }
+func (ne NumberExpr) String() string { return strconv.Itoa(ne.Val) }
+func (ne NumberExpr) isNode()        {}
+func (ne NumberExpr) isExpr()        {}
 
 // BooleanExpr describes a boolean constant
 type BooleanExpr struct {
-	Tok lexer.Token
+	Tok Token
 	Val bool
 }
 
 // Start returns a location that this node can be considered to start at
-func (be BooleanExpr) Start() lexer.Loc { return be.Tok.Loc }
+func (be BooleanExpr) Start() Loc { return be.Tok.Loc }
 func (be BooleanExpr) String() string {
 	if be.Val {
 		return "true"

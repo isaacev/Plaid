@@ -1,8 +1,7 @@
-package linker
+package lang
 
 import (
 	"fmt"
-	"plaid/parser"
 	"testing"
 )
 
@@ -190,11 +189,11 @@ func TestBuildGraph(t *testing.T) {
 }
 
 func TestGetDependencyPaths(t *testing.T) {
-	n := &node{path: "a/b/c.plaid", ast: &parser.Program{Stmts: []parser.Stmt{
-		&parser.UseStmt{Path: &parser.StringExpr{Val: "foo"}},
-		&parser.UseStmt{Path: &parser.StringExpr{Val: "../bar"}},
-		&parser.ExprStmt{},
-		&parser.UseStmt{Path: &parser.StringExpr{Val: "baz/quux"}},
+	n := &node{path: "a/b/c.plaid", ast: &Program{Stmts: []Stmt{
+		&UseStmt{Path: &StringExpr{Val: "foo"}},
+		&UseStmt{Path: &StringExpr{Val: "../bar"}},
+		&ExprStmt{},
+		&UseStmt{Path: &StringExpr{Val: "baz/quux"}},
 	}}}
 
 	got := getDependencyPaths(n)
@@ -241,13 +240,13 @@ func TestAddDone(t *testing.T) {
 
 func TestMakeNode(t *testing.T) {
 	path := "foo bar"
-	ast := &parser.Program{}
+	ast := &Program{}
 	n := makeNode(path, ast)
 
 	expectBool(t, n.path == path, true)
 	expectBool(t, n.ast == ast, true)
-	expectBool(t, n.module.Name == path, true)
-	expectBool(t, n.module.AST == ast, true)
+	expectBool(t, n.module.String() == path, true)
+	// expectBool(t, n.module.AST == ast, true)
 }
 
 func testNode(path string, children ...*node) *node {
@@ -260,14 +259,6 @@ func testNode(path string, children ...*node) *node {
 func expectNoError(t *testing.T, err error) {
 	if err != nil {
 		t.Fatalf("Expected no error, got '%s'", err)
-	}
-}
-
-func expectAnError(t *testing.T, err error, exp string) {
-	if err == nil {
-		t.Fatalf("Expected an error '%s'", exp)
-	} else if err.Error() != exp {
-		t.Fatalf("Expected error '%s', got '%s'", exp, err)
 	}
 }
 

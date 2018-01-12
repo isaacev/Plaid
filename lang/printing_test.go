@@ -1,4 +1,4 @@
-package debug
+package lang
 
 import (
 	"testing"
@@ -68,12 +68,6 @@ func TestIndentAndAttach(t *testing.T) {
 
 	test("foo\nbar\nbaz", "╰", " ", "│ foo\n╰─bar\n  baz")
 	test("foo\nbar\nbaz", "├", "│", "│ foo\n├─bar\n│ baz")
-}
-
-func expectString(t *testing.T, got string, exp string) {
-	if got != exp {
-		t.Errorf("Expected '%s', got '%s'", exp, got)
-	}
 }
 
 func expectStringSlice(t *testing.T, got []string, exp []string) {

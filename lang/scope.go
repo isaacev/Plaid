@@ -1,58 +1,49 @@
-package scope
+package lang
 
 import (
 	"fmt"
-	"plaid/debug"
-	"plaid/types"
-	"plaid/vm"
 	"sort"
 )
 
+type UniqueReference struct{}
+
 // Scope describes common methods that any type of scope must implement
 type Scope interface {
-	debug.StringTree
+	StringTree
 	HasParent() bool
 	GetParent() Scope
 	addChild(Scope) Scope
 	HasSelfReference() bool
-	GetSelfReference() types.Function
+	GetSelfReference() TypeFunction
 	HasErrors() bool
 	GetErrors() []error
 	NewError(error)
 	HasLocalVariable(string) bool
-	GetLocalVariableType(string) types.Type
-	GetLocalVariableRegister(string) *vm.RegisterTemplate
+	GetLocalVariableType(string) Type
+	GetLocalVariableReference(string) *UniqueReference
 	GetLocalVariableNames() []string
 	HasVariable(string) bool
-	GetVariableType(string) types.Type
-	GetVariableRegister(string) *vm.RegisterTemplate
-	NewVariable(string, types.Type) *vm.RegisterTemplate
+	GetVariableType(string) Type
+	GetVariableReference(string) *UniqueReference
+	NewVariable(string, Type) *UniqueReference
 }
 
 // GlobalScope exists at the top of the scope tree
 type GlobalScope struct {
-	imports   []*GlobalScope
-	exports   map[string]*vm.Export
-	children  []Scope
-	errors    []error
-	types     map[string]types.Type
-	registers map[string]*vm.RegisterTemplate
+	imports    []*GlobalScope
+	exports    map[string]Type
+	children   []Scope
+	errors     []error
+	types      map[string]Type
+	references map[string]*UniqueReference
 }
 
 // MakeGlobalScope is a helper function to quickly build a global scope
 func MakeGlobalScope() *GlobalScope {
 	return &GlobalScope{
-		exports:   make(map[string]*vm.Export),
-		types:     make(map[string]types.Type),
-		registers: make(map[string]*vm.RegisterTemplate),
-	}
-}
-
-// MakeGlobalScopeFromModule converts a *vm.Module to a *GlobalScope that can be
-// used for cross-module type resolution during the type-checking phase.
-func MakeGlobalScopeFromModule(module *vm.Module) *GlobalScope {
-	return &GlobalScope{
-		exports: module.Exports,
+		exports:    make(map[string]Type),
+		types:      make(map[string]Type),
+		references: make(map[string]*UniqueReference),
 	}
 }
 
@@ -61,7 +52,7 @@ func (s *GlobalScope) AddImport(module *GlobalScope) {
 	s.imports = append(s.imports, module)
 }
 
-// HasExport returns true if a given name has been mapped to a *vm.Export struct
+// HasExport returns true if a given name has been mapped to a *Export struct
 func (s *GlobalScope) HasExport(name string) bool {
 	if _, exists := s.exports[name]; exists {
 		return true
@@ -72,7 +63,7 @@ func (s *GlobalScope) HasExport(name string) bool {
 
 // GetExport returns an Export struct if the given variable is exported, returns
 // nil otherwise
-func (s *GlobalScope) GetExport(name string) *vm.Export {
+func (s *GlobalScope) GetExport(name string) Type {
 	if s.HasExport(name) {
 		return s.exports[name]
 	}
@@ -81,11 +72,8 @@ func (s *GlobalScope) GetExport(name string) *vm.Export {
 }
 
 // Export exposes global definitions for use by other modules
-func (s *GlobalScope) Export(name string, typ types.Type) {
-	s.exports[name] = &vm.Export{
-		Type:     typ,
-		Register: s.GetLocalVariableRegister(name),
-	}
+func (s *GlobalScope) Export(name string, typ Type) {
+	s.exports[name] = typ
 }
 
 // HasParent returns true if the current scope has a parent scope
@@ -104,7 +92,7 @@ func (s *GlobalScope) HasSelfReference() bool { return false }
 
 // GetSelfReference returns an empty function type because no function can
 // contain a global scope
-func (s *GlobalScope) GetSelfReference() types.Function { return types.Function{} }
+func (s *GlobalScope) GetSelfReference() TypeFunction { return TypeFunction{} }
 
 // HasErrors returns true if any errors have been logged with this scope
 func (s *GlobalScope) HasErrors() bool { return len(s.errors) > 0 }
@@ -117,7 +105,7 @@ func (s *GlobalScope) NewError(err error) { s.errors = append(s.errors, err) }
 
 // HasLocalVariable returns true if *this* scope recognizes the given variable
 func (s *GlobalScope) HasLocalVariable(name string) bool {
-	if _, exists := s.registers[name]; exists {
+	if _, exists := s.references[name]; exists {
 		return true
 	}
 
@@ -126,7 +114,7 @@ func (s *GlobalScope) HasLocalVariable(name string) bool {
 
 // GetLocalVariableType returns the type of a given variable if it exists in the
 // local scope. If the variable cannot be found the method returns nil
-func (s *GlobalScope) GetLocalVariableType(name string) types.Type {
+func (s *GlobalScope) GetLocalVariableType(name string) Type {
 	if s.HasLocalVariable(name) {
 		return s.types[name]
 	}
@@ -134,12 +122,12 @@ func (s *GlobalScope) GetLocalVariableType(name string) types.Type {
 	return nil
 }
 
-// GetLocalVariableRegister returns the register template of a given variable if it
-// exists in the local scope. It the variable cannot be found the method returns
-// nil
-func (s *GlobalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate {
+// GetLocalVariableReference returns the unique reference identifier of a given
+// variable if it exists in the local scope. It the variable cannot be found the
+// method returns nil
+func (s *GlobalScope) GetLocalVariableReference(name string) *UniqueReference {
 	if s.HasLocalVariable(name) {
-		return s.registers[name]
+		return s.references[name]
 	}
 
 	return nil
@@ -147,7 +135,7 @@ func (s *GlobalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate
 
 // GetLocalVariableNames returns a list of all locally registered variables
 func (s *GlobalScope) GetLocalVariableNames() (names []string) {
-	for name := range s.registers {
+	for name := range s.references {
 		names = append(names, name)
 	}
 	return names
@@ -172,31 +160,32 @@ func (s *GlobalScope) HasVariable(name string) bool {
 // GetVariableType returns the type associated with the given variable name if
 // it can be found in scope. It returns nil if the variable cannot be found in
 // the current scope
-func (s *GlobalScope) GetVariableType(name string) types.Type {
+func (s *GlobalScope) GetVariableType(name string) Type {
 	if s.HasLocalVariable(name) {
 		return s.GetLocalVariableType(name)
 	}
 
 	for _, module := range s.imports {
 		if module.HasExport(name) {
-			return module.GetExport(name).Type
+			return module.GetExport(name)
 		}
 	}
 
 	return nil
 }
 
-// GetVariableRegister returns the reigster template associated with the given
+// GetVariableReference returns the reigster template associated with the given
 // variable if it can be found in scope. It returns nil if the variable cannot
 // be found in scope
-func (s *GlobalScope) GetVariableRegister(name string) *vm.RegisterTemplate {
+func (s *GlobalScope) GetVariableReference(name string) *UniqueReference {
 	if s.HasLocalVariable(name) {
-		return s.GetLocalVariableRegister(name)
+		return s.GetLocalVariableReference(name)
 	}
 
 	for _, module := range s.imports {
 		if module.HasExport(name) {
-			return module.GetExport(name).Register
+			panic("GlobalScope#GetVariableReference not implemented")
+			// return module.GetExport(name).Reference
 		}
 	}
 
@@ -204,18 +193,18 @@ func (s *GlobalScope) GetVariableRegister(name string) *vm.RegisterTemplate {
 }
 
 // NewVariable registers a new variable with the given name and type and
-// generates a unique register template for that variable
-func (s *GlobalScope) NewVariable(name string, typ types.Type) *vm.RegisterTemplate {
-	reg := vm.MakeRegisterTemplate(name)
+// generates a unique reference identifier for that variable
+func (s *GlobalScope) NewVariable(name string, typ Type) *UniqueReference {
+	ref := &UniqueReference{}
 	s.types[name] = typ
-	s.registers[name] = reg
-	return reg
+	s.references[name] = ref
+	return ref
 }
 
 func (s *GlobalScope) String() (out string) {
 	var padding int
 	var names []string
-	for name := range s.registers {
+	for name := range s.references {
 		if len(name) >= padding {
 			padding = len(name)
 
@@ -242,8 +231,8 @@ func (s *GlobalScope) String() (out string) {
 	return out
 }
 
-// StringChildren satisfies the debug.StringTree interface
-func (s *GlobalScope) StringChildren() (children []debug.StringTree) {
+// StringChildren satisfies the StringTree interface
+func (s *GlobalScope) StringChildren() (children []StringTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}
@@ -252,21 +241,21 @@ func (s *GlobalScope) StringChildren() (children []debug.StringTree) {
 
 // LocalScope exists inside of function literals
 type LocalScope struct {
-	parent    Scope
-	children  []Scope
-	self      types.Function
-	types     map[string]types.Type
-	registers map[string]*vm.RegisterTemplate
+	parent     Scope
+	children   []Scope
+	self       TypeFunction
+	types      map[string]Type
+	references map[string]*UniqueReference
 }
 
 // MakeLocalScope is a helper function to quickly build a local scope that is
 // doubly linked to its parent scope
-func MakeLocalScope(parent Scope, self types.Function) *LocalScope {
+func MakeLocalScope(parent Scope, self TypeFunction) *LocalScope {
 	return parent.addChild(&LocalScope{
-		parent:    parent,
-		self:      self,
-		types:     make(map[string]types.Type),
-		registers: make(map[string]*vm.RegisterTemplate),
+		parent:     parent,
+		self:       self,
+		types:      make(map[string]Type),
+		references: make(map[string]*UniqueReference),
 	}).(*LocalScope)
 }
 
@@ -285,7 +274,7 @@ func (s *LocalScope) addChild(child Scope) Scope {
 func (s *LocalScope) HasSelfReference() bool { return true }
 
 // GetSelfReference returns the type signature of the current function
-func (s *LocalScope) GetSelfReference() types.Function { return s.self }
+func (s *LocalScope) GetSelfReference() TypeFunction { return s.self }
 
 // HasErrors returns true if any errors have been logged with this scope
 func (s *LocalScope) HasErrors() bool { return s.parent.HasErrors() }
@@ -297,11 +286,11 @@ func (s *LocalScope) GetErrors() []error { return s.parent.GetErrors() }
 func (s *LocalScope) NewError(err error) { s.parent.NewError(err) }
 
 // SelfReference returns the type signature of the local function
-func (s *LocalScope) SelfReference() types.Type { return nil }
+func (s *LocalScope) SelfReference() Type { return nil }
 
 // HasLocalVariable returns true if *this* scope recognizes the given variable
 func (s *LocalScope) HasLocalVariable(name string) bool {
-	if _, exists := s.registers[name]; exists {
+	if _, exists := s.references[name]; exists {
 		return true
 	}
 
@@ -311,7 +300,7 @@ func (s *LocalScope) HasLocalVariable(name string) bool {
 // GetLocalVariableType returns the type associated with the given variable name if
 // it can be found in scope. It returns nil if the variable cannot be found in
 // the current scope
-func (s *LocalScope) GetLocalVariableType(name string) types.Type {
+func (s *LocalScope) GetLocalVariableType(name string) Type {
 	if s.HasLocalVariable(name) {
 		return s.types[name]
 	}
@@ -319,12 +308,12 @@ func (s *LocalScope) GetLocalVariableType(name string) types.Type {
 	return nil
 }
 
-// GetLocalVariableRegister returns the register template of a given variable if it
-// exists in the local scope. It the variable cannot be found the method returns
-// nil
-func (s *LocalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate {
+// GetLocalVariableReference returns the unique reference identifier of a given
+// variable if it exists in the local scope. It the variable cannot be found the
+// method returns nil
+func (s *LocalScope) GetLocalVariableReference(name string) *UniqueReference {
 	if s.HasLocalVariable(name) {
-		return s.registers[name]
+		return s.references[name]
 	}
 
 	return nil
@@ -332,7 +321,7 @@ func (s *LocalScope) GetLocalVariableRegister(name string) *vm.RegisterTemplate 
 
 // GetLocalVariableNames returns a list of all locally registered variables
 func (s *LocalScope) GetLocalVariableNames() (names []string) {
-	for name := range s.registers {
+	for name := range s.references {
 		names = append(names, name)
 	}
 	return names
@@ -351,7 +340,7 @@ func (s *LocalScope) HasVariable(name string) bool {
 // GetVariableType returns the type associated with the given variable name if
 // it can be found in scope. It returns nil if the variable cannot be found in
 // the current scope
-func (s *LocalScope) GetVariableType(name string) types.Type {
+func (s *LocalScope) GetVariableType(name string) Type {
 	if s.HasLocalVariable(name) {
 		return s.GetLocalVariableType(name)
 	}
@@ -359,21 +348,21 @@ func (s *LocalScope) GetVariableType(name string) types.Type {
 	return s.parent.GetVariableType(name)
 }
 
-// GetVariableRegister returns the reigster template associated with the given
+// GetVariableReference returns the reigster template associated with the given
 // variable if it can be found in scope. It returns nil if the variable cannot
 // be found in scope
-func (s *LocalScope) GetVariableRegister(name string) *vm.RegisterTemplate {
+func (s *LocalScope) GetVariableReference(name string) *UniqueReference {
 	if s.HasLocalVariable(name) {
-		return s.GetLocalVariableRegister(name)
+		return s.GetLocalVariableReference(name)
 	}
 
-	return s.parent.GetVariableRegister(name)
+	return s.parent.GetVariableReference(name)
 }
 
 func (s *LocalScope) String() (out string) {
 	var padding int
 	var names []string
-	for name := range s.registers {
+	for name := range s.references {
 		if len(name) > padding {
 			padding = len(name)
 		}
@@ -393,8 +382,8 @@ func (s *LocalScope) String() (out string) {
 	return out
 }
 
-// StringChildren satisfies the debug.StringTree interface
-func (s *LocalScope) StringChildren() (children []debug.StringTree) {
+// StringChildren satisfies the StringTree interface
+func (s *LocalScope) StringChildren() (children []StringTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}
@@ -402,10 +391,10 @@ func (s *LocalScope) StringChildren() (children []debug.StringTree) {
 }
 
 // NewVariable registers a new variable with the given name and type and
-// generates a unique register template for that variable
-func (s *LocalScope) NewVariable(name string, typ types.Type) *vm.RegisterTemplate {
-	reg := vm.MakeRegisterTemplate(name)
+// generates a unique reference identifier for that variable
+func (s *LocalScope) NewVariable(name string, typ Type) *UniqueReference {
+	ref := &UniqueReference{}
 	s.types[name] = typ
-	s.registers[name] = reg
-	return reg
+	s.references[name] = ref
+	return ref
 }

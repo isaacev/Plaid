@@ -6,13 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"plaid/codegen"
-	"plaid/debug"
-	"plaid/libs"
-	"plaid/linker"
-	"plaid/parser"
-	"plaid/typechecker"
-	"plaid/vm"
+	"plaid/lang"
+	"plaid/lib"
 )
 
 func main() {
@@ -37,7 +32,7 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 	}
 
 	src := string(buf)
-	ast, err := parser.Parse(filename, src)
+	ast, err := lang.Parse(filename, src)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -48,47 +43,60 @@ func processFile(filename string, showAST bool, showDeps bool, showCheck bool, s
 	}
 
 	abs, _ := filepath.Abs(filename)
-	mod, err := linker.Link(abs, ast)
+	mod, err := lang.Link(abs, ast)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
 	if showDeps {
-		fmt.Println(mod.Imports)
+		fmt.Println(mod.Imports())
 	}
 
-	if showCheck || showIR || showBC || showOut {
-		typechecker.Check(mod,
-			linker.ConvertModule(libs.IO),
-			linker.ConvertModule(libs.Conv))
-		if mod.Scope.HasErrors() {
-			for _, err := range mod.Scope.GetErrors() {
+	if showCheck {
+		lang.Check(mod.(*lang.VirtualModule), lib.IO, lib.Conv)
+		if mod.Scope().HasErrors() {
+			for _, err := range mod.Scope().GetErrors() {
 				fmt.Println(err)
 			}
-			os.Exit(1)
 		} else if showCheck {
-			fmt.Println(debug.PrettyTree(mod.Scope))
-		}
-
-		if showIR || showBC || showOut {
-			ir := codegen.Transform(ast, libs.IO, libs.Conv)
-
-			if showIR {
-				fmt.Println(ir.String())
-			}
-
-			if showBC || showOut {
-				mod := codegen.Generate(ir)
-
-				if showBC {
-					fmt.Println(debug.PrettyTree(mod.Root))
-				}
-
-				if showOut {
-					vm.Eval(mod)
-				}
-			}
+			fmt.Println(lang.PrettyTree(mod.Scope()))
 		}
 	}
+
+	/*
+		if showCheck || showIR || showBC || showOut {
+			typechecker.Check(mod,
+				linker.ConvertModule(libs.IO),
+				linker.ConvertModule(libs.Conv))
+			if mod.Scope.HasErrors() {
+				for _, err := range mod.Scope.GetErrors() {
+					fmt.Println(err)
+				}
+				os.Exit(1)
+			} else if showCheck {
+				fmt.Println(debug.PrettyTree(mod.Scope))
+			}
+
+			if showIR || showBC || showOut {
+				ir := codegen.Transform(ast, libs.IO, libs.Conv)
+
+				if showIR {
+					fmt.Println(ir.String())
+				}
+
+				if showBC || showOut {
+					mod := codegen.Generate(ir)
+
+					if showBC {
+						fmt.Println(debug.PrettyTree(mod.Root))
+					}
+
+					if showOut {
+						vm.Eval(mod)
+					}
+				}
+			}
+		}
+	*/
 }

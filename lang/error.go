@@ -1,14 +1,13 @@
-package parser
+package lang
 
 import (
 	"fmt"
-	"plaid/lexer"
 )
 
 // SyntaxError combines a source code location with the resulting error message
 type SyntaxError struct {
 	Filepath string
-	Location lexer.Loc
+	Location Loc
 	Message  string
 }
 

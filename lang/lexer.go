@@ -1,4 +1,4 @@
-package lexer
+package lang
 
 // TokenType classifies the different Tokens
 type TokenType string
