@@ -14,9 +14,9 @@ func (l Loc) String() string {
 	return fmt.Sprintf("(%d:%d)", l.Line, l.Col)
 }
 
-// SmallerLoc takes to Loc structs and returns the Loc that occurs earlier in
+// smallerLoc takes to Loc structs and returns the Loc that occurs earlier in
 // the source code
-func SmallerLoc(a Loc, b Loc) Loc {
+func smallerLoc(a Loc, b Loc) Loc {
 	if a.Line < b.Line {
 		return a
 	} else if b.Line < a.Line {
@@ -28,26 +28,26 @@ func SmallerLoc(a Loc, b Loc) Loc {
 	return b
 }
 
-// Char maps a character to that character's line & column within source code
-type Char struct {
+// charPoint maps a character to that character's line & column within source code
+type charPoint struct {
 	char rune
 	loc  Loc
 }
 
-// Scanner holds a sequence of Char structs
-type Scanner struct {
+// scanner holds a sequence of Char structs
+type scanner struct {
 	index  int
-	buffer []Char
+	buffer []charPoint
 }
 
-// Peek returns the next character without advancing
-func (cb *Scanner) Peek() Char {
+// peek returns the next character without advancing
+func (cb *scanner) peek() charPoint {
 	return cb.buffer[cb.index]
 }
 
-// Next returns the next character and advances the buffer
-func (cb *Scanner) Next() Char {
-	if cb.EOF() {
+// next returns the next character and advances the buffer
+func (cb *scanner) next() charPoint {
+	if cb.eof() {
 		return cb.buffer[cb.index]
 	}
 
@@ -56,14 +56,14 @@ func (cb *Scanner) Next() Char {
 	return char
 }
 
-// EOF returns true if the char buffer has been exhausted
-func (cb *Scanner) EOF() bool {
+// eof returns true if the char buffer has been exhausted
+func (cb *scanner) eof() bool {
 	return cb.index+1 == len(cb.buffer)
 }
 
-// Scan creates a Scanner from a string of source code
-func Scan(source string) *Scanner {
-	buffer := []Char{}
+// scan creates a Scanner from a string of source code
+func scan(source string) *scanner {
+	buffer := []charPoint{}
 	line := 1
 	col := 0
 
@@ -79,9 +79,9 @@ func Scan(source string) *Scanner {
 			loc = Loc{line, col}
 		}
 
-		buffer = append(buffer, Char{char, loc})
+		buffer = append(buffer, charPoint{char, loc})
 	}
 
-	buffer = append(buffer, Char{'\000', Loc{line, col}})
-	return &Scanner{0, buffer}
+	buffer = append(buffer, charPoint{'\000', Loc{line, col}})
+	return &scanner{0, buffer}
 }

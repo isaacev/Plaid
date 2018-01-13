@@ -26,8 +26,8 @@ func (g *graph) resetFlags() {
 	}
 }
 
-// Link does some stuff
-func Link(path string, ast *RootNode, builtins ...Module) (Module, error) {
+// link does some stuff
+func link(path string, ast *RootNode, builtins ...Module) (Module, error) {
 	order, err := resolve(path, ast)
 	if err != nil {
 		return nil, err

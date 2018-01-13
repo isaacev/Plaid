@@ -5,7 +5,7 @@ import (
 )
 
 func TestCheckMain(t *testing.T) {
-	mod := Check(&VirtualModule{ast: &RootNode{}})
+	mod := checkModule(&VirtualModule{ast: &RootNode{}})
 	expectNoErrors(t, mod.Scope())
 
 	// mod1 := &vm.Module{
@@ -264,7 +264,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 	s = MakeGlobalScope()
 	s.NewVariable("a", TypeNativeInt)
 	s.NewVariable("b", TypeNativeInt)
-	oper := Token{Loc: Loc{Line: 10, Col: 4}}
+	oper := token{Loc: Loc{Line: 10, Col: 4}}
 	leftExpr := &IdentExpr{Name: "a"}
 	rightExpr := &IdentExpr{Name: "b"}
 	expr := &BinaryExpr{Tok: oper, Oper: "@", Left: leftExpr, Right: rightExpr}
@@ -401,7 +401,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note TypeNote
 
 	note = TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeVoid{})
+	expectEquivalentType(t, convertTypeNote(note), TypeVoid{})
 
 	note = TypeNoteFunction{
 		Params: TypeNoteTuple{Tok: nop, Elems: []TypeNote{
@@ -410,7 +410,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
+	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
 		Params: TypeTuple{Children: []Type{
 			TypeIdent{Name: "Int"},
 			TypeIdent{Name: "Bool"},
@@ -425,7 +425,7 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: TypeNoteVoid{},
 	}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeFunction{
+	expectEquivalentType(t, convertTypeNote(note), TypeFunction{
 		Params: TypeTuple{Children: []Type{
 			TypeIdent{Name: "Int"},
 			TypeIdent{Name: "Bool"},
@@ -437,26 +437,26 @@ func TestConvertTypeSig(t *testing.T) {
 		TypeNoteIdent{Tok: nop, Name: "Int"},
 		TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeTuple{Children: []Type{
+	expectEquivalentType(t, convertTypeNote(note), TypeTuple{Children: []Type{
 		TypeIdent{Name: "Int"},
 		TypeIdent{Name: "Bool"},
 	}})
 
 	note = TypeNoteList{Tok: nop, Child: TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeList{Child: TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, convertTypeNote(note), TypeList{Child: TypeIdent{Name: "Int"}})
 
 	note = TypeNoteOptional{Tok: nop, Child: TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeOptional{Child: TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, convertTypeNote(note), TypeOptional{Child: TypeIdent{Name: "Int"}})
 
 	note = TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, ConvertTypeNote(note), TypeIdent{Name: "Int"})
+	expectEquivalentType(t, convertTypeNote(note), TypeIdent{Name: "Int"})
 
 	note = nil
-	expectBool(t, ConvertTypeNote(note) == nil, true)
+	expectBool(t, convertTypeNote(note) == nil, true)
 }
 
-func makeTok(line int, col int) Token {
-	return Token{Loc: Loc{Line: line, Col: col}}
+func makeTok(line int, col int) token {
+	return token{Loc: Loc{Line: line, Col: col}}
 }
 
 func expectVariable(t *testing.T, s Scope, name string, exp Type) {

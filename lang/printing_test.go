@@ -13,7 +13,7 @@ func (d dummy) String() string {
 	return d.name
 }
 
-func (d dummy) StringChildren() (s []StringTree) {
+func (d dummy) stringChildren() (s []stringTree) {
 	for _, l := range d.leafs {
 		s = append(s, l)
 	}
@@ -21,8 +21,8 @@ func (d dummy) StringChildren() (s []StringTree) {
 }
 
 func TestPrettyTree(t *testing.T) {
-	test := func(root StringTree, exp string) {
-		got := PrettyTree(root)
+	test := func(root stringTree, exp string) {
+		got := prettyTree(root)
 		expectString(t, got, exp)
 	}
 

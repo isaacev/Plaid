@@ -6,19 +6,19 @@ import (
 )
 
 func TestLexerPeekNext(t *testing.T) {
-	lexer := Lex("", Scan("abc def"))
+	lexer := Lex("", scan("abc def"))
 
-	expectToken(t, Token{TokIdent, "abc", Loc{1, 1}}, lexer.Peek())
-	expectToken(t, Token{TokIdent, "abc", Loc{1, 1}}, lexer.buffer[0])
-	expectToken(t, Token{TokIdent, "abc", Loc{1, 1}}, lexer.Peek())
-	expectToken(t, Token{TokIdent, "abc", Loc{1, 1}}, lexer.buffer[0])
-	expectToken(t, Token{TokIdent, "abc", Loc{1, 1}}, lexer.Next())
-	expectToken(t, Token{TokIdent, "def", Loc{1, 5}}, lexer.Peek())
-	expectToken(t, Token{TokIdent, "def", Loc{1, 5}}, lexer.buffer[0])
-	expectToken(t, Token{TokIdent, "def", Loc{1, 5}}, lexer.Next())
-	expectToken(t, Token{TokEOF, "", Loc{1, 7}}, lexer.Next())
-	expectToken(t, Token{TokEOF, "", Loc{1, 7}}, lexer.Next())
-	expectToken(t, Token{TokEOF, "", Loc{1, 7}}, lexer.Peek())
+	expectToken(t, token{tokIdent, "abc", Loc{1, 1}}, lexer.peek())
+	expectToken(t, token{tokIdent, "abc", Loc{1, 1}}, lexer.buffer[0])
+	expectToken(t, token{tokIdent, "abc", Loc{1, 1}}, lexer.peek())
+	expectToken(t, token{tokIdent, "abc", Loc{1, 1}}, lexer.buffer[0])
+	expectToken(t, token{tokIdent, "abc", Loc{1, 1}}, lexer.next())
+	expectToken(t, token{tokIdent, "def", Loc{1, 5}}, lexer.peek())
+	expectToken(t, token{tokIdent, "def", Loc{1, 5}}, lexer.buffer[0])
+	expectToken(t, token{tokIdent, "def", Loc{1, 5}}, lexer.next())
+	expectToken(t, token{tokEOF, "", Loc{1, 7}}, lexer.next())
+	expectToken(t, token{tokEOF, "", Loc{1, 7}}, lexer.next())
+	expectToken(t, token{tokEOF, "", Loc{1, 7}}, lexer.peek())
 }
 
 func TestIsWhitespace(t *testing.T) {
@@ -74,111 +74,111 @@ func TestIsDoubleQuote(t *testing.T) {
 }
 
 func TestEatToken(t *testing.T) {
-	expectLexer(t, eatToken, "", Token{TokEOF, "", Loc{1, 0}})
-	expectLexer(t, eatToken, "  \nfoo", Token{TokIdent, "foo", Loc{2, 1}})
-	expectLexer(t, eatToken, "+", Token{TokPlus, "+", Loc{1, 1}})
-	expectLexer(t, eatToken, "-", Token{TokDash, "-", Loc{1, 1}})
-	expectLexer(t, eatToken, "*", Token{TokStar, "*", Loc{1, 1}})
-	expectLexer(t, eatToken, "/", Token{TokSlash, "/", Loc{1, 1}})
-	expectLexer(t, eatToken, "?", Token{TokQuestion, "?", Loc{1, 1}})
-	expectLexer(t, eatToken, ";", Token{TokSemi, ";", Loc{1, 1}})
-	expectLexer(t, eatToken, ",", Token{TokComma, ",", Loc{1, 1}})
-	expectLexer(t, eatToken, "(", Token{TokParenL, "(", Loc{1, 1}})
-	expectLexer(t, eatToken, ")", Token{TokParenR, ")", Loc{1, 1}})
-	expectLexer(t, eatToken, "{", Token{TokBraceL, "{", Loc{1, 1}})
-	expectLexer(t, eatToken, "}", Token{TokBraceR, "}", Loc{1, 1}})
-	expectLexer(t, eatToken, "[", Token{TokBracketL, "[", Loc{1, 1}})
-	expectLexer(t, eatToken, "]", Token{TokBracketR, "]", Loc{1, 1}})
-	expectLexer(t, eatToken, "foo", Token{TokIdent, "foo", Loc{1, 1}})
-	expectLexer(t, eatToken, "fn", Token{TokFn, "fn", Loc{1, 1}})
-	expectLexer(t, eatToken, "if", Token{TokIf, "if", Loc{1, 1}})
-	expectLexer(t, eatToken, "let", Token{TokLet, "let", Loc{1, 1}})
-	expectLexer(t, eatToken, "return", Token{TokReturn, "return", Loc{1, 1}})
-	expectLexer(t, eatToken, "self", Token{TokSelf, "self", Loc{1, 1}})
-	expectLexer(t, eatToken, "use", Token{TokUse, "use", Loc{1, 1}})
-	expectLexer(t, eatToken, "pub", Token{TokPub, "pub", Loc{1, 1}})
-	expectLexer(t, eatToken, "true", Token{TokBoolean, "true", Loc{1, 1}})
-	expectLexer(t, eatToken, "false", Token{TokBoolean, "false", Loc{1, 1}})
-	expectLexer(t, eatToken, "123", Token{TokNumber, "123", Loc{1, 1}})
-	expectLexer(t, eatToken, `"foo"`, Token{TokString, `"foo"`, Loc{1, 1}})
+	expectLexer(t, eatToken, "", token{tokEOF, "", Loc{1, 0}})
+	expectLexer(t, eatToken, "  \nfoo", token{tokIdent, "foo", Loc{2, 1}})
+	expectLexer(t, eatToken, "+", token{tokPlus, "+", Loc{1, 1}})
+	expectLexer(t, eatToken, "-", token{tokDash, "-", Loc{1, 1}})
+	expectLexer(t, eatToken, "*", token{tokStar, "*", Loc{1, 1}})
+	expectLexer(t, eatToken, "/", token{tokSlash, "/", Loc{1, 1}})
+	expectLexer(t, eatToken, "?", token{tokQuestion, "?", Loc{1, 1}})
+	expectLexer(t, eatToken, ";", token{tokSemi, ";", Loc{1, 1}})
+	expectLexer(t, eatToken, ",", token{tokComma, ",", Loc{1, 1}})
+	expectLexer(t, eatToken, "(", token{tokParenL, "(", Loc{1, 1}})
+	expectLexer(t, eatToken, ")", token{tokParenR, ")", Loc{1, 1}})
+	expectLexer(t, eatToken, "{", token{tokBraceL, "{", Loc{1, 1}})
+	expectLexer(t, eatToken, "}", token{tokBraceR, "}", Loc{1, 1}})
+	expectLexer(t, eatToken, "[", token{tokBracketL, "[", Loc{1, 1}})
+	expectLexer(t, eatToken, "]", token{tokBracketR, "]", Loc{1, 1}})
+	expectLexer(t, eatToken, "foo", token{tokIdent, "foo", Loc{1, 1}})
+	expectLexer(t, eatToken, "fn", token{tokFn, "fn", Loc{1, 1}})
+	expectLexer(t, eatToken, "if", token{tokIf, "if", Loc{1, 1}})
+	expectLexer(t, eatToken, "let", token{tokLet, "let", Loc{1, 1}})
+	expectLexer(t, eatToken, "return", token{tokReturn, "return", Loc{1, 1}})
+	expectLexer(t, eatToken, "self", token{tokSelf, "self", Loc{1, 1}})
+	expectLexer(t, eatToken, "use", token{tokUse, "use", Loc{1, 1}})
+	expectLexer(t, eatToken, "pub", token{tokPub, "pub", Loc{1, 1}})
+	expectLexer(t, eatToken, "true", token{tokBoolean, "true", Loc{1, 1}})
+	expectLexer(t, eatToken, "false", token{tokBoolean, "false", Loc{1, 1}})
+	expectLexer(t, eatToken, "123", token{tokNumber, "123", Loc{1, 1}})
+	expectLexer(t, eatToken, `"foo"`, token{tokString, `"foo"`, Loc{1, 1}})
 
 	expectLexerError(t, eatToken, "@", "(1:1) unexpected symbol")
 }
 
 func TestEatOperatorToken(t *testing.T) {
-	expectLexer(t, eatOperatorToken, "+", Token{TokPlus, "+", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "-", Token{TokDash, "-", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "*", Token{TokStar, "*", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "/", Token{TokSlash, "/", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "?", Token{TokQuestion, "?", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, ":", Token{TokColon, ":", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, ":=", Token{TokAssign, ":=", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "=>", Token{TokArrow, "=>", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "<", Token{TokLT, "<", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, "<=", Token{TokLTEquals, "<=", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, ">", Token{TokGT, ">", Loc{1, 1}})
-	expectLexer(t, eatOperatorToken, ">=", Token{TokGTEquals, ">=", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "+", token{tokPlus, "+", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "-", token{tokDash, "-", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "*", token{tokStar, "*", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "/", token{tokSlash, "/", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "?", token{tokQuestion, "?", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, ":", token{tokColon, ":", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, ":=", token{tokAssign, ":=", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "=>", token{tokArrow, "=>", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "<", token{tokLT, "<", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, "<=", token{tokLTEquals, "<=", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, ">", token{tokGT, ">", Loc{1, 1}})
+	expectLexer(t, eatOperatorToken, ">=", token{tokGTEquals, ">=", Loc{1, 1}})
 
 	expectLexerError(t, eatOperatorToken, "@", "(1:1) expected operator")
 	expectLexerError(t, eatOperatorToken, "=", "(1:1) expected operator")
 }
 
 func TestEatSemicolonToken(t *testing.T) {
-	expectLexer(t, eatSemicolonToken, ";", Token{TokSemi, ";", Loc{1, 1}})
+	expectLexer(t, eatSemicolonToken, ";", token{tokSemi, ";", Loc{1, 1}})
 
 	expectLexerError(t, eatSemicolonToken, "@", "(1:1) expected semicolon")
 }
 
 func TestEatCommaToken(t *testing.T) {
-	expectLexer(t, eatCommaToken, ",", Token{TokComma, ",", Loc{1, 1}})
+	expectLexer(t, eatCommaToken, ",", token{tokComma, ",", Loc{1, 1}})
 
 	expectLexerError(t, eatCommaToken, "@", "(1:1) expected comma")
 }
 
 func TestEatParen(t *testing.T) {
-	expectLexer(t, eatParenToken, "(", Token{TokParenL, "(", Loc{1, 1}})
-	expectLexer(t, eatParenToken, ")", Token{TokParenR, ")", Loc{1, 1}})
+	expectLexer(t, eatParenToken, "(", token{tokParenL, "(", Loc{1, 1}})
+	expectLexer(t, eatParenToken, ")", token{tokParenR, ")", Loc{1, 1}})
 
 	expectLexerError(t, eatParenToken, "@", "(1:1) expected paren")
 }
 
 func TestEatBrace(t *testing.T) {
-	expectLexer(t, eatBraceToken, "{", Token{TokBraceL, "{", Loc{1, 1}})
-	expectLexer(t, eatBraceToken, "}", Token{TokBraceR, "}", Loc{1, 1}})
+	expectLexer(t, eatBraceToken, "{", token{tokBraceL, "{", Loc{1, 1}})
+	expectLexer(t, eatBraceToken, "}", token{tokBraceR, "}", Loc{1, 1}})
 
 	expectLexerError(t, eatBraceToken, "@", "(1:1) expected brace")
 }
 
 func TestEatBracket(t *testing.T) {
-	expectLexer(t, eatBracketToken, "[", Token{TokBracketL, "[", Loc{1, 1}})
-	expectLexer(t, eatBracketToken, "]", Token{TokBracketR, "]", Loc{1, 1}})
+	expectLexer(t, eatBracketToken, "[", token{tokBracketL, "[", Loc{1, 1}})
+	expectLexer(t, eatBracketToken, "]", token{tokBracketR, "]", Loc{1, 1}})
 
 	expectLexerError(t, eatBracketToken, "@", "(1:1) expected bracket")
 }
 
 func TestEatWordToken(t *testing.T) {
-	expectLexer(t, eatWordToken, "foo", Token{TokIdent, "foo", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "fn", Token{TokFn, "fn", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "if", Token{TokIf, "if", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "let", Token{TokLet, "let", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "return", Token{TokReturn, "return", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "self", Token{TokSelf, "self", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "use", Token{TokUse, "use", Loc{1, 1}})
-	expectLexer(t, eatWordToken, "pub", Token{TokPub, "pub", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "foo", token{tokIdent, "foo", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "fn", token{tokFn, "fn", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "if", token{tokIf, "if", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "let", token{tokLet, "let", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "return", token{tokReturn, "return", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "self", token{tokSelf, "self", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "use", token{tokUse, "use", Loc{1, 1}})
+	expectLexer(t, eatWordToken, "pub", token{tokPub, "pub", Loc{1, 1}})
 
 	expectLexerError(t, eatWordToken, "123", "(1:1) expected word")
 	expectLexerError(t, eatWordToken, "", "(1:0) expected word")
 }
 
 func TestEatNumberToken(t *testing.T) {
-	expectLexer(t, eatNumberToken, "123", Token{TokNumber, "123", Loc{1, 1}})
+	expectLexer(t, eatNumberToken, "123", token{tokNumber, "123", Loc{1, 1}})
 
 	expectLexerError(t, eatNumberToken, "foo", "(1:1) expected number")
 	expectLexerError(t, eatNumberToken, "", "(1:0) expected number")
 }
 
 func TestEatStringToken(t *testing.T) {
-	expectLexer(t, eatStringToken, `"foo"`, Token{TokString, `"foo"`, Loc{1, 1}})
+	expectLexer(t, eatStringToken, `"foo"`, token{tokString, `"foo"`, Loc{1, 1}})
 
 	expectLexerError(t, eatStringToken, "123", "(1:1) expected string")
 	expectLexerError(t, eatStringToken, `"foo`, "(1:4) unclosed string")
@@ -195,19 +195,19 @@ func expectRunePredicateBool(t *testing.T, fn charPred, r rune, exp bool) {
 	}
 }
 
-type lexFunc func(scanner *Scanner) Token
+type lexFunc func(scn *scanner) token
 
-func expectLexer(t *testing.T, fn lexFunc, source string, exp Token) {
-	scanner := Scan(source)
-	got := fn(scanner)
+func expectLexer(t *testing.T, fn lexFunc, source string, exp token) {
+	scn := scan(source)
+	got := fn(scn)
 	expectToken(t, exp, got)
 }
 
 func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
-	scanner := Scan(source)
-	got := fn(scanner)
+	scn := scan(source)
+	got := fn(scn)
 
-	if got.Type == TokError {
+	if got.Type == tokError {
 		if msg != formatErrorMessage(got) {
 			t.Errorf("Expected syntax error '%s', got '%s'\n", msg, formatErrorMessage(got))
 		}
@@ -216,7 +216,7 @@ func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
 	}
 }
 
-func expectToken(t *testing.T, exp Token, got Token) {
+func expectToken(t *testing.T, exp token, got token) {
 	if exp.Type != got.Type {
 		t.Errorf("Expected Token.Type %s, got %s\n", exp.Type, got.Type)
 	}
@@ -228,6 +228,6 @@ func expectToken(t *testing.T, exp Token, got Token) {
 	expectLoc(t, exp.Loc, got.Loc)
 }
 
-func formatErrorMessage(tok Token) string {
+func formatErrorMessage(tok token) string {
 	return fmt.Sprintf("%s %s", tok.Loc, tok.Lexeme)
 }

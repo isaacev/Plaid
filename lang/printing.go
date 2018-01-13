@@ -18,15 +18,15 @@ const (
 	teeE      = "├"
 )
 
-// StringTree describes the node of a tree that can have 0 or more children
+// stringTree describes the node of a tree that can have 0 or more children
 // each of whom defines a `String() string` function and may have its own
 // children
-type StringTree interface {
+type stringTree interface {
 	fmt.Stringer
-	StringChildren() []StringTree
+	stringChildren() []stringTree
 }
 
-// PrettyTree takes a StringTree and returns a string of the form:
+// prettyTree takes a StringTree and returns a string of the form:
 // ╭
 // ┤ (leaf 1).String()
 // │ ╭
@@ -37,15 +37,15 @@ type StringTree interface {
 // │ ╭
 // ╰─┤ (leaf 1.2).String()
 //   ╰
-func PrettyTree(root StringTree) (out string) {
-	children := root.StringChildren()
+func prettyTree(root stringTree) (out string) {
+	children := root.stringChildren()
 	total := len(children)
 	out += brace(root.String(), total == 0)
 	for i, child := range children {
 		if i < total-1 {
-			out += "\n" + indentAndAttach(PrettyTree(child), teeE, pipeVert)
+			out += "\n" + indentAndAttach(prettyTree(child), teeE, pipeVert)
 		} else {
-			out += "\n" + indentAndAttach(PrettyTree(child), cornerSW, " ")
+			out += "\n" + indentAndAttach(prettyTree(child), cornerSW, " ")
 		}
 	}
 	return out

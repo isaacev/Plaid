@@ -38,14 +38,14 @@ func TestConvertTypeNote(t *testing.T) {
 	expectConversion(t, note, "Blah?")
 
 	note = nil
-	got := ConvertTypeNote(note)
+	got := convertTypeNote(note)
 	if got != nil {
 		t.Errorf("Expected '%v', got '%v'", nil, got)
 	}
 }
 
 func expectConversion(t *testing.T, note TypeNote, exp string) {
-	got := ConvertTypeNote(note)
+	got := convertTypeNote(note)
 	if got.String() != exp {
 		t.Errorf("Expected '%s', got '%v'", exp, got)
 	}

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-var nop = Token{}
+var nop = token{}
 
 func TestProgram(t *testing.T) {
 	(RootNode{}).isNode()

@@ -9,7 +9,7 @@ type UniqueReference struct{}
 
 // Scope describes common methods that any type of scope must implement
 type Scope interface {
-	StringTree
+	stringTree
 	HasParent() bool
 	GetParent() Scope
 	addChild(Scope) Scope
@@ -231,8 +231,8 @@ func (s *GlobalScope) String() (out string) {
 	return out
 }
 
-// StringChildren satisfies the StringTree interface
-func (s *GlobalScope) StringChildren() (children []StringTree) {
+// stringChildren satisfies the StringTree interface
+func (s *GlobalScope) stringChildren() (children []stringTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}
@@ -382,8 +382,8 @@ func (s *LocalScope) String() (out string) {
 	return out
 }
 
-// StringChildren satisfies the StringTree interface
-func (s *LocalScope) StringChildren() (children []StringTree) {
+// stringChildren satisfies the StringTree interface
+func (s *LocalScope) stringChildren() (children []stringTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}

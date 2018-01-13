@@ -14,7 +14,7 @@ func TestLoc(t *testing.T) {
 
 func TestSmallerLoc(t *testing.T) {
 	expectSmallerLoc := func(a Loc, b Loc, exp Loc) {
-		greater := SmallerLoc(a, b)
+		greater := smallerLoc(a, b)
 
 		if exp.String() != greater.String() {
 			t.Errorf("Expected %s, got %s\n", exp, greater)
@@ -29,31 +29,31 @@ func TestSmallerLoc(t *testing.T) {
 }
 
 func TestScanner(t *testing.T) {
-	buf := Scanner{0, []Char{
-		Char{'a', Loc{1, 1}},
-		Char{'b', Loc{1, 2}},
-		Char{'c', Loc{1, 3}},
+	buf := scanner{0, []charPoint{
+		charPoint{'a', Loc{1, 1}},
+		charPoint{'b', Loc{1, 2}},
+		charPoint{'c', Loc{1, 3}},
 	}}
 
-	expectChar(t, Char{'a', Loc{1, 1}}, buf.Peek())
-	expectChar(t, Char{'a', Loc{1, 1}}, buf.Peek())
+	expectChar(t, charPoint{'a', Loc{1, 1}}, buf.peek())
+	expectChar(t, charPoint{'a', Loc{1, 1}}, buf.peek())
 	expectIndex(t, 0, buf.index)
 
-	expectChar(t, Char{'a', Loc{1, 1}}, buf.Next())
+	expectChar(t, charPoint{'a', Loc{1, 1}}, buf.next())
 	expectIndex(t, 1, buf.index)
 
-	expectChar(t, Char{'b', Loc{1, 2}}, buf.Next())
+	expectChar(t, charPoint{'b', Loc{1, 2}}, buf.next())
 	expectIndex(t, 2, buf.index)
 
-	expectChar(t, Char{'c', Loc{1, 3}}, buf.Next())
+	expectChar(t, charPoint{'c', Loc{1, 3}}, buf.next())
 	expectIndex(t, 2, buf.index)
 
-	expectChar(t, Char{'c', Loc{1, 3}}, buf.Next())
+	expectChar(t, charPoint{'c', Loc{1, 3}}, buf.next())
 	expectIndex(t, 2, buf.index)
 }
 
 func TestScan(t *testing.T) {
-	buf := Scan("abc\ndef")
+	buf := scan("abc\ndef")
 
 	expectNext(t, 'a', Loc{1, 1}, buf)
 	expectNext(t, 'b', Loc{1, 2}, buf)
@@ -68,8 +68,8 @@ func TestScan(t *testing.T) {
 	expectEOF(t, true, buf)
 }
 
-func expectNext(t *testing.T, expChar rune, expLoc Loc, buf *Scanner) {
-	expectChar(t, Char{expChar, expLoc}, buf.Next())
+func expectNext(t *testing.T, expChar rune, expLoc Loc, buf *scanner) {
+	expectChar(t, charPoint{expChar, expLoc}, buf.next())
 }
 
 func expectIndex(t *testing.T, exp int, got int) {
@@ -78,7 +78,7 @@ func expectIndex(t *testing.T, exp int, got int) {
 	}
 }
 
-func expectChar(t *testing.T, exp Char, got Char) {
+func expectChar(t *testing.T, exp charPoint, got charPoint) {
 	if exp.char != got.char {
 		t.Errorf("Expected Char.char %c, got %c\n", exp.char, got.char)
 	}
@@ -86,9 +86,9 @@ func expectChar(t *testing.T, exp Char, got Char) {
 	expectLoc(t, exp.loc, got.loc)
 }
 
-func expectEOF(t *testing.T, exp bool, buf *Scanner) {
-	if exp != buf.EOF() {
-		t.Errorf("Expected Scanner#EOF() %t, got %t\n", exp, buf.EOF())
+func expectEOF(t *testing.T, exp bool, buf *scanner) {
+	if exp != buf.eof() {
+		t.Errorf("Expected Scanner#EOF() %t, got %t\n", exp, buf.eof())
 	}
 }
 

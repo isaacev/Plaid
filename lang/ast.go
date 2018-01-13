@@ -51,9 +51,9 @@ type Stmt interface {
 
 // StmtBlock describes any series of statements bounded by curly braces
 type StmtBlock struct {
-	Left  Token
+	Left  token
 	Stmts []Stmt
-	Right Token
+	Right token
 }
 
 // Start returns a location that this node can be considered to start at
@@ -71,7 +71,7 @@ func (sb StmtBlock) isNode() {}
 
 // UseStmt describes a file or module import
 type UseStmt struct {
-	Tok    Token
+	Tok    token
 	Path   *StringExpr
 	Filter []*UseFilter
 }
@@ -108,7 +108,7 @@ func (s UseFilter) isNode()        {}
 
 // PubStmt describes a file or module import
 type PubStmt struct {
-	Tok  Token
+	Tok  token
 	Stmt *DeclarationStmt
 }
 
@@ -120,7 +120,7 @@ func (s PubStmt) isStmt()        {}
 
 // IfStmt describes a condition expression and an associated clause
 type IfStmt struct {
-	Tok    Token
+	Tok    token
 	Cond   Expr
 	Clause *StmtBlock
 }
@@ -133,7 +133,7 @@ func (is IfStmt) isStmt()        {}
 
 // DeclarationStmt describes the declaration and assignment of a variable
 type DeclarationStmt struct {
-	Tok  Token
+	Tok  token
 	Name *IdentExpr
 	Expr Expr
 }
@@ -146,7 +146,7 @@ func (ds DeclarationStmt) isStmt()        {}
 
 // ReturnStmt describes a return keyword and an optional returned expression.
 type ReturnStmt struct {
-	Tok  Token
+	Tok  token
 	Expr Expr
 }
 
@@ -185,7 +185,7 @@ type TypeNote interface {
 
 // TypeNoteAny describes a type that matches everything
 type TypeNoteAny struct {
-	Tok Token
+	Tok token
 }
 
 // Start returns a location that this node can be considered to start at
@@ -196,7 +196,7 @@ func (ta TypeNoteAny) isType()        {}
 
 // TypeNoteVoid describes a missing type annotation
 type TypeNoteVoid struct {
-	Tok Token
+	Tok token
 }
 
 // Start returns a location that this node can be considered to start at
@@ -207,7 +207,7 @@ func (tv TypeNoteVoid) isType()        {}
 
 // TypeNoteTuple describes a set of 0 or more types wrapped in parentheses
 type TypeNoteTuple struct {
-	Tok   Token
+	Tok   token
 	Elems []TypeNote
 }
 
@@ -250,7 +250,7 @@ func (tf TypeNoteFunction) isType() {}
 
 // TypeNoteIdent describes a named reference to a type
 type TypeNoteIdent struct {
-	Tok  Token
+	Tok  token
 	Name string
 }
 
@@ -262,7 +262,7 @@ func (ti TypeNoteIdent) isType()        {}
 
 // TypeNoteList describes a list type
 type TypeNoteList struct {
-	Tok   Token
+	Tok   token
 	Child TypeNote
 }
 
@@ -274,7 +274,7 @@ func (tl TypeNoteList) isType()        {}
 
 // TypeNoteOptional describes a list type
 type TypeNoteOptional struct {
-	Tok   Token
+	Tok   token
 	Child TypeNote
 }
 
@@ -294,7 +294,7 @@ type Expr interface {
 
 // FunctionExpr describes a function's entire type signature and body
 type FunctionExpr struct {
-	Tok    Token
+	Tok    token
 	Params []*FunctionParam
 	Ret    TypeNote
 	Block  *StmtBlock
@@ -369,7 +369,7 @@ func (de DispatchExpr) isExpr() {}
 
 // AssignExpr describes the binding of a value to an assignable expression
 type AssignExpr struct {
-	Tok   Token
+	Tok   token
 	Left  *IdentExpr
 	Right Expr
 }
@@ -382,7 +382,7 @@ func (ae AssignExpr) isExpr()        {}
 
 // ListExpr describes a listeral list constructor
 type ListExpr struct {
-	Tok      Token
+	Tok      token
 	Elements []Expr
 }
 
@@ -413,7 +413,7 @@ func (se SubscriptExpr) isExpr()        {}
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	Oper  string
-	Tok   Token
+	Tok   token
 	Left  Expr
 	Right Expr
 }
@@ -427,19 +427,19 @@ func (be BinaryExpr) isExpr()        {}
 // UnaryExpr describes any single expression associated to an operator
 type UnaryExpr struct {
 	Oper string
-	Tok  Token
+	Tok  token
 	Expr Expr
 }
 
 // Start returns a location that this node can be considered to start at
-func (ue UnaryExpr) Start() Loc     { return SmallerLoc(ue.Tok.Loc, ue.Expr.Start()) }
+func (ue UnaryExpr) Start() Loc     { return smallerLoc(ue.Tok.Loc, ue.Expr.Start()) }
 func (ue UnaryExpr) String() string { return fmt.Sprintf("(%s %s)", ue.Oper, ue.Expr) }
 func (ue UnaryExpr) isNode()        {}
 func (ue UnaryExpr) isExpr()        {}
 
 // SelfExpr describes a reflexive reference to a function from within that function
 type SelfExpr struct {
-	Tok Token
+	Tok token
 }
 
 // Start returns a location that this node can be considered to start at
@@ -450,7 +450,7 @@ func (se SelfExpr) isExpr()        {}
 
 // IdentExpr describes an identifier
 type IdentExpr struct {
-	Tok  Token
+	Tok  token
 	Name string
 }
 
@@ -462,7 +462,7 @@ func (ie IdentExpr) isExpr()        {}
 
 // StringExpr describes a string literal
 type StringExpr struct {
-	Tok Token
+	Tok token
 	Val string
 }
 
@@ -474,7 +474,7 @@ func (se StringExpr) isExpr()        {}
 
 // NumberExpr describes a string literal
 type NumberExpr struct {
-	Tok Token
+	Tok token
 	Val int
 }
 
@@ -486,7 +486,7 @@ func (ne NumberExpr) isExpr()        {}
 
 // BooleanExpr describes a boolean constant
 type BooleanExpr struct {
-	Tok Token
+	Tok token
 	Val bool
 }
 

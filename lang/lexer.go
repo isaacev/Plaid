@@ -1,72 +1,72 @@
 package lang
 
-// TokenType classifies the different Tokens
-type TokenType string
+// tokType classifies the different Tokens
+type tokType string
 
 // Token classifications
 const (
-	TokError    TokenType = "Error"
-	TokEOF                = "EOF"
-	TokPlus               = "+"
-	TokDash               = "-"
-	TokStar               = "*"
-	TokSlash              = "/"
-	TokQuestion           = "?"
-	TokSemi               = ";"
-	TokComma              = ","
-	TokParenL             = "("
-	TokParenR             = ")"
-	TokBraceL             = "{"
-	TokBraceR             = "}"
-	TokBracketL           = "["
-	TokBracketR           = "]"
-	TokColon              = ":"
-	TokAssign             = ":="
-	TokArrow              = "=>"
-	TokLT                 = "<"
-	TokGT                 = ">"
-	TokLTEquals           = "<="
-	TokGTEquals           = ">="
-	TokFn                 = "fn"
-	TokIf                 = "if"
-	TokLet                = "let"
-	TokReturn             = "return"
-	TokSelf               = "self"
-	TokUse                = "use"
-	TokPub                = "pub"
-	TokIdent              = "Ident"
-	TokNumber             = "Number"
-	TokString             = "String"
-	TokBoolean            = "Boolean"
+	tokError    tokType = "Error"
+	tokEOF              = "EOF"
+	tokPlus             = "+"
+	tokDash             = "-"
+	tokStar             = "*"
+	tokSlash            = "/"
+	tokQuestion         = "?"
+	tokSemi             = ";"
+	tokComma            = ","
+	tokParenL           = "("
+	tokParenR           = ")"
+	tokBraceL           = "{"
+	tokBraceR           = "}"
+	tokBracketL         = "["
+	tokBracketR         = "]"
+	tokColon            = ":"
+	tokAssign           = ":="
+	tokArrow            = "=>"
+	tokLT               = "<"
+	tokGT               = ">"
+	tokLTEquals         = "<="
+	tokGTEquals         = ">="
+	tokFn               = "fn"
+	tokIf               = "if"
+	tokLet              = "let"
+	tokReturn           = "return"
+	tokSelf             = "self"
+	tokUse              = "use"
+	tokPub              = "pub"
+	tokIdent            = "Ident"
+	tokNumber           = "Number"
+	tokString           = "String"
+	tokBoolean          = "Boolean"
 )
 
-// Token is a basic syntactic unit
-type Token struct {
-	Type   TokenType
+// token is a basic syntactic unit
+type token struct {
+	Type   tokType
 	Lexeme string
 	Loc    Loc
 }
 
-// Lexer contains methods for generating a sequence of Tokens
-type Lexer struct {
+// lexer contains methods for generating a sequence of Tokens
+type lexer struct {
 	Filepath string
-	buffer   []Token
-	scanner  *Scanner
+	buffer   []token
+	scanner  *scanner
 }
 
-// Peek returns the next token but does not advance the Lexer
-func (l *Lexer) Peek() Token {
+// peek returns the next token but does not advance the Lexer
+func (l *lexer) peek() token {
 	if len(l.buffer) > 0 {
 		return l.buffer[0]
 	}
 
-	tok := l.Next()
+	tok := l.next()
 	l.buffer = append(l.buffer, tok)
 	return l.buffer[0]
 }
 
-// Next returns the next token and advances the Lexer
-func (l *Lexer) Next() Token {
+// next returns the next token and advances the Lexer
+func (l *lexer) next() token {
 	if len(l.buffer) > 0 {
 		tok := l.buffer[0]
 		l.buffer = l.buffer[1:]
@@ -77,8 +77,8 @@ func (l *Lexer) Next() Token {
 }
 
 // Lex creates a new Lexer struct given a Scanner
-func Lex(filepath string, scanner *Scanner) *Lexer {
-	return &Lexer{filepath, []Token{}, scanner}
+func Lex(filepath string, scn *scanner) *lexer {
+	return &lexer{filepath, []token{}, scn}
 }
 
 func isEOF(r rune) bool {
@@ -146,223 +146,223 @@ func isDoubleQuote(r rune) bool {
 	return (r == '"')
 }
 
-func eatToken(scanner *Scanner) Token {
-	peek := scanner.Peek()
+func eatToken(scn *scanner) token {
+	peek := scn.peek()
 
 	switch {
 	case isEOF(peek.char):
-		return eatEOF(scanner)
+		return eatEOF(scn)
 	case isWhitespace(peek.char):
-		return eatWhitespace(scanner)
+		return eatWhitespace(scn)
 	case isOperator(peek.char):
-		return eatOperatorToken(scanner)
+		return eatOperatorToken(scn)
 	case isSemicolon(peek.char):
-		return eatSemicolonToken(scanner)
+		return eatSemicolonToken(scn)
 	case isComma(peek.char):
-		return eatCommaToken(scanner)
+		return eatCommaToken(scn)
 	case isParen(peek.char):
-		return eatParenToken(scanner)
+		return eatParenToken(scn)
 	case isBrace(peek.char):
-		return eatBraceToken(scanner)
+		return eatBraceToken(scn)
 	case isBracket(peek.char):
-		return eatBracketToken(scanner)
+		return eatBracketToken(scn)
 	case isLetter(peek.char):
-		return eatWordToken(scanner)
+		return eatWordToken(scn)
 	case isDigit(peek.char):
-		return eatNumberToken(scanner)
+		return eatNumberToken(scn)
 	case isDoubleQuote(peek.char):
-		return eatStringToken(scanner)
+		return eatStringToken(scn)
 	default:
-		return Token{TokError, "unexpected symbol", peek.loc}
+		return token{tokError, "unexpected symbol", peek.loc}
 	}
 }
 
-func eatEOF(scanner *Scanner) Token {
-	return Token{TokEOF, "", scanner.Peek().loc}
+func eatEOF(scn *scanner) token {
+	return token{tokEOF, "", scn.peek().loc}
 }
 
-func eatWhitespace(scanner *Scanner) Token {
-	for isWhitespace(scanner.Peek().char) {
-		scanner.Next()
+func eatWhitespace(scn *scanner) token {
+	for isWhitespace(scn.peek().char) {
+		scn.next()
 	}
 
-	return eatToken(scanner)
+	return eatToken(scn)
 }
 
-func eatOperatorToken(scanner *Scanner) Token {
-	switch scanner.Peek().char {
+func eatOperatorToken(scn *scanner) token {
+	switch scn.peek().char {
 	case '+':
-		return Token{TokPlus, "+", scanner.Next().loc}
+		return token{tokPlus, "+", scn.next().loc}
 	case '-':
-		return Token{TokDash, "-", scanner.Next().loc}
+		return token{tokDash, "-", scn.next().loc}
 	case '*':
-		return Token{TokStar, "*", scanner.Next().loc}
+		return token{tokStar, "*", scn.next().loc}
 	case '/':
-		return Token{TokSlash, "/", scanner.Next().loc}
+		return token{tokSlash, "/", scn.next().loc}
 	case '?':
-		return Token{TokQuestion, "?", scanner.Next().loc}
+		return token{tokQuestion, "?", scn.next().loc}
 	case ':':
-		colon := scanner.Next()
-		tok := Token{TokColon, ":", colon.loc}
+		colon := scn.next()
+		tok := token{tokColon, ":", colon.loc}
 
-		if scanner.Peek().char == '=' {
-			scanner.Next()
-			tok = Token{TokAssign, ":=", colon.loc}
+		if scn.peek().char == '=' {
+			scn.next()
+			tok = token{tokAssign, ":=", colon.loc}
 		}
 
 		return tok
 	case '=':
-		equals := scanner.Next()
+		equals := scn.next()
 
-		if scanner.Peek().char == '>' {
-			scanner.Next()
-			return Token{TokArrow, "=>", equals.loc}
+		if scn.peek().char == '>' {
+			scn.next()
+			return token{tokArrow, "=>", equals.loc}
 		}
 
-		return Token{TokError, "expected operator", equals.loc}
+		return token{tokError, "expected operator", equals.loc}
 	case '<':
-		lt := scanner.Next()
+		lt := scn.next()
 
-		if scanner.Peek().char == '=' {
-			scanner.Next()
-			return Token{TokLTEquals, "<=", lt.loc}
+		if scn.peek().char == '=' {
+			scn.next()
+			return token{tokLTEquals, "<=", lt.loc}
 		}
 
-		return Token{TokLT, "<", lt.loc}
+		return token{tokLT, "<", lt.loc}
 	case '>':
-		gt := scanner.Next()
+		gt := scn.next()
 
-		if scanner.Peek().char == '=' {
-			scanner.Next()
-			return Token{TokGTEquals, ">=", gt.loc}
+		if scn.peek().char == '=' {
+			scn.next()
+			return token{tokGTEquals, ">=", gt.loc}
 		}
 
-		return Token{TokGT, ">", gt.loc}
+		return token{tokGT, ">", gt.loc}
 	default:
-		return Token{TokError, "expected operator", scanner.Next().loc}
+		return token{tokError, "expected operator", scn.next().loc}
 	}
 }
 
-func eatSemicolonToken(scanner *Scanner) Token {
-	if scanner.Peek().char != ';' {
-		return Token{TokError, "expected semicolon", scanner.Next().loc}
+func eatSemicolonToken(scn *scanner) token {
+	if scn.peek().char != ';' {
+		return token{tokError, "expected semicolon", scn.next().loc}
 	}
 
-	return Token{TokSemi, ";", scanner.Next().loc}
+	return token{tokSemi, ";", scn.next().loc}
 }
 
-func eatCommaToken(scanner *Scanner) Token {
-	if scanner.Peek().char != ',' {
-		return Token{TokError, "expected comma", scanner.Next().loc}
+func eatCommaToken(scn *scanner) token {
+	if scn.peek().char != ',' {
+		return token{tokError, "expected comma", scn.next().loc}
 	}
 
-	return Token{TokComma, ",", scanner.Next().loc}
+	return token{tokComma, ",", scn.next().loc}
 }
 
-func eatParenToken(scanner *Scanner) Token {
-	switch scanner.Peek().char {
+func eatParenToken(scn *scanner) token {
+	switch scn.peek().char {
 	case '(':
-		return Token{TokParenL, "(", scanner.Next().loc}
+		return token{tokParenL, "(", scn.next().loc}
 	case ')':
-		return Token{TokParenR, ")", scanner.Next().loc}
+		return token{tokParenR, ")", scn.next().loc}
 	default:
-		return Token{TokError, "expected paren", scanner.Next().loc}
+		return token{tokError, "expected paren", scn.next().loc}
 	}
 }
 
-func eatBraceToken(scanner *Scanner) Token {
-	switch scanner.Peek().char {
+func eatBraceToken(scn *scanner) token {
+	switch scn.peek().char {
 	case '{':
-		return Token{TokBraceL, "{", scanner.Next().loc}
+		return token{tokBraceL, "{", scn.next().loc}
 	case '}':
-		return Token{TokBraceR, "}", scanner.Next().loc}
+		return token{tokBraceR, "}", scn.next().loc}
 	default:
-		return Token{TokError, "expected brace", scanner.Next().loc}
+		return token{tokError, "expected brace", scn.next().loc}
 	}
 }
 
-func eatBracketToken(scanner *Scanner) Token {
-	switch scanner.Peek().char {
+func eatBracketToken(scn *scanner) token {
+	switch scn.peek().char {
 	case '[':
-		return Token{TokBracketL, "[", scanner.Next().loc}
+		return token{tokBracketL, "[", scn.next().loc}
 	case ']':
-		return Token{TokBracketR, "]", scanner.Next().loc}
+		return token{tokBracketR, "]", scn.next().loc}
 	default:
-		return Token{TokError, "expected bracket", scanner.Next().loc}
+		return token{tokError, "expected bracket", scn.next().loc}
 	}
 }
 
-func eatWordToken(scanner *Scanner) Token {
-	loc := scanner.Peek().loc
+func eatWordToken(scn *scanner) token {
+	loc := scn.peek().loc
 	lexeme := ""
 
-	if isLetter(scanner.Peek().char) == false {
-		return Token{TokError, "expected word", loc}
+	if isLetter(scn.peek().char) == false {
+		return token{tokError, "expected word", loc}
 	}
 
-	for isLetter(scanner.Peek().char) {
-		lexeme += string(scanner.Next().char)
+	for isLetter(scn.peek().char) {
+		lexeme += string(scn.next().char)
 	}
 
 	switch lexeme {
 	case "fn":
-		return Token{TokFn, "fn", loc}
+		return token{tokFn, "fn", loc}
 	case "if":
-		return Token{TokIf, "if", loc}
+		return token{tokIf, "if", loc}
 	case "let":
-		return Token{TokLet, "let", loc}
+		return token{tokLet, "let", loc}
 	case "return":
-		return Token{TokReturn, "return", loc}
+		return token{tokReturn, "return", loc}
 	case "self":
-		return Token{TokSelf, "self", loc}
+		return token{tokSelf, "self", loc}
 	case "use":
-		return Token{TokUse, "use", loc}
+		return token{tokUse, "use", loc}
 	case "pub":
-		return Token{TokPub, "pub", loc}
+		return token{tokPub, "pub", loc}
 	case "true":
-		return Token{TokBoolean, "true", loc}
+		return token{tokBoolean, "true", loc}
 	case "false":
-		return Token{TokBoolean, "false", loc}
+		return token{tokBoolean, "false", loc}
 	default:
-		return Token{TokIdent, lexeme, loc}
+		return token{tokIdent, lexeme, loc}
 	}
 }
 
-func eatNumberToken(scanner *Scanner) Token {
-	loc := scanner.Peek().loc
+func eatNumberToken(scn *scanner) token {
+	loc := scn.peek().loc
 	lexeme := ""
 
-	if isDigit(scanner.Peek().char) == false {
-		return Token{TokError, "expected number", loc}
+	if isDigit(scn.peek().char) == false {
+		return token{tokError, "expected number", loc}
 	}
 
-	for isDigit(scanner.Peek().char) {
-		lexeme += string(scanner.Next().char)
+	for isDigit(scn.peek().char) {
+		lexeme += string(scn.next().char)
 	}
 
-	return Token{TokNumber, lexeme, loc}
+	return token{tokNumber, lexeme, loc}
 }
 
-func eatStringToken(scanner *Scanner) Token {
-	loc := scanner.Peek().loc
+func eatStringToken(scn *scanner) token {
+	loc := scn.peek().loc
 	lexeme := ""
 
-	if isDoubleQuote(scanner.Peek().char) == false {
-		return Token{TokError, "expected string", loc}
+	if isDoubleQuote(scn.peek().char) == false {
+		return token{tokError, "expected string", loc}
 	}
 
-	lexeme += string(scanner.Next().char)
+	lexeme += string(scn.next().char)
 	for {
-		switch scanner.Peek().char {
+		switch scn.peek().char {
 		case '"':
-			lexeme += string(scanner.Next().char)
-			return Token{TokString, lexeme, loc}
+			lexeme += string(scn.next().char)
+			return token{tokString, lexeme, loc}
 		case '\000':
 			fallthrough
 		case '\n':
-			return Token{TokError, "unclosed string", scanner.Peek().loc}
+			return token{tokError, "unclosed string", scn.peek().loc}
 		default:
-			lexeme += string(scanner.Next().char)
+			lexeme += string(scn.next().char)
 		}
 	}
 }

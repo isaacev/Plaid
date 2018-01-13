@@ -36,21 +36,21 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
-// CheckModules type-checks a list of modules ordered from most-depended upon to
+// checkModules type-checks a list of modules ordered from most-depended upon to
 // least-depended-upon. Type checking is only performed on virtual modules since
 // native modules have explicitly typed interfaces.
-func CheckModules(modules []Module, builtins ...Module) {
+func checkModules(modules []Module, builtins ...Module) {
 	for _, mod := range modules {
 		if unchecked, ok := mod.(*VirtualModule); ok {
-			Check(unchecked, builtins...)
+			checkModule(unchecked, builtins...)
 		}
 	}
 }
 
-// Check takes an existing abstract syntax tree and performs type checks and
+// checkModule takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
-func Check(root *VirtualModule, builtins ...Module) Module {
+func checkModule(root *VirtualModule, builtins ...Module) Module {
 	root.scope = MakeGlobalScope()
 
 	for _, mod := range builtins {
@@ -204,10 +204,10 @@ func checkExpr(s Scope, expr Expr) Type {
 }
 
 func checkFunctionExpr(s Scope, expr *FunctionExpr) Type {
-	ret := ConvertTypeNote(expr.Ret)
+	ret := convertTypeNote(expr.Ret)
 	params := []Type{}
 	for _, param := range expr.Params {
-		params = append(params, ConvertTypeNote(param.Note))
+		params = append(params, convertTypeNote(param.Note))
 	}
 	tuple := TypeTuple{Children: params}
 	self := TypeFunction{Params: tuple, Ret: ret}
@@ -216,7 +216,7 @@ func checkFunctionExpr(s Scope, expr *FunctionExpr) Type {
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
-		paramType := ConvertTypeNote(param.Note)
+		paramType := convertTypeNote(param.Note)
 		childScope.NewVariable(paramName, paramType)
 	}
 
