@@ -6,37 +6,37 @@ import (
 )
 
 func TestScopeHasParent(t *testing.T) {
-	root := MakeGlobalScope()
-	child := MakeLocalScope(root, TypeFunction{})
+	root := makeGlobalScope()
+	child := makeLocalScope(root, TypeFunction{})
 	expectBool(t, root.HasParent(), false)
 	expectBool(t, child.HasParent(), true)
 }
 
 func TestScopeErrors(t *testing.T) {
-	root := MakeGlobalScope()
-	child := MakeLocalScope(root, TypeFunction{})
-	child.NewError(fmt.Errorf("foo bar baz"))
+	root := makeGlobalScope()
+	child := makeLocalScope(root, TypeFunction{})
+	child.newError(fmt.Errorf("foo bar baz"))
 	expectNthError(t, root, 0, "foo bar baz")
 	expectNthError(t, child, 0, "foo bar baz")
 }
 
 func TestScopeAddError(t *testing.T) {
-	scope := MakeGlobalScope()
+	scope := makeGlobalScope()
 	expectNoScopeErrors(t, scope)
-	scope.NewError(fmt.Errorf("a semantic analysis error"))
+	scope.newError(fmt.Errorf("a semantic analysis error"))
 	expectNthError(t, scope, 0, "a semantic analysis error")
 }
 
 func TestScopeHasLocalVariable(t *testing.T) {
-	scope := MakeGlobalScope()
-	scope.NewVariable("foo", TypeIdent{Name: "Bar"})
+	scope := makeGlobalScope()
+	scope.newVariable("foo", TypeIdent{Name: "Bar"})
 	expectBool(t, scope.HasLocalVariable("foo"), true)
 	expectBool(t, scope.HasLocalVariable("baz"), false)
 }
 
 func TestScopeNewVariable(t *testing.T) {
-	scope := MakeGlobalScope()
-	scope.NewVariable("foo", TypeIdent{Name: "Bar"})
+	scope := makeGlobalScope()
+	scope.newVariable("foo", TypeIdent{Name: "Bar"})
 	if scope.HasVariable("foo") {
 		expectEquivalentType(t, scope.GetVariableType("foo"), TypeIdent{Name: "Bar"})
 	} else {
@@ -45,17 +45,17 @@ func TestScopeNewVariable(t *testing.T) {
 }
 
 func TestScopeGetVariable(t *testing.T) {
-	parent := MakeGlobalScope()
-	child := MakeLocalScope(parent, TypeFunction{})
-	parent.NewVariable("foo", TypeIdent{Name: "Bar"})
+	parent := makeGlobalScope()
+	child := makeLocalScope(parent, TypeFunction{})
+	parent.newVariable("foo", TypeIdent{Name: "Bar"})
 	expectEquivalentType(t, child.GetVariableType("foo"), TypeIdent{Name: "Bar"})
 }
 
 func TestScopeString(t *testing.T) {
-	scope := MakeGlobalScope()
-	scope.NewVariable("num", TypeIdent{Name: "Int"})
-	scope.NewVariable("test", TypeIdent{Name: "Bool"})
-	scope.NewVariable("coord", TypeTuple{Children: []Type{TypeIdent{Name: "Int"}, TypeIdent{Name: "Int"}}})
+	scope := makeGlobalScope()
+	scope.newVariable("num", TypeIdent{Name: "Int"})
+	scope.newVariable("test", TypeIdent{Name: "Bool"})
+	scope.newVariable("coord", TypeTuple{Children: []Type{TypeIdent{Name: "Int"}, TypeIdent{Name: "Int"}}})
 
 	expectString(t, scope.String(), "coord : (Int Int)\nnum   : Int\ntest  : Bool")
 }

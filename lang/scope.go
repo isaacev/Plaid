@@ -17,7 +17,7 @@ type Scope interface {
 	GetSelfReference() TypeFunction
 	HasErrors() bool
 	GetErrors() []error
-	NewError(error)
+	newError(error)
 	HasLocalVariable(string) bool
 	GetLocalVariableType(string) Type
 	GetLocalVariableReference(string) *UniqueSymbol
@@ -25,7 +25,7 @@ type Scope interface {
 	HasVariable(string) bool
 	GetVariableType(string) Type
 	GetVariableReference(string) *UniqueSymbol
-	NewVariable(string, Type) *UniqueSymbol
+	newVariable(string, Type) *UniqueSymbol
 }
 
 // GlobalScope exists at the top of the scope tree
@@ -38,8 +38,8 @@ type GlobalScope struct {
 	symbols  map[string]*UniqueSymbol
 }
 
-// MakeGlobalScope is a helper function to quickly build a global scope
-func MakeGlobalScope() *GlobalScope {
+// makeGlobalScope is a helper function to quickly build a global scope
+func makeGlobalScope() *GlobalScope {
 	return &GlobalScope{
 		exports: make(map[string]Type),
 		types:   make(map[string]Type),
@@ -47,8 +47,8 @@ func MakeGlobalScope() *GlobalScope {
 	}
 }
 
-// AddImport exposes another module's exports to the global scope
-func (s *GlobalScope) AddImport(module *GlobalScope) {
+// addImport exposes another module's exports to the global scope
+func (s *GlobalScope) addImport(module *GlobalScope) {
 	s.imports = append(s.imports, module)
 }
 
@@ -71,8 +71,8 @@ func (s *GlobalScope) GetExport(name string) Type {
 	return nil
 }
 
-// Export exposes global definitions for use by other modules
-func (s *GlobalScope) Export(name string, typ Type) {
+// newExport exposes global definitions for use by other modules
+func (s *GlobalScope) newExport(name string, typ Type) {
 	s.exports[name] = typ
 }
 
@@ -100,8 +100,8 @@ func (s *GlobalScope) HasErrors() bool { return len(s.errors) > 0 }
 // GetErrors returns any erros that have been logged with this scope
 func (s *GlobalScope) GetErrors() []error { return s.errors }
 
-// NewError appends another error to the global list of logged errors
-func (s *GlobalScope) NewError(err error) { s.errors = append(s.errors, err) }
+// newError appends another error to the global list of logged errors
+func (s *GlobalScope) newError(err error) { s.errors = append(s.errors, err) }
 
 // HasLocalVariable returns true if *this* scope recognizes the given variable
 func (s *GlobalScope) HasLocalVariable(name string) bool {
@@ -192,9 +192,9 @@ func (s *GlobalScope) GetVariableReference(name string) *UniqueSymbol {
 	return nil
 }
 
-// NewVariable registers a new variable with the given name and type and
+// newVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
-func (s *GlobalScope) NewVariable(name string, typ Type) *UniqueSymbol {
+func (s *GlobalScope) newVariable(name string, typ Type) *UniqueSymbol {
 	ref := &UniqueSymbol{}
 	s.types[name] = typ
 	s.symbols[name] = ref
@@ -248,9 +248,9 @@ type LocalScope struct {
 	references map[string]*UniqueSymbol
 }
 
-// MakeLocalScope is a helper function to quickly build a local scope that is
+// makeLocalScope is a helper function to quickly build a local scope that is
 // doubly linked to its parent scope
-func MakeLocalScope(parent Scope, self TypeFunction) *LocalScope {
+func makeLocalScope(parent Scope, self TypeFunction) *LocalScope {
 	return parent.addChild(&LocalScope{
 		parent:     parent,
 		self:       self,
@@ -282,8 +282,8 @@ func (s *LocalScope) HasErrors() bool { return s.parent.HasErrors() }
 // GetErrors returns any erros that have been logged with this scope
 func (s *LocalScope) GetErrors() []error { return s.parent.GetErrors() }
 
-// NewError appends another error to the global list of logged errors
-func (s *LocalScope) NewError(err error) { s.parent.NewError(err) }
+// newError appends another error to the global list of logged errors
+func (s *LocalScope) newError(err error) { s.parent.newError(err) }
 
 // SelfReference returns the type signature of the local function
 func (s *LocalScope) SelfReference() Type { return nil }
@@ -390,9 +390,9 @@ func (s *LocalScope) stringChildren() (children []stringTree) {
 	return children
 }
 
-// NewVariable registers a new variable with the given name and type and
+// newVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
-func (s *LocalScope) NewVariable(name string, typ Type) *UniqueSymbol {
+func (s *LocalScope) newVariable(name string, typ Type) *UniqueSymbol {
 	ref := &UniqueSymbol{}
 	s.types[name] = typ
 	s.references[name] = ref

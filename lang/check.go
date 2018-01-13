@@ -111,7 +111,7 @@ func checkPubStmt(s Scope, stmt *PubStmt) {
 
 	name := stmt.Stmt.Name.Name
 	typ := g.GetVariableType(name)
-	g.Export(name, typ)
+	g.newExport(name, typ)
 }
 
 func checkIfStmt(s Scope, stmt *IfStmt) {
@@ -126,7 +126,7 @@ func checkIfStmt(s Scope, stmt *IfStmt) {
 func checkDeclarationStmt(s Scope, stmt *DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(s, stmt.Expr)
-	s.NewVariable(name, typ)
+	s.newVariable(name, typ)
 }
 
 func checkReturnStmt(s Scope, stmt *ReturnStmt) {
@@ -212,12 +212,12 @@ func checkFunctionExpr(s Scope, expr *FunctionExpr) Type {
 	tuple := TypeTuple{Children: params}
 	self := TypeFunction{Params: tuple, Ret: ret}
 
-	childScope := MakeLocalScope(s, self)
+	childScope := makeLocalScope(s, self)
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
 		paramType := convertTypeNote(param.Note)
-		childScope.NewVariable(paramName, paramType)
+		childScope.newVariable(paramName, paramType)
 	}
 
 	checkStmtBlock(childScope, expr.Block)
@@ -422,7 +422,7 @@ type TypeCheckError struct {
 
 func addTypeError(s Scope, loc Loc, msg string) {
 	err := TypeCheckError{loc, msg}
-	s.NewError(err)
+	s.newError(err)
 }
 
 func (err TypeCheckError) Error() string {

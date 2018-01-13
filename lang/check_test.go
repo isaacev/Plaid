@@ -23,107 +23,107 @@ func TestCheckMain(t *testing.T) {
 
 func TestCheckProgram(t *testing.T) {
 	prog, _ := Parse("", "let a := 123;")
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	checkProgram(s, prog)
 	expectNoErrors(t, s)
 }
 
 func TestCheckStmt(t *testing.T) {
 	prog, _ := Parse("", "let a := 123;")
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	checkStmt(s, prog.Stmts[0])
 	expectNoErrors(t, s)
 }
 
 func TestCheckIfStmt(t *testing.T) {
 	prog, _ := Parse("", "if true {};")
-	s := checkProgram(MakeGlobalScope(), prog)
+	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "if 123 {};")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:4) condition must resolve to a boolean")
 }
 
 func TestCheckReturnStmt(t *testing.T) {
 	prog, _ := Parse("", "let a := fn (): Int { return \"abc\"; };")
-	s := checkProgram(MakeGlobalScope(), prog)
+	s := checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:30) expected to return 'Int', got 'Str'")
 
 	prog, _ = Parse("", "let a := fn (): Int { return x; };")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:30) variable 'x' was used before it was declared")
 
 	prog, _ = Parse("", "let a := fn (): Int { return; };")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:23) expected a return type of 'Int', got nothing")
 
 	prog, _ = Parse("", "let a := fn ():Void { return 123; };")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:30) expected to return nothing, got 'Int'")
 
 	prog = &RootNode{Stmts: []Stmt{
 		&ReturnStmt{Tok: makeTok(1, 1)},
 	}}
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:1) return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
 	prog, _ := Parse("", "let a := 2 + 1;")
-	s := checkProgram(MakeGlobalScope(), prog)
+	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), TypeNativeInt)
 
 	prog, _ = Parse("", "let a := 1;")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), TypeNativeInt)
 
 	prog, _ = Parse("", "let a := \"abc\";")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("a"), TypeNativeStr)
 
 	prog, _ = Parse("", "let a := fn () {};")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "let a := true;")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "let a := false;")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "let a := [1, 2, 3];")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "let a := \"abc\"[0];")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "let a := add(2, 2);")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:10) variable 'add' was used before it was declared")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = Parse("", "let f := fn():Void{}; let a := f();")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:32) cannot use void types in an expression")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 
 	prog, _ = Parse("", "let a := -5;")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:10) unknown expression type")
 	expectBool(t, s.GetVariableType("a").IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn (a: Int): Int { };")
-	s := checkProgram(MakeGlobalScope(), prog)
+	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, s.GetVariableType("f"), TypeFunction{
 		Params: TypeTuple{Children: []Type{TypeIdent{Name: "Int"}}},
@@ -136,8 +136,8 @@ func TestCheckDispatchExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := MakeGlobalScope()
-			s.NewVariable(name, typ)
+			s := makeGlobalScope()
+			s.newVariable(name, typ)
 			checkProgram(s, prog)
 			expectNoErrors(t, s)
 		}
@@ -147,8 +147,8 @@ func TestCheckDispatchExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := MakeGlobalScope()
-			s.NewVariable(name, typ)
+			s := makeGlobalScope()
+			s.newVariable(name, typ)
 			checkProgram(s, prog)
 			for i, err := range errs {
 				expectNthError(t, s, i, err)
@@ -194,8 +194,8 @@ func TestCheckAssignExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := MakeGlobalScope()
-			s.NewVariable(name, typ)
+			s := makeGlobalScope()
+			s.newVariable(name, typ)
 			checkProgram(s, prog)
 			expectNoErrors(t, s)
 		}
@@ -205,8 +205,8 @@ func TestCheckAssignExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := MakeGlobalScope()
-			s.NewVariable(name, typ)
+			s := makeGlobalScope()
+			s.newVariable(name, typ)
 			checkProgram(s, prog)
 			expectNthError(t, s, 0, exp)
 		}
@@ -227,9 +227,9 @@ func TestCheckBinaryExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := MakeGlobalScope()
-			s.NewVariable("a", left)
-			s.NewVariable("b", right)
+			s := makeGlobalScope()
+			s.newVariable("a", left)
+			s.newVariable("b", right)
 			checkProgram(s, prog)
 			expectNoErrors(t, s)
 			expectEquivalentType(t, s.GetVariableType("c"), exp)
@@ -251,19 +251,19 @@ func TestCheckBinaryExpr(t *testing.T) {
 	good(TypeNativeInt, "+", TypeNativeInt, TypeNativeInt)
 	good(TypeNativeInt, "-", TypeNativeInt, TypeNativeInt)
 
-	s := MakeGlobalScope()
-	s.NewVariable("b", TypeNativeInt)
+	s := makeGlobalScope()
+	s.newVariable("b", TypeNativeInt)
 	bad("let c := a + b;", s,
 		"(1:10) variable 'a' was used before it was declared")
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	bad("let c := a + b;", s,
 		"(1:10) variable 'a' was used before it was declared",
 		"(1:14) variable 'b' was used before it was declared")
 
-	s = MakeGlobalScope()
-	s.NewVariable("a", TypeNativeInt)
-	s.NewVariable("b", TypeNativeInt)
+	s = makeGlobalScope()
+	s.newVariable("a", TypeNativeInt)
+	s.newVariable("b", TypeNativeInt)
 	oper := token{Loc: Loc{Line: 10, Col: 4}}
 	leftExpr := &IdentExpr{Name: "a"}
 	rightExpr := &IdentExpr{Name: "b"}
@@ -275,14 +275,14 @@ func TestCheckBinaryExpr(t *testing.T) {
 
 func TestCheckListExpr(t *testing.T) {
 	good := func(expr *ListExpr, exp Type) {
-		s := MakeGlobalScope()
+		s := makeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNoErrors(t, s)
 		expectEquivalentType(t, got, exp)
 	}
 
 	bad := func(expr *ListExpr, exp string) {
-		s := MakeGlobalScope()
+		s := makeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNthError(t, s, 0, exp)
 		expectEquivalentType(t, got, TypeError{})
@@ -306,7 +306,7 @@ func TestCheckListExpr(t *testing.T) {
 }
 
 func TestCheckSubscriptExpr(t *testing.T) {
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	str := &StringExpr{Tok: nop, Val: "foo"}
 	index := &NumberExpr{Tok: nop, Val: 0}
 	expr := &SubscriptExpr{ListLike: str, Index: index}
@@ -314,7 +314,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, TypeOptional{Child: TypeNativeStr})
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	list := &ListExpr{Elements: []Expr{
 		&NumberExpr{Val: 123},
 		&NumberExpr{Val: 456},
@@ -324,7 +324,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, TypeOptional{Child: TypeNativeInt})
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	str = &StringExpr{Tok: nop, Val: "foo"}
 	badRef := &IdentExpr{Tok: makeTok(5, 2), Name: "x"}
 	expr = &SubscriptExpr{ListLike: str, Index: badRef}
@@ -332,7 +332,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNthError(t, s, 0, "(5:2) variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	str = &StringExpr{Tok: nop, Val: "foo"}
 	badIndex := &StringExpr{Tok: makeTok(2, 9), Val: "0"}
 	expr = &SubscriptExpr{ListLike: str, Index: badIndex}
@@ -340,7 +340,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNthError(t, s, 0, "(2:9) subscript operator does not support Str[Str]")
 	expectBool(t, typ.IsError(), true)
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	str = &StringExpr{Tok: makeTok(4, 2), Val: "foo"}
 	expr = &SubscriptExpr{ListLike: str, Index: index}
 	typ = checkSubscriptExpr(s, expr, make(binopsLUT))
@@ -350,23 +350,23 @@ func TestCheckSubscriptExpr(t *testing.T) {
 
 func TestCheckSelfExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn(): Void { self(); };")
-	s := checkProgram(MakeGlobalScope(), prog)
+	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
 
 	prog, _ = Parse("", "self();")
-	s = checkProgram(MakeGlobalScope(), prog)
+	s = checkProgram(makeGlobalScope(), prog)
 	expectNthError(t, s, 0, "(1:1) self references must be inside a function")
 }
 
 func TestCheckIdentExpr(t *testing.T) {
-	s := MakeGlobalScope()
-	s.NewVariable("x", TypeNativeInt)
+	s := makeGlobalScope()
+	s.newVariable("x", TypeNativeInt)
 	expr := &IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(s, expr)
 	expectNoErrors(t, s)
 	expectEquivalentType(t, typ, TypeNativeInt)
 
-	s = MakeGlobalScope()
+	s = makeGlobalScope()
 	expr = &IdentExpr{Tok: makeTok(10, 13), Name: "x"}
 	typ = checkIdentExpr(s, expr)
 	expectNthError(t, s, 0, "(10:13) variable 'x' was used before it was declared")
@@ -374,7 +374,7 @@ func TestCheckIdentExpr(t *testing.T) {
 }
 
 func TestCheckNumberExpr(t *testing.T) {
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	expr := &NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(s, expr)
 	expectNoErrors(t, s)
@@ -382,7 +382,7 @@ func TestCheckNumberExpr(t *testing.T) {
 }
 
 func TestCheckStringExpr(t *testing.T) {
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	expr := &StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(s, expr)
 	expectNoErrors(t, s)
@@ -390,7 +390,7 @@ func TestCheckStringExpr(t *testing.T) {
 }
 
 func TestCheckBooleanExpr(t *testing.T) {
-	s := MakeGlobalScope()
+	s := makeGlobalScope()
 	expr := &BooleanExpr{Tok: nop, Val: true}
 	typ := checkBooleanExpr(s, expr)
 	expectNoErrors(t, s)
