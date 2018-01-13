@@ -158,7 +158,7 @@ func TestBuildGraph(t *testing.T) {
 	n3 := testNode("n3")
 	n4 := testNode("n4")
 
-	load := func(path string) (*node, error) {
+	load := func(path string) (*node, []error) {
 		switch path {
 		case "n0":
 			return n0, nil
@@ -171,12 +171,15 @@ func TestBuildGraph(t *testing.T) {
 		case "n4":
 			return n4, nil
 		default:
-			return nil, fmt.Errorf("random error")
+			return nil, []error{fmt.Errorf("random error")}
 		}
 	}
 
-	g, err := buildGraph(n0, branch, load)
-	expectNoError(t, err)
+	g, errs := buildGraph(n0, branch, load)
+	for _, err := range errs {
+		expectNoError(t, err)
+	}
+
 	expectChildren(t, g, "n0", "n1", "n2")
 	expectChildren(t, g, "n1", "n2", "n3")
 	expectChildren(t, g, "n2")
@@ -184,7 +187,11 @@ func TestBuildGraph(t *testing.T) {
 	expectParents(t, g, "n0", "n3")
 	expectParents(t, g, "n2", "n0", "n1")
 
-	_, err = buildGraph(n4, branch, load)
+	_, errs = buildGraph(n4, branch, load)
+	var err error = nil
+	if len(errs) > 0 {
+		err = errs[0]
+	}
 	expectAnError(t, err, "random error")
 }
 

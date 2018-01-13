@@ -9,9 +9,9 @@ import (
 func Link(filepath string, ast *RootNode) (mod Module, errs []error) {
 	// Determine an order that all dependencies can be loaded such that no
 	// dependent is loaded before any of its dependencies.
-	order, err := resolve(filepath, ast)
-	if err != nil {
-		return nil, append(errs, err)
+	order, errs := resolve(filepath, ast)
+	if len(errs) > 0 {
+		return nil, errs
 	}
 
 	// Sanity check: the last module in the order must be the same program passed
@@ -49,10 +49,10 @@ func (g *graph) resetFlags() {
 }
 
 // link does some stuff
-func link(path string, ast *RootNode, builtins ...Module) (Module, error) {
-	order, err := resolve(path, ast)
-	if err != nil {
-		return nil, err
+func link(path string, ast *RootNode, builtins ...Module) (Module, []error) {
+	order, errs := resolve(path, ast)
+	if len(errs) > 0 {
+		return nil, errs
 	}
 
 	// Link ordered modules.
@@ -66,15 +66,15 @@ func link(path string, ast *RootNode, builtins ...Module) (Module, error) {
 }
 
 // resolve determines if a module has any dependency cycles
-func resolve(path string, ast *RootNode) ([]*node, error) {
+func resolve(path string, ast *RootNode) ([]*node, []error) {
 	n := makeNode(path, ast)
-	g, err := buildGraph(n, getDependencyPaths, loadDependency)
-	if err != nil {
-		return nil, err
+	g, errs := buildGraph(n, getDependencyPaths, loadDependency)
+	if len(errs) > 0 {
+		return nil, errs
 	}
 
 	if cycle := findCycle(g.root, nil); cycle != nil {
-		return nil, fmt.Errorf("Dependency cycle: %s", routeToString(cycle))
+		return nil, []error{fmt.Errorf("Dependency cycle: %s", routeToString(cycle))}
 	}
 
 	order := orderDependencies(g)
@@ -162,7 +162,7 @@ func extractCycle(route []*node) (cycle []*node) {
 	return nil
 }
 
-func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, error)) (g *graph, err error) {
+func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, []error)) (g *graph, errs []error) {
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
@@ -179,13 +179,13 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
-			} else if dep, err = load(path); err == nil {
+			} else if dep, errs = load(path); len(errs) == 0 {
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
 				g.nodes[path] = dep
 			} else {
-				return nil, err
+				return nil, errs
 			}
 		}
 		addDone(done, n)
@@ -222,15 +222,15 @@ func addDone(done map[string]*node, n *node) {
 	done[n.module.name] = n
 }
 
-func loadDependency(path string) (n *node, err error) {
+func loadDependency(path string) (n *node, errs []error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, append(errs, err)
 	}
 
-	ast, err := Parse(path, string(buf))
-	if err != nil {
-		return nil, err
+	ast, errs := Parse(path, string(buf))
+	if len(errs) > 0 {
+		return nil, errs
 	}
 
 	return makeNode(path, ast), nil
