@@ -6,6 +6,30 @@ import (
 	"path/filepath"
 )
 
+func Link(filepath string, ast *RootNode) (mod Module, errs []error) {
+	// Determine an order that all dependencies can be loaded such that no
+	// dependent is loaded before any of its dependencies.
+	order, err := resolve(filepath, ast)
+	if err != nil {
+		return nil, append(errs, err)
+	}
+
+	// Sanity check: the last module in the order must be the same program passed
+	// via the `ast` parameter.
+	if order[len(order)-1].module.ast != ast {
+		panic("root module not loaded last")
+	}
+
+	// Link each module in the dependency graph to its dependencies.
+	for _, n := range order {
+		for _, child := range n.children {
+			n.module.imports = append(n.module.imports, child.module)
+		}
+	}
+
+	return order[len(order)-1].module, nil
+}
+
 type node struct {
 	flag     int
 	children []*node

@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// Parse initializers a parser and defines the grammar precedence levels
+func Parse(filepath string, source string) (*RootNode, error) {
+	p := makeParser(filepath, source)
+	loadGrammar(p)
+	return parseProgram(p)
+}
+
 // precedence describes the relative binding powers of different operators
 type precedence int
 
@@ -92,13 +99,6 @@ func (p *parser) peekPrecedence() precedence {
 	}
 
 	return precLowest
-}
-
-// Parse initializers a parser and defines the grammar precedence levels
-func Parse(filepath string, source string) (*RootNode, error) {
-	p := makeParser(filepath, source)
-	loadGrammar(p)
-	return parseProgram(p)
 }
 
 func makeParser(filepath string, source string) *parser {
