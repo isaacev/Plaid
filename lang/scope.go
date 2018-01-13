@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-type UniqueReference struct{}
+type UniqueSymbol struct{}
 
 // Scope describes common methods that any type of scope must implement
 type Scope interface {
@@ -20,30 +20,30 @@ type Scope interface {
 	NewError(error)
 	HasLocalVariable(string) bool
 	GetLocalVariableType(string) Type
-	GetLocalVariableReference(string) *UniqueReference
+	GetLocalVariableReference(string) *UniqueSymbol
 	GetLocalVariableNames() []string
 	HasVariable(string) bool
 	GetVariableType(string) Type
-	GetVariableReference(string) *UniqueReference
-	NewVariable(string, Type) *UniqueReference
+	GetVariableReference(string) *UniqueSymbol
+	NewVariable(string, Type) *UniqueSymbol
 }
 
 // GlobalScope exists at the top of the scope tree
 type GlobalScope struct {
-	imports    []*GlobalScope
-	exports    map[string]Type
-	children   []Scope
-	errors     []error
-	types      map[string]Type
-	references map[string]*UniqueReference
+	imports  []*GlobalScope
+	exports  map[string]Type
+	children []Scope
+	errors   []error
+	types    map[string]Type
+	symbols  map[string]*UniqueSymbol
 }
 
 // MakeGlobalScope is a helper function to quickly build a global scope
 func MakeGlobalScope() *GlobalScope {
 	return &GlobalScope{
-		exports:    make(map[string]Type),
-		types:      make(map[string]Type),
-		references: make(map[string]*UniqueReference),
+		exports: make(map[string]Type),
+		types:   make(map[string]Type),
+		symbols: make(map[string]*UniqueSymbol),
 	}
 }
 
@@ -105,7 +105,7 @@ func (s *GlobalScope) NewError(err error) { s.errors = append(s.errors, err) }
 
 // HasLocalVariable returns true if *this* scope recognizes the given variable
 func (s *GlobalScope) HasLocalVariable(name string) bool {
-	if _, exists := s.references[name]; exists {
+	if _, exists := s.symbols[name]; exists {
 		return true
 	}
 
@@ -125,9 +125,9 @@ func (s *GlobalScope) GetLocalVariableType(name string) Type {
 // GetLocalVariableReference returns the unique reference identifier of a given
 // variable if it exists in the local scope. It the variable cannot be found the
 // method returns nil
-func (s *GlobalScope) GetLocalVariableReference(name string) *UniqueReference {
+func (s *GlobalScope) GetLocalVariableReference(name string) *UniqueSymbol {
 	if s.HasLocalVariable(name) {
-		return s.references[name]
+		return s.symbols[name]
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (s *GlobalScope) GetLocalVariableReference(name string) *UniqueReference {
 
 // GetLocalVariableNames returns a list of all locally registered variables
 func (s *GlobalScope) GetLocalVariableNames() (names []string) {
-	for name := range s.references {
+	for name := range s.symbols {
 		names = append(names, name)
 	}
 	return names
@@ -177,7 +177,7 @@ func (s *GlobalScope) GetVariableType(name string) Type {
 // GetVariableReference returns the reigster template associated with the given
 // variable if it can be found in scope. It returns nil if the variable cannot
 // be found in scope
-func (s *GlobalScope) GetVariableReference(name string) *UniqueReference {
+func (s *GlobalScope) GetVariableReference(name string) *UniqueSymbol {
 	if s.HasLocalVariable(name) {
 		return s.GetLocalVariableReference(name)
 	}
@@ -194,17 +194,17 @@ func (s *GlobalScope) GetVariableReference(name string) *UniqueReference {
 
 // NewVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
-func (s *GlobalScope) NewVariable(name string, typ Type) *UniqueReference {
-	ref := &UniqueReference{}
+func (s *GlobalScope) NewVariable(name string, typ Type) *UniqueSymbol {
+	ref := &UniqueSymbol{}
 	s.types[name] = typ
-	s.references[name] = ref
+	s.symbols[name] = ref
 	return ref
 }
 
 func (s *GlobalScope) String() (out string) {
 	var padding int
 	var names []string
-	for name := range s.references {
+	for name := range s.symbols {
 		if len(name) >= padding {
 			padding = len(name)
 
@@ -245,7 +245,7 @@ type LocalScope struct {
 	children   []Scope
 	self       TypeFunction
 	types      map[string]Type
-	references map[string]*UniqueReference
+	references map[string]*UniqueSymbol
 }
 
 // MakeLocalScope is a helper function to quickly build a local scope that is
@@ -255,7 +255,7 @@ func MakeLocalScope(parent Scope, self TypeFunction) *LocalScope {
 		parent:     parent,
 		self:       self,
 		types:      make(map[string]Type),
-		references: make(map[string]*UniqueReference),
+		references: make(map[string]*UniqueSymbol),
 	}).(*LocalScope)
 }
 
@@ -311,7 +311,7 @@ func (s *LocalScope) GetLocalVariableType(name string) Type {
 // GetLocalVariableReference returns the unique reference identifier of a given
 // variable if it exists in the local scope. It the variable cannot be found the
 // method returns nil
-func (s *LocalScope) GetLocalVariableReference(name string) *UniqueReference {
+func (s *LocalScope) GetLocalVariableReference(name string) *UniqueSymbol {
 	if s.HasLocalVariable(name) {
 		return s.references[name]
 	}
@@ -351,7 +351,7 @@ func (s *LocalScope) GetVariableType(name string) Type {
 // GetVariableReference returns the reigster template associated with the given
 // variable if it can be found in scope. It returns nil if the variable cannot
 // be found in scope
-func (s *LocalScope) GetVariableReference(name string) *UniqueReference {
+func (s *LocalScope) GetVariableReference(name string) *UniqueSymbol {
 	if s.HasLocalVariable(name) {
 		return s.GetLocalVariableReference(name)
 	}
@@ -392,8 +392,8 @@ func (s *LocalScope) stringChildren() (children []stringTree) {
 
 // NewVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
-func (s *LocalScope) NewVariable(name string, typ Type) *UniqueReference {
-	ref := &UniqueReference{}
+func (s *LocalScope) NewVariable(name string, typ Type) *UniqueSymbol {
+	ref := &UniqueSymbol{}
 	s.types[name] = typ
 	s.references[name] = ref
 	return ref
