@@ -103,7 +103,7 @@ func Parse(filepath string, source string) (*RootNode, error) {
 
 func makeParser(filepath string, source string) *parser {
 	s := scan(source)
-	l := Lex(filepath, s)
+	l := makeLexer(filepath, s)
 	p := &parser{
 		l,
 		0,

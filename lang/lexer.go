@@ -76,8 +76,8 @@ func (l *lexer) next() token {
 	return eatToken(l.scanner)
 }
 
-// Lex creates a new Lexer struct given a Scanner
-func Lex(filepath string, scn *scanner) *lexer {
+// makeLexer creates a new Lexer struct given a Scanner
+func makeLexer(filepath string, scn *scanner) *lexer {
 	return &lexer{filepath, []token{}, scn}
 }
 
