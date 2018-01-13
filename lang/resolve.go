@@ -8,11 +8,9 @@ import (
 
 type node struct {
 	flag     int
-	path     string
-	ast      *RootNode
 	children []*node
 	parents  []*node
-	module   Module
+	module   *VirtualModule
 }
 
 type graph struct {
@@ -36,8 +34,7 @@ func link(path string, ast *RootNode, builtins ...Module) (Module, error) {
 	// Link ordered modules.
 	for _, n := range order {
 		for _, child := range n.children {
-			mod := n.module.(*VirtualModule)
-			mod.imports = append(mod.imports, child.module)
+			n.module.imports = append(n.module.imports, child.module)
 		}
 	}
 
@@ -92,9 +89,9 @@ func routeToString(route []*node) (out string) {
 
 	for i, n := range route {
 		if i == len(route)-1 {
-			out += filepath.Base(n.path)
+			out += filepath.Base(n.module.name)
 		} else {
-			out += fmt.Sprintf("%s <- ", filepath.Base(n.path))
+			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.name))
 		}
 	}
 	return out
@@ -145,8 +142,8 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
-	g.nodes[n.path] = n
-	done[n.path] = n
+	g.nodes[n.module.name] = n
+	done[n.module.name] = n
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
@@ -174,9 +171,9 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 }
 
 func getDependencyPaths(n *node) (paths []string) {
-	for _, stmt := range n.ast.Stmts {
+	for _, stmt := range n.module.ast.Stmts {
 		if stmt, ok := stmt.(*UseStmt); ok {
-			dir := filepath.Dir(n.path)
+			dir := filepath.Dir(n.module.name)
 			path := filepath.Join(dir, stmt.Path.Val)
 			paths = append(paths, path)
 		}
@@ -198,7 +195,7 @@ func addTodo(todo *[]*node, n *node) {
 }
 
 func addDone(done map[string]*node, n *node) {
-	done[n.path] = n
+	done[n.module.name] = n
 }
 
 func loadDependency(path string) (n *node, err error) {
@@ -217,8 +214,6 @@ func loadDependency(path string) (n *node, err error) {
 
 func makeNode(path string, ast *RootNode) *node {
 	return &node{
-		path: path,
-		ast:  ast,
 		module: &VirtualModule{
 			name:    path,
 			ast:     ast,

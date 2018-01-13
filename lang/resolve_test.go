@@ -61,10 +61,10 @@ func TestOrderDependencies(t *testing.T) {
 }
 
 func TestRouteToString(t *testing.T) {
-	n1 := &node{path: "n1"}
-	n2 := &node{path: "n2"}
-	n3 := &node{path: "n3"}
-	n4 := &node{path: "n4"}
+	n1 := &node{module: &VirtualModule{name: "n1"}}
+	n2 := &node{module: &VirtualModule{name: "n2"}}
+	n3 := &node{module: &VirtualModule{name: "n3"}}
+	n4 := &node{module: &VirtualModule{name: "n4"}}
 	r1 := []*node{n1, n2, n3, n4}
 	r2 := []*node{n1}
 	r3 := []*node{}
@@ -108,8 +108,8 @@ func TestFindCycle(t *testing.T) {
 }
 
 func TestContainsNode(t *testing.T) {
-	n1 := &node{path: "foo"}
-	n2 := &node{path: "foo"}
+	n1 := &node{module: &VirtualModule{name: "foo"}}
+	n2 := &node{module: &VirtualModule{name: "foo"}}
 	l := []*node{n1}
 
 	expectBool(t, containsNode(l, n1), true)
@@ -138,7 +138,7 @@ func TestExtractCycle(t *testing.T) {
 
 func TestBuildGraph(t *testing.T) {
 	branch := func(n *node) []string {
-		switch n.path {
+		switch n.module.name {
 		case "n0":
 			return []string{"n1", "n2"}
 		case "n1":
@@ -189,12 +189,12 @@ func TestBuildGraph(t *testing.T) {
 }
 
 func TestGetDependencyPaths(t *testing.T) {
-	n := &node{path: "a/b/c.plaid", ast: &RootNode{Stmts: []Stmt{
+	n := &node{module: &VirtualModule{name: "a/b/c.plaid", ast: &RootNode{Stmts: []Stmt{
 		&UseStmt{Path: &StringExpr{Val: "foo"}},
 		&UseStmt{Path: &StringExpr{Val: "../bar"}},
 		&ExprStmt{},
 		&UseStmt{Path: &StringExpr{Val: "baz/quux"}},
-	}}}
+	}}}}
 
 	got := getDependencyPaths(n)
 	expectString(t, got[0], "a/b/foo")
@@ -231,7 +231,7 @@ func TestAddTodo(t *testing.T) {
 
 func TestAddDone(t *testing.T) {
 	done := map[string]*node{}
-	n := &node{}
+	n := &node{module: &VirtualModule{}}
 	addDone(done, n)
 	if done[""] != n {
 		t.Errorf("expected node to be stored in 'done', found nothing")
@@ -243,15 +243,15 @@ func TestMakeNode(t *testing.T) {
 	ast := &RootNode{}
 	n := makeNode(path, ast)
 
-	expectBool(t, n.path == path, true)
-	expectBool(t, n.ast == ast, true)
+	expectBool(t, n.module.name == path, true)
+	expectBool(t, n.module.ast == ast, true)
 	expectBool(t, n.module.String() == path, true)
 	// expectBool(t, n.module.AST == ast, true)
 }
 
 func testNode(path string, children ...*node) *node {
 	return &node{
-		path:     path,
+		module:   &VirtualModule{name: path},
 		children: children,
 	}
 }
@@ -277,8 +277,8 @@ func expectChildren(t *testing.T, g *graph, path string, children ...string) {
 			t.Errorf("Expected at least %d children of %s, found %d", i+1, path, len(n.children))
 		}
 
-		if n.children[i].path != p {
-			t.Errorf("Expected child #%d of %s to be named '%s', was named '%s'", i, path, p, n.children[i].path)
+		if n.children[i].module.name != p {
+			t.Errorf("Expected child #%d of %s to be named '%s', was named '%s'", i, path, p, n.children[i].module.name)
 		}
 	}
 }
@@ -298,8 +298,8 @@ func expectParents(t *testing.T, g *graph, path string, parents ...string) {
 			t.Errorf("Expected at least %d parents of %s, found %d", i+1, path, len(n.parents))
 		}
 
-		if n.parents[i].path != p {
-			t.Errorf("Expected parent #%d of %s to be named '%s', was named '%s'", i, path, p, n.parents[i].path)
+		if n.parents[i].module.name != p {
+			t.Errorf("Expected parent #%d of %s to be named '%s', was named '%s'", i, path, p, n.parents[i].module.name)
 		}
 	}
 }
