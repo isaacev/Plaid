@@ -36,17 +36,6 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
-// checkModules type-checks a list of modules ordered from most-depended upon to
-// least-depended-upon. Type checking is only performed on virtual modules since
-// native modules have explicitly typed interfaces.
-func checkModules(modules []Module, builtins ...Module) {
-	for _, mod := range modules {
-		if unchecked, ok := mod.(*VirtualModule); ok {
-			checkModule(unchecked, builtins...)
-		}
-	}
-}
-
 // checkModule takes an existing abstract syntax tree and performs type checks and
 // other correctness checks. It returns a list of any errors that were
 // discovered inside the AST
