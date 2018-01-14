@@ -1,30 +1,34 @@
 package lang
 
+import (
+	"plaid/lang/types"
+)
+
 // convertTypeNote transforms a TypeNote struct (used to represent a syntax
 // type notation) into a Type struct (used internally to represent a type)
-func convertTypeNote(note TypeNote) Type {
+func convertTypeNote(note TypeNote) types.Type {
 	switch note := note.(type) {
 	case TypeNoteAny:
-		return TypeAny{}
+		return types.TypeAny{}
 	case TypeNoteVoid:
-		return TypeVoid{}
+		return types.TypeVoid{}
 	case TypeNoteFunction:
-		return TypeFunction{
-			Params: convertTypeNote(note.Params).(TypeTuple),
+		return types.TypeFunction{
+			Params: convertTypeNote(note.Params).(types.TypeTuple),
 			Ret:    convertTypeNote(note.Ret),
 		}
 	case TypeNoteTuple:
-		elems := []Type{}
+		elems := []types.Type{}
 		for _, elem := range note.Elems {
 			elems = append(elems, convertTypeNote(elem))
 		}
-		return TypeTuple{Children: elems}
+		return types.TypeTuple{Children: elems}
 	case TypeNoteList:
-		return TypeList{Child: convertTypeNote(note.Child)}
+		return types.TypeList{Child: convertTypeNote(note.Child)}
 	case TypeNoteOptional:
-		return TypeOptional{Child: convertTypeNote(note.Child)}
+		return types.TypeOptional{Child: convertTypeNote(note.Child)}
 	case TypeNoteIdent:
-		return TypeIdent{Name: note.Name}
+		return types.TypeIdent{Name: note.Name}
 	default:
 		return nil
 	}

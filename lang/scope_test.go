@@ -2,19 +2,20 @@ package lang
 
 import (
 	"fmt"
+	"plaid/lang/types"
 	"testing"
 )
 
 func TestScopeHasParent(t *testing.T) {
 	root := makeGlobalScope()
-	child := makeLocalScope(root, TypeFunction{})
+	child := makeLocalScope(root, types.TypeFunction{})
 	expectBool(t, root.HasParent(), false)
 	expectBool(t, child.HasParent(), true)
 }
 
 func TestScopeErrors(t *testing.T) {
 	root := makeGlobalScope()
-	child := makeLocalScope(root, TypeFunction{})
+	child := makeLocalScope(root, types.TypeFunction{})
 	child.newError(fmt.Errorf("foo bar baz"))
 	expectNthError(t, root, 0, "foo bar baz")
 	expectNthError(t, child, 0, "foo bar baz")
@@ -29,16 +30,16 @@ func TestScopeAddError(t *testing.T) {
 
 func TestScopeHasLocalVariable(t *testing.T) {
 	scope := makeGlobalScope()
-	scope.newVariable("foo", TypeIdent{Name: "Bar"})
+	scope.newVariable("foo", types.TypeIdent{Name: "Bar"})
 	expectBool(t, scope.HasLocalVariable("foo"), true)
 	expectBool(t, scope.HasLocalVariable("baz"), false)
 }
 
 func TestScopeNewVariable(t *testing.T) {
 	scope := makeGlobalScope()
-	scope.newVariable("foo", TypeIdent{Name: "Bar"})
+	scope.newVariable("foo", types.TypeIdent{Name: "Bar"})
 	if scope.HasVariable("foo") {
-		expectEquivalentType(t, scope.GetVariableType("foo"), TypeIdent{Name: "Bar"})
+		expectEquivalentType(t, scope.GetVariableType("foo"), types.TypeIdent{Name: "Bar"})
 	} else {
 		t.Errorf("Expected key '%s' in Scope#variables, none found", "foo")
 	}
@@ -46,16 +47,16 @@ func TestScopeNewVariable(t *testing.T) {
 
 func TestScopeGetVariable(t *testing.T) {
 	parent := makeGlobalScope()
-	child := makeLocalScope(parent, TypeFunction{})
-	parent.newVariable("foo", TypeIdent{Name: "Bar"})
-	expectEquivalentType(t, child.GetVariableType("foo"), TypeIdent{Name: "Bar"})
+	child := makeLocalScope(parent, types.TypeFunction{})
+	parent.newVariable("foo", types.TypeIdent{Name: "Bar"})
+	expectEquivalentType(t, child.GetVariableType("foo"), types.TypeIdent{Name: "Bar"})
 }
 
 func TestScopeString(t *testing.T) {
 	scope := makeGlobalScope()
-	scope.newVariable("num", TypeIdent{Name: "Int"})
-	scope.newVariable("test", TypeIdent{Name: "Bool"})
-	scope.newVariable("coord", TypeTuple{Children: []Type{TypeIdent{Name: "Int"}, TypeIdent{Name: "Int"}}})
+	scope.newVariable("num", types.TypeIdent{Name: "Int"})
+	scope.newVariable("test", types.TypeIdent{Name: "Bool"})
+	scope.newVariable("coord", types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}, types.TypeIdent{Name: "Int"}}})
 
 	expectString(t, scope.String(), "coord : (Int Int)\nnum   : Int\ntest  : Bool")
 }

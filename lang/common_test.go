@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"plaid/lang/types"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func expectBool(t *testing.T, got bool, exp bool) {
 	}
 }
 
-func expectEquivalentType(t *testing.T, t1 Type, t2 Type) {
+func expectEquivalentType(t *testing.T, t1 types.Type, t2 types.Type) {
 	if t1 == nil {
 		t.Fatalf("Expected type, got <nil>")
 	}
@@ -41,7 +42,7 @@ func expectEquivalentType(t *testing.T, t1 Type, t2 Type) {
 	}
 }
 
-func expectNotEquivalentType(t *testing.T, t1 Type, t2 Type) {
+func expectNotEquivalentType(t *testing.T, t1 types.Type, t2 types.Type) {
 	if t1 == nil {
 		t.Fatalf("Expected type, got <nil>")
 	}

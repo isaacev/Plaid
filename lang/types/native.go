@@ -1,4 +1,4 @@
-package lang
+package types
 
 // TypeNativeInt is the canonical integer type symbol
 var TypeNativeInt = TypeIdent{"Int"}

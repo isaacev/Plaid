@@ -1,4 +1,4 @@
-package lang
+package types
 
 import (
 	"testing"
@@ -118,4 +118,66 @@ func TestConcatTypes(t *testing.T) {
 	expectString(t, concatTypes(nil), "")
 	expectString(t, concatTypes([]Type{}), "")
 	expectString(t, concatTypes([]Type{tInt, tBool, tInt}), "Int Bool Int")
+}
+
+func expectEquivalentType(t *testing.T, t1 Type, t2 Type) {
+	if t1 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
+	if t2 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
+	same := t1.Equals(t2)
+	commutative := t1.Equals(t2) == t2.Equals(t1)
+
+	if commutative == false {
+		if same {
+			t.Errorf("%s == %s, but %s != %s", t1, t2, t2, t1)
+		} else {
+			t.Errorf("%s == %s, but %s != %s", t2, t1, t1, t2)
+		}
+	}
+
+	if same == false {
+		t.Errorf("Expected %s == %s, got %t", t1, t2, same)
+	}
+}
+
+func expectNotEquivalentType(t *testing.T, t1 Type, t2 Type) {
+	if t1 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
+	if t2 == nil {
+		t.Fatalf("Expected type, got <nil>")
+	}
+
+	same := t1.Equals(t2)
+	commutative := t1.Equals(t2) == t2.Equals(t1)
+
+	if commutative == false {
+		if same {
+			t.Errorf("%s == %s, but %s != %s", t1, t2, t2, t1)
+		} else {
+			t.Errorf("%s == %s, but %s != %s", t2, t1, t1, t2)
+		}
+	}
+
+	if same == true {
+		t.Errorf("Expected %s != %s, got %t", t1, t2, same)
+	}
+}
+
+func expectString(t *testing.T, got string, exp string) {
+	if exp != got {
+		t.Errorf("Expected '%s', got '%s'", exp, got)
+	}
+}
+
+func expectBool(t *testing.T, got bool, exp bool) {
+	if exp != got {
+		t.Errorf("Expected %t, got %t", exp, got)
+	}
 }

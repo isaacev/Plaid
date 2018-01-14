@@ -3,6 +3,7 @@ package lang
 import (
 	"fmt"
 	"plaid/lang/printing"
+	"plaid/lang/types"
 )
 
 type Module interface {
@@ -25,7 +26,7 @@ func (m *NativeModule) String() (out string) {
 	return m.Path()
 }
 
-func BuildNativeModule(name string, exports map[string]Type) *NativeModule {
+func BuildNativeModule(name string, exports map[string]types.Type) *NativeModule {
 	return &NativeModule{
 		path: name,
 		scope: &GlobalScope{
