@@ -2,8 +2,174 @@ package lang
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+func buildTestingScripts(root string, files map[string]string) (rootPath string, tmpDir string) {
+	dir, err := ioutil.TempDir("", "plaid-test")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for name, contents := range files {
+		tmpFile := filepath.Join(dir, name)
+		if name == root {
+			rootPath = tmpFile
+		}
+		ioutil.WriteFile(tmpFile, []byte(contents), 0666)
+	}
+
+	return rootPath, dir
+}
+
+func destroyTestingScripts(tmpDir string) {
+	os.RemoveAll(tmpDir)
+}
+
+func TestLink(t *testing.T) {
+	read := func(filepath string) *RootNode {
+		src, err := ioutil.ReadFile(filepath)
+		if err != nil {
+			t.Fatalf("failed to read testing file: '%s'", filepath)
+		}
+
+		ast, errs := Parse(filepath, string(src))
+		if len(errs) > 0 {
+			t.Fatalf("failed to parse testing file: '%s'", filepath)
+		}
+
+		return ast
+	}
+
+	good := func(start string, modBase string, importBases []string) {
+		ast := read(start)
+		mod, errs := Link(start, ast)
+
+		if len(errs) > 0 {
+			t.Fatal(errs[0])
+		} else {
+			expectSame(t, filepath.Base(mod.Path()), modBase)
+			if len(mod.Imports()) != len(importBases) {
+				t.Errorf("Expected %d imports, got %d", len(importBases), len(mod.Imports()))
+			} else {
+				for i, imp := range importBases {
+					expectSame(t, filepath.Base(mod.Imports()[i].Path()), imp)
+				}
+			}
+		}
+	}
+
+	bad := func(start string, exp string) {
+		ast := read(start)
+		var err error = nil
+		_, errs := Link(start, ast)
+		if len(errs) > 0 {
+			err = errs[0]
+		}
+
+		expectAnError(t, err, exp)
+	}
+
+	start, tmpDir := buildTestingScripts("b.plaid", map[string]string{
+		"a.plaid": `let x := 100;`,
+		"b.plaid": `use "a.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+	good(start, "b.plaid", []string{"a.plaid"})
+
+	start, tmpDir = buildTestingScripts("d.plaid", map[string]string{
+		"c.plaid": `let x :=`,
+		"d.plaid": `use "c.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+	bad(start, fmt.Sprintf("%s/c.plaid(1:8) unexpected symbol", tmpDir))
+}
+
+func TestResolve(t *testing.T) {
+	start, tmpDir := buildTestingScripts("e.plaid", map[string]string{
+		"a.plaid": "let x := 100;",
+		"b.plaid": `use "a.plaid";`,
+		"c.plaid": `use "a.plaid";`,
+		"d.plaid": `use "b.plaid";`,
+		"e.plaid": `use "a.plaid"; use "b.plaid"; use "c.plaid"; use "d.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+
+	read := func(filepath string) *RootNode {
+		src, err := ioutil.ReadFile(filepath)
+		if err != nil {
+			t.Fatalf("failed to read testing file: '%s'", filepath)
+		}
+
+		ast, errs := Parse(filepath, string(src))
+		if len(errs) > 0 {
+			t.Fatalf("failed to parse testing file: '%s'", filepath)
+		}
+
+		return ast
+	}
+
+	good := func(start string, exp []string) {
+		ast := read(start)
+		if order, errs := resolve(start, ast); len(errs) > 0 {
+			t.Fatal(errs[0])
+		} else if len(order) != len(exp) {
+			t.Errorf("expected %d loaded dependencies, got %d", len(exp), len(order))
+		} else {
+			for i, expDep := range exp {
+				got := filepath.Base(order[i].module.Path())
+				if expDep != got {
+					t.Errorf("expected moduel %d to be '%s', got '%s'", i, expDep, got)
+				}
+			}
+		}
+	}
+
+	good(start, []string{
+		"a.plaid",
+		"b.plaid",
+		"c.plaid",
+		"d.plaid",
+		"e.plaid",
+	})
+
+	bad := func(start string, exp string) {
+		ast := read(start)
+		var err error = nil
+		_, errs := resolve(start, ast)
+		if len(errs) > 0 {
+			err = errs[0]
+		}
+
+		expectAnError(t, err, exp)
+	}
+
+	start, tmpDir = buildTestingScripts("h.plaid", map[string]string{
+		"f.plaid": `use "h.plaid";`,
+		"g.plaid": `use "f.plaid";`,
+		"h.plaid": `use "g.plaid";`,
+		"i.plaid": `use "h.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+	bad(start, "Dependency cycle: h.plaid <- f.plaid <- g.plaid <- h.plaid")
+
+	start, tmpDir = buildTestingScripts("k.plaid", map[string]string{
+		"j.plaid": `let x :=`,
+		"k.plaid": `use "j.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+	bad(start, fmt.Sprintf("%s/j.plaid(1:8) unexpected symbol", tmpDir))
+
+	start, tmpDir = buildTestingScripts("l.plaid", map[string]string{
+		"l.plaid": `use "m.plaid";`,
+	})
+	defer destroyTestingScripts(tmpDir)
+	bad(start, fmt.Sprintf("open %s/m.plaid: no such file or directory", tmpDir))
+}
 
 func TestGraphResetFlags(t *testing.T) {
 	n1 := &node{flag: 5}

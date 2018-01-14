@@ -14,12 +14,6 @@ func Link(filepath string, ast *RootNode) (mod *VirtualModule, errs []error) {
 		return nil, errs
 	}
 
-	// Sanity check: the last module in the order must be the same program passed
-	// via the `ast` parameter.
-	if order[len(order)-1].module.ast != ast {
-		panic("root module not loaded last")
-	}
-
 	// Link each module in the dependency graph to its dependencies.
 	for _, n := range order {
 		for _, child := range n.children {
