@@ -126,9 +126,9 @@ func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn (a: Int): Int { };")
 	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, s.GetVariableType("f"), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{types.TypeIdent{Name: "Int"}}},
-		Ret:    types.TypeIdent{Name: "Int"},
+	expectEquivalentType(t, s.GetVariableType("f"), types.Function{
+		Params: types.Tuple{Children: []types.Type{types.Ident{Name: "Int"}}},
+		Ret:    types.Ident{Name: "Int"},
 	})
 }
 
@@ -157,36 +157,36 @@ func TestCheckDispatchExpr(t *testing.T) {
 		}
 	}
 
-	good("add(2, 5);", "add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	good("add(2, 5);", "add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	})
 
 	bad("add(2, 5);", "add", types.TypeNativeInt, "(1:1) cannot call function on type 'Int'")
-	bad("add(2);", "add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	bad("add(2);", "add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	}, "(1:1) expected 2 arguments, got 1")
 	bad("self();", "", nil, "(1:1) self references must be inside a function")
-	bad("add(5, x);", "add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	bad("add(5, x);", "add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	}, "(1:8) variable 'x' was used before it was declared")
-	bad(`add("2", "4");`, "add", types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Int"},
+	bad(`add("2", "4");`, "add", types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Int"},
 		}},
-		Ret: types.TypeIdent{Name: "Int"},
+		Ret: types.Ident{Name: "Int"},
 	}, "(1:5) expected 'Int', got 'Str'", "(1:10) expected 'Int', got 'Str'")
 }
 
@@ -245,7 +245,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 			for n, err := range errs {
 				expectNthError(t, s, n, err)
 			}
-			expectEquivalentType(t, s.GetVariableType("c"), types.TypeError{})
+			expectEquivalentType(t, s.GetVariableType("c"), types.Error{})
 		}
 	}
 
@@ -286,12 +286,12 @@ func TestCheckListExpr(t *testing.T) {
 		s := makeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNthError(t, s, 0, exp)
-		expectEquivalentType(t, got, types.TypeError{})
+		expectEquivalentType(t, got, types.Error{})
 	}
 
 	good(&ListExpr{Elements: []Expr{
 		&StringExpr{Val: "foo"},
-	}}, types.TypeList{Child: types.TypeNativeStr})
+	}}, types.List{Child: types.TypeNativeStr})
 
 	start := makeTok(5, 4)
 	first := makeTok(7, 12)
@@ -313,7 +313,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr := &SubscriptExpr{ListLike: str, Index: index}
 	typ := checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeOptional{Child: types.TypeNativeStr})
+	expectEquivalentType(t, typ, types.Optional{Child: types.TypeNativeStr})
 
 	s = makeGlobalScope()
 	list := &ListExpr{Elements: []Expr{
@@ -323,7 +323,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr = &SubscriptExpr{ListLike: list, Index: index}
 	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeOptional{Child: types.TypeNativeInt})
+	expectEquivalentType(t, typ, types.Optional{Child: types.TypeNativeInt})
 
 	s = makeGlobalScope()
 	str = &StringExpr{Tok: nop, Val: "foo"}
@@ -402,7 +402,7 @@ func TestConvertTypeSig(t *testing.T) {
 	var note TypeNote
 
 	note = TypeNoteVoid{Tok: nop}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeVoid{})
+	expectEquivalentType(t, convertTypeNote(note), types.Void{})
 
 	note = TypeNoteFunction{
 		Params: TypeNoteTuple{Tok: nop, Elems: []TypeNote{
@@ -411,12 +411,12 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: TypeNoteIdent{Tok: nop, Name: "Str"},
 	}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, convertTypeNote(note), types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Bool"},
 		}},
-		Ret: types.TypeIdent{Name: "Str"},
+		Ret: types.Ident{Name: "Str"},
 	})
 
 	note = TypeNoteFunction{
@@ -426,31 +426,31 @@ func TestConvertTypeSig(t *testing.T) {
 		}},
 		Ret: TypeNoteVoid{},
 	}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeFunction{
-		Params: types.TypeTuple{Children: []types.Type{
-			types.TypeIdent{Name: "Int"},
-			types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, convertTypeNote(note), types.Function{
+		Params: types.Tuple{Children: []types.Type{
+			types.Ident{Name: "Int"},
+			types.Ident{Name: "Bool"},
 		}},
-		Ret: types.TypeVoid{},
+		Ret: types.Void{},
 	})
 
 	note = TypeNoteTuple{Tok: nop, Elems: []TypeNote{
 		TypeNoteIdent{Tok: nop, Name: "Int"},
 		TypeNoteIdent{Tok: nop, Name: "Bool"},
 	}}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeTuple{Children: []types.Type{
-		types.TypeIdent{Name: "Int"},
-		types.TypeIdent{Name: "Bool"},
+	expectEquivalentType(t, convertTypeNote(note), types.Tuple{Children: []types.Type{
+		types.Ident{Name: "Int"},
+		types.Ident{Name: "Bool"},
 	}})
 
 	note = TypeNoteList{Tok: nop, Child: TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeList{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, convertTypeNote(note), types.List{Child: types.Ident{Name: "Int"}})
 
 	note = TypeNoteOptional{Tok: nop, Child: TypeNoteIdent{Tok: nop, Name: "Int"}}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeOptional{Child: types.TypeIdent{Name: "Int"}})
+	expectEquivalentType(t, convertTypeNote(note), types.Optional{Child: types.Ident{Name: "Int"}})
 
 	note = TypeNoteIdent{Tok: nop, Name: "Int"}
-	expectEquivalentType(t, convertTypeNote(note), types.TypeIdent{Name: "Int"})
+	expectEquivalentType(t, convertTypeNote(note), types.Ident{Name: "Int"})
 
 	note = nil
 	expectBool(t, convertTypeNote(note) == nil, true)

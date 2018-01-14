@@ -9,12 +9,12 @@ import (
 func convertTypeNote(note TypeNote) types.Type {
 	switch note := note.(type) {
 	case TypeNoteAny:
-		return types.TypeAny{}
+		return types.Any{}
 	case TypeNoteVoid:
-		return types.TypeVoid{}
+		return types.Void{}
 	case TypeNoteFunction:
-		return types.TypeFunction{
-			Params: convertTypeNote(note.Params).(types.TypeTuple),
+		return types.Function{
+			Params: convertTypeNote(note.Params).(types.Tuple),
 			Ret:    convertTypeNote(note.Ret),
 		}
 	case TypeNoteTuple:
@@ -22,13 +22,13 @@ func convertTypeNote(note TypeNote) types.Type {
 		for _, elem := range note.Elems {
 			elems = append(elems, convertTypeNote(elem))
 		}
-		return types.TypeTuple{Children: elems}
+		return types.Tuple{Children: elems}
 	case TypeNoteList:
-		return types.TypeList{Child: convertTypeNote(note.Child)}
+		return types.List{Child: convertTypeNote(note.Child)}
 	case TypeNoteOptional:
-		return types.TypeOptional{Child: convertTypeNote(note.Child)}
+		return types.Optional{Child: convertTypeNote(note.Child)}
 	case TypeNoteIdent:
-		return types.TypeIdent{Name: note.Name}
+		return types.Ident{Name: note.Name}
 	default:
 		return nil
 	}

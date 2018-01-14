@@ -49,7 +49,7 @@ var defaultBinopsLUT = binopsLUT{
 		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeBool},
 	},
 	"[": doubleLUT{
-		types.TypeNativeStr: singleLUT{types.TypeNativeInt: types.TypeOptional{Child: types.TypeNativeStr}},
+		types.TypeNativeStr: singleLUT{types.TypeNativeInt: types.Optional{Child: types.TypeNativeStr}},
 	},
 }
 
@@ -143,7 +143,7 @@ func checkDeclarationStmt(s Scope, stmt *DeclarationStmt) {
 }
 
 func checkReturnStmt(s Scope, stmt *ReturnStmt) {
-	var ret types.Type = types.TypeVoid{}
+	var ret types.Type = types.Void{}
 	if stmt.Expr != nil {
 		ret = checkExpr(s, stmt.Expr)
 	}
@@ -157,13 +157,13 @@ func checkReturnStmt(s Scope, stmt *ReturnStmt) {
 		return
 	}
 
-	if s.GetSelfReference().Ret.Equals(types.TypeVoid{}) {
+	if s.GetSelfReference().Ret.Equals(types.Void{}) {
 		msg := fmt.Sprintf("expected to return nothing, got '%s'", ret)
 		addTypeError(s, stmt.Expr.Start(), msg)
 		return
 	}
 
-	if (types.TypeVoid{}).Equals(ret) {
+	if (types.Void{}).Equals(ret) {
 		msg := fmt.Sprintf("expected a return type of '%s', got nothing", s.GetSelfReference().Ret)
 		addTypeError(s, stmt.Start(), msg)
 		return
@@ -174,7 +174,7 @@ func checkReturnStmt(s Scope, stmt *ReturnStmt) {
 }
 
 func checkExprAllowVoid(s Scope, expr Expr) types.Type {
-	var typ types.Type = types.TypeError{}
+	var typ types.Type = types.Error{}
 	switch expr := expr.(type) {
 	case *FunctionExpr:
 		typ = checkFunctionExpr(s, expr)
@@ -208,9 +208,9 @@ func checkExprAllowVoid(s Scope, expr Expr) types.Type {
 func checkExpr(s Scope, expr Expr) types.Type {
 	typ := checkExprAllowVoid(s, expr)
 
-	if (types.TypeVoid{}).Equals(typ) {
+	if (types.Void{}).Equals(typ) {
 		addTypeError(s, expr.Start(), "cannot use void types in an expression")
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	return typ
@@ -222,8 +222,8 @@ func checkFunctionExpr(s Scope, expr *FunctionExpr) types.Type {
 	for _, param := range expr.Params {
 		params = append(params, convertTypeNote(param.Note))
 	}
-	tuple := types.TypeTuple{Children: params}
-	self := types.TypeFunction{Params: tuple, Ret: ret}
+	tuple := types.Tuple{Children: params}
+	self := types.Function{Params: tuple, Ret: ret}
 
 	childScope := makeLocalScope(s, self)
 
@@ -246,14 +246,14 @@ func checkDispatchExpr(s Scope, expr *DispatchExpr) types.Type {
 
 	// Resolve callee to type
 	calleeType := checkExpr(s, expr.Callee)
-	calleeFunc, ok := calleeType.(types.TypeFunction)
+	calleeFunc, ok := calleeType.(types.Function)
 	if ok == false {
 		if calleeType.IsError() == false {
 			msg := fmt.Sprintf("cannot call function on type '%s'", calleeType)
 			addTypeError(s, expr.Start(), msg)
 		}
 
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	// Resolve return type
@@ -268,17 +268,17 @@ func checkDispatchExpr(s Scope, expr *DispatchExpr) types.Type {
 			paramType := calleeFunc.Params.Children[i]
 
 			if argType.IsError() {
-				retType = types.TypeError{}
+				retType = types.Error{}
 			} else if paramType.Equals(argType) == false {
 				msg := fmt.Sprintf("expected '%s', got '%s'", paramType, argType)
 				addTypeError(s, expr.Args[i].Start(), msg)
-				retType = types.TypeError{}
+				retType = types.Error{}
 			}
 		}
 	} else {
 		msg := fmt.Sprintf("expected %d arguments, got %d", totalParams, totalArgs)
 		addTypeError(s, expr.Start(), msg)
-		retType = types.TypeError{}
+		retType = types.Error{}
 	}
 
 	return retType
@@ -292,17 +292,17 @@ func checkAssignExpr(s Scope, expr *AssignExpr) types.Type {
 	if leftType == nil {
 		msg := fmt.Sprintf("'%s' cannot be assigned before it is declared", name)
 		addTypeError(s, expr.Start(), msg)
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	if leftType.IsError() || rightType.IsError() {
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	if leftType.Equals(rightType) == false {
 		msg := fmt.Sprintf("'%s' cannot be assigned type '%s'", leftType, rightType)
 		addTypeError(s, expr.Right.Start(), msg)
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	return leftType
@@ -313,7 +313,7 @@ func checkBinaryExpr(s Scope, expr *BinaryExpr, lut binopsLUT) types.Type {
 	rightType := checkExpr(s, expr.Right)
 
 	if leftType.IsError() || rightType.IsError() {
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	if operLUT, ok := lut[expr.Oper]; ok {
@@ -325,12 +325,12 @@ func checkBinaryExpr(s Scope, expr *BinaryExpr, lut binopsLUT) types.Type {
 
 		msg := fmt.Sprintf("operator '%s' does not support %s and %s", expr.Oper, leftType, rightType)
 		addTypeError(s, expr.Tok.Loc, msg)
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	msg := fmt.Sprintf("unknown infix operator '%s'", expr.Oper)
 	addTypeError(s, expr.Tok.Loc, msg)
-	return types.TypeError{}
+	return types.Error{}
 }
 
 func checkListExpr(s Scope, expr *ListExpr) types.Type {
@@ -342,12 +342,12 @@ func checkListExpr(s Scope, expr *ListExpr) types.Type {
 	if len(elemTypes) == 0 {
 		msg := "cannot determine type from empty list"
 		addTypeError(s, expr.Start(), msg)
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	for _, typ := range elemTypes {
 		if typ.IsError() {
-			return types.TypeError{}
+			return types.Error{}
 		}
 	}
 
@@ -361,11 +361,11 @@ func checkListExpr(s Scope, expr *ListExpr) types.Type {
 		if listType.Equals(typ) == false {
 			msg := fmt.Sprintf("element type %s is not compatible with type %s", typ, listType)
 			addTypeError(s, expr.Elements[i].Start(), msg)
-			return types.TypeError{}
+			return types.Error{}
 		}
 	}
 
-	return types.TypeList{Child: listType}
+	return types.List{Child: listType}
 }
 
 func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type {
@@ -373,11 +373,11 @@ func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type 
 	indexType := checkExpr(s, expr.Index)
 
 	if listType.IsError() || indexType.IsError() {
-		return types.TypeError{}
+		return types.Error{}
 	}
 
-	if listType, ok := listType.(types.TypeList); ok {
-		return types.TypeOptional{Child: listType.Child}
+	if listType, ok := listType.(types.List); ok {
+		return types.Optional{Child: listType.Child}
 	}
 
 	if subscriptLUT, ok := lut["["]; ok {
@@ -389,17 +389,17 @@ func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type 
 
 		msg := fmt.Sprintf("subscript operator does not support %s[%s]", listType, indexType)
 		addTypeError(s, expr.Index.Start(), msg)
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	addTypeError(s, expr.Start(), "unknown infix operator '['")
-	return types.TypeError{}
+	return types.Error{}
 }
 
 func checkSelfExpr(s Scope, expr *SelfExpr) types.Type {
 	if s.HasSelfReference() == false {
 		addTypeError(s, expr.Start(), "self references must be inside a function")
-		return types.TypeError{}
+		return types.Error{}
 	}
 
 	return s.GetSelfReference()
@@ -412,7 +412,7 @@ func checkIdentExpr(s Scope, expr *IdentExpr) types.Type {
 
 	msg := fmt.Sprintf("variable '%s' was used before it was declared", expr.Name)
 	addTypeError(s, expr.Start(), msg)
-	return types.TypeError{}
+	return types.Error{}
 }
 
 func checkNumberExpr(s Scope, expr *NumberExpr) types.Type {

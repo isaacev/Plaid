@@ -16,7 +16,7 @@ type Scope interface {
 	GetParent() Scope
 	addChild(Scope) Scope
 	HasSelfReference() bool
-	GetSelfReference() types.TypeFunction
+	GetSelfReference() types.Function
 	HasErrors() bool
 	GetErrors() []error
 	newError(error)
@@ -98,7 +98,7 @@ func (s *GlobalScope) HasSelfReference() bool { return false }
 
 // GetSelfReference returns an empty function type because no function can
 // contain a global scope
-func (s *GlobalScope) GetSelfReference() types.TypeFunction { return types.TypeFunction{} }
+func (s *GlobalScope) GetSelfReference() types.Function { return types.Function{} }
 
 // HasErrors returns true if any errors have been logged with this scope
 func (s *GlobalScope) HasErrors() bool { return len(s.errors) > 0 }
@@ -249,14 +249,14 @@ func (s *GlobalScope) StringerChildren() (children []printing.StringerTree) {
 type LocalScope struct {
 	parent     Scope
 	children   []Scope
-	self       types.TypeFunction
+	self       types.Function
 	types      map[string]types.Type
 	references map[string]*UniqueSymbol
 }
 
 // makeLocalScope is a helper function to quickly build a local scope that is
 // doubly linked to its parent scope
-func makeLocalScope(parent Scope, self types.TypeFunction) *LocalScope {
+func makeLocalScope(parent Scope, self types.Function) *LocalScope {
 	return parent.addChild(&LocalScope{
 		parent:     parent,
 		self:       self,
@@ -280,7 +280,7 @@ func (s *LocalScope) addChild(child Scope) Scope {
 func (s *LocalScope) HasSelfReference() bool { return true }
 
 // GetSelfReference returns the type signature of the current function
-func (s *LocalScope) GetSelfReference() types.TypeFunction { return s.self }
+func (s *LocalScope) GetSelfReference() types.Function { return s.self }
 
 // HasErrors returns true if any errors have been logged with this scope
 func (s *LocalScope) HasErrors() bool { return s.parent.HasErrors() }

@@ -6,10 +6,10 @@ import (
 )
 
 var IO = lang.BuildNativeModule("IO", map[string]types.Type{
-	"print": types.TypeFunction{
-		Params: types.TypeTuple{[]types.Type{
-			types.TypeAny{},
+	"print": types.Function{
+		Params: types.Tuple{[]types.Type{
+			types.Any{},
 		}},
-		Ret: types.TypeVoid{},
+		Ret: types.Void{},
 	},
 })
