@@ -46,9 +46,9 @@ func (m *VirtualModule) Scope() *GlobalScope { return m.scope }
 func (m *VirtualModule) Imports() []Module   { return m.imports }
 
 func (m *VirtualModule) String() (out string) {
-	out += fmt.Sprintln(m.Path())
+	out += fmt.Sprintf("path: %s\n", m.Path())
 	for _, imp := range m.Imports() {
-		out += fmt.Sprintf(" > %s\n", imp.Path())
+		out += fmt.Sprintf("uses: %s\n", imp.Path())
 	}
 	out += printing.TreeToString(m.scope)
 	return out
