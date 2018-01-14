@@ -6,10 +6,15 @@ import (
 )
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(filepath string, source string) (*RootNode, error) {
+func Parse(filepath string, source string) (*RootNode, []error) {
 	p := makeParser(filepath, source)
 	loadGrammar(p)
-	return parseProgram(p)
+	ast, err := parseProgram(p)
+	if err != nil {
+		return ast, []error{err}
+	} else {
+		return ast, nil
+	}
 }
 
 // precedence describes the relative binding powers of different operators
