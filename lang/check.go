@@ -9,8 +9,12 @@ func Check(mod Module) (Module, []error) {
 	case *NativeModule:
 		return cast, nil
 	case *VirtualModule:
-		checkModule(cast)
-		return cast, nil
+		scope := checkModule(cast)
+		if scope.HasErrors() {
+			return nil, scope.GetErrors()
+		} else {
+			return cast, nil
+		}
 	default:
 		panic("unknown module type")
 	}
