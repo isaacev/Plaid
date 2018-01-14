@@ -6,9 +6,9 @@ import (
 
 // Type describes all type structs
 type Type interface {
+	fmt.Stringer
 	Equals(other Type) bool
 	IsError() bool
-	String() string
 	isType()
 }
 
