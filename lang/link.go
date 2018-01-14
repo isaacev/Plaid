@@ -48,23 +48,6 @@ func (g *graph) resetFlags() {
 	}
 }
 
-// link does some stuff
-func link(path string, ast *RootNode, builtins ...Module) (Module, []error) {
-	order, errs := resolve(path, ast)
-	if len(errs) > 0 {
-		return nil, errs
-	}
-
-	// Link ordered modules.
-	for _, n := range order {
-		for _, child := range n.children {
-			n.module.imports = append(n.module.imports, child.module)
-		}
-	}
-
-	return order[len(order)-1].module, nil
-}
-
 // resolve determines if a module has any dependency cycles
 func resolve(path string, ast *RootNode) ([]*node, []error) {
 	n := makeNode(path, ast)
