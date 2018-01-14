@@ -31,17 +31,17 @@ func run(filename string) (errs []error) {
 	var ast *lang.RootNode
 	var mod *lang.VirtualModule
 
+	fmt.Println("\n=== SOURCE CODE")
 	if src, errs = read(filename); len(errs) > 0 {
 		return errs
 	} else {
-		fmt.Println("=== SOURCE CODE")
 		fmt.Println(src)
 	}
 
+	fmt.Println("\n=== SYNTAX TREE")
 	if ast, errs = lang.Parse(filename, src); len(errs) > 0 {
 		return errs
 	} else {
-		fmt.Println("=== SYNTAX TREE")
 		fmt.Println(ast)
 	}
 
@@ -49,10 +49,10 @@ func run(filename string) (errs []error) {
 		return errs
 	}
 
+	fmt.Println("\n=== MODULE")
 	if _, errs = lang.Check(mod); len(errs) > 0 {
 		return errs
 	} else {
-		fmt.Println("=== MODULE")
 		fmt.Println(mod)
 	}
 
