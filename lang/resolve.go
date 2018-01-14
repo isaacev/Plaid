@@ -113,9 +113,9 @@ func routeToString(route []*node) (out string) {
 
 	for i, n := range route {
 		if i == len(route)-1 {
-			out += filepath.Base(n.module.name)
+			out += filepath.Base(n.module.path)
 		} else {
-			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.name))
+			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.path))
 		}
 	}
 	return out
@@ -166,8 +166,8 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
-	g.nodes[n.module.name] = n
-	done[n.module.name] = n
+	g.nodes[n.module.path] = n
+	done[n.module.path] = n
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
@@ -197,7 +197,7 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 func getDependencyPaths(n *node) (paths []string) {
 	for _, stmt := range n.module.ast.Stmts {
 		if stmt, ok := stmt.(*UseStmt); ok {
-			dir := filepath.Dir(n.module.name)
+			dir := filepath.Dir(n.module.path)
 			path := filepath.Join(dir, stmt.Path.Val)
 			paths = append(paths, path)
 		}
@@ -219,7 +219,7 @@ func addTodo(todo *[]*node, n *node) {
 }
 
 func addDone(done map[string]*node, n *node) {
-	done[n.module.name] = n
+	done[n.module.path] = n
 }
 
 func loadDependency(path string) (n *node, errs []error) {
@@ -239,7 +239,7 @@ func loadDependency(path string) (n *node, errs []error) {
 func makeNode(path string, ast *RootNode) *node {
 	return &node{
 		module: &VirtualModule{
-			name:    path,
+			path:    path,
 			ast:     ast,
 			scope:   nil,
 			imports: nil,
