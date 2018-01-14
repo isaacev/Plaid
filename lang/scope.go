@@ -50,6 +50,10 @@ func makeGlobalScope() *GlobalScope {
 
 // addImport exposes another module's exports to the global scope
 func (s *GlobalScope) addImport(module *GlobalScope) {
+	if module == nil {
+		panic("tried to add <nil> as import")
+	}
+
 	s.imports = append(s.imports, module)
 }
 
