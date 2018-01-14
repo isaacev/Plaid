@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"plaid/lang"
+	"plaid/lib"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func run(filename string) (errs []error) {
 	}
 
 	fmt.Println("\n=== MODULE")
-	if _, errs = lang.Check(mod); len(errs) > 0 {
+	if _, errs = lang.Check(mod, lib.IO, lib.Conv); len(errs) > 0 {
 		return errs
 	} else {
 		fmt.Println(mod)

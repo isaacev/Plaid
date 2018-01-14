@@ -4,12 +4,12 @@ import (
 	"fmt"
 )
 
-func Check(mod Module) (Module, []error) {
+func Check(mod Module, builtins ...Module) (Module, []error) {
 	switch cast := mod.(type) {
 	case *NativeModule:
 		return cast, nil
 	case *VirtualModule:
-		scope := checkModule(cast)
+		scope := checkModule(cast, builtins...)
 		if scope.HasErrors() {
 			return nil, scope.GetErrors()
 		} else {
