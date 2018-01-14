@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+func expectSame(t *testing.T, got interface{}, exp interface{}) {
+	if exp != got {
+		t.Errorf("Expected '%v', got '%v'", exp, got)
+	}
+}
+
 func expectString(t *testing.T, got string, exp string) {
 	if exp != got {
 		t.Errorf("Expected '%s', got '%s'", exp, got)
