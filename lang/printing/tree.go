@@ -1,4 +1,4 @@
-package lang
+package printing
 
 import (
 	"fmt"
@@ -18,15 +18,15 @@ const (
 	teeE      = "├"
 )
 
-// stringTree describes the node of a tree that can have 0 or more children
+// StringerTree describes the node of a tree that can have 0 or more children
 // each of whom defines a `String() string` function and may have its own
 // children
-type stringTree interface {
+type StringerTree interface {
 	fmt.Stringer
-	stringChildren() []stringTree
+	StringerChildren() []StringerTree
 }
 
-// prettyTree takes a StringTree and returns a string of the form:
+// PrettyTree takes a StringTree and returns a string of the form:
 // ╭
 // ┤ (leaf 1).String()
 // │ ╭
@@ -37,15 +37,15 @@ type stringTree interface {
 // │ ╭
 // ╰─┤ (leaf 1.2).String()
 //   ╰
-func prettyTree(root stringTree) (out string) {
-	children := root.stringChildren()
+func PrettyTree(root StringerTree) (out string) {
+	children := root.StringerChildren()
 	total := len(children)
 	out += brace(root.String(), total == 0)
 	for i, child := range children {
 		if i < total-1 {
-			out += "\n" + indentAndAttach(prettyTree(child), teeE, pipeVert)
+			out += "\n" + indentAndAttach(PrettyTree(child), teeE, pipeVert)
 		} else {
-			out += "\n" + indentAndAttach(prettyTree(child), cornerSW, " ")
+			out += "\n" + indentAndAttach(PrettyTree(child), cornerSW, " ")
 		}
 	}
 	return out

@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"plaid/lang/printing"
 	"sort"
 )
 
@@ -9,7 +10,7 @@ type UniqueSymbol struct{}
 
 // Scope describes common methods that any type of scope must implement
 type Scope interface {
-	stringTree
+	printing.StringerTree
 	HasParent() bool
 	GetParent() Scope
 	addChild(Scope) Scope
@@ -231,8 +232,8 @@ func (s *GlobalScope) String() (out string) {
 	return out
 }
 
-// stringChildren satisfies the StringTree interface
-func (s *GlobalScope) stringChildren() (children []stringTree) {
+// StringerChildren satisfies the StringTree interface
+func (s *GlobalScope) StringerChildren() (children []printing.StringerTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}
@@ -382,8 +383,8 @@ func (s *LocalScope) String() (out string) {
 	return out
 }
 
-// stringChildren satisfies the StringTree interface
-func (s *LocalScope) stringChildren() (children []stringTree) {
+// StringerChildren satisfies the StringTree interface
+func (s *LocalScope) StringerChildren() (children []printing.StringerTree) {
 	for _, child := range s.children {
 		children = append(children, child)
 	}

@@ -1,4 +1,4 @@
-package lang
+package printing
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func (d dummy) String() string {
 	return d.name
 }
 
-func (d dummy) stringChildren() (s []stringTree) {
+func (d dummy) StringerChildren() (s []StringerTree) {
 	for _, l := range d.leafs {
 		s = append(s, l)
 	}
@@ -21,8 +21,8 @@ func (d dummy) stringChildren() (s []stringTree) {
 }
 
 func TestPrettyTree(t *testing.T) {
-	test := func(root stringTree, exp string) {
-		got := prettyTree(root)
+	test := func(root StringerTree, exp string) {
+		got := PrettyTree(root)
 		expectString(t, got, exp)
 	}
 
@@ -77,5 +77,11 @@ func expectStringSlice(t *testing.T, got []string, exp []string) {
 		for i := 0; i < len(exp); i++ {
 			expectString(t, got[i], exp[i])
 		}
+	}
+}
+
+func expectString(t *testing.T, got string, exp string) {
+	if exp != got {
+		t.Errorf("Expected '%s', got '%s'", exp, got)
 	}
 }

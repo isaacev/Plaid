@@ -18,7 +18,7 @@ func (m *NativeModule) Path() string        { return m.path }
 func (m *NativeModule) Scope() *GlobalScope { return m.scope }
 func (m *NativeModule) Imports() []Module   { return nil }
 
-func (m *NativeModule) String() string {
+func (m *NativeModule) String() (out string) {
 	return m.Path()
 }
 
@@ -42,6 +42,6 @@ func (m *VirtualModule) Path() string        { return m.path }
 func (m *VirtualModule) Scope() *GlobalScope { return m.scope }
 func (m *VirtualModule) Imports() []Module   { return m.imports }
 
-func (m *VirtualModule) String() string {
+func (m *VirtualModule) String() (out string) {
 	return m.Path()
 }
