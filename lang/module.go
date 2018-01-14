@@ -1,6 +1,9 @@
 package lang
 
-import "fmt"
+import (
+	"fmt"
+	"plaid/lang/printing"
+)
 
 type Module interface {
 	Path() string
@@ -43,5 +46,10 @@ func (m *VirtualModule) Scope() *GlobalScope { return m.scope }
 func (m *VirtualModule) Imports() []Module   { return m.imports }
 
 func (m *VirtualModule) String() (out string) {
-	return m.Path()
+	out += fmt.Sprintln(m.Path())
+	for _, imp := range m.Imports() {
+		out += fmt.Sprintf(" > %s\n", imp.Path())
+	}
+	out += printing.TreeToString(m.scope)
+	return out
 }
