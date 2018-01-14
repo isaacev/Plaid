@@ -1,10 +1,10 @@
 package types
 
-// TypeNativeInt is the canonical integer type symbol
-var TypeNativeInt = Ident{"Int"}
+// BuiltinInt is the canonical integer type symbol
+var BuiltinInt = Ident{"Int"}
 
-// TypeNativeStr is the canonical string type symbol
-var TypeNativeStr = Ident{"Str"}
+// BuiltinStr is the canonical string type symbol
+var BuiltinStr = Ident{"Str"}
 
-// TypeNativeBool is the canonical boolean type symbol
-var TypeNativeBool = Ident{"Bool"}
+// BuiltinBool is the canonical boolean type symbol
+var BuiltinBool = Ident{"Bool"}

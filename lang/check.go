@@ -27,29 +27,29 @@ type singleLUT map[types.Type]types.Type
 
 var defaultBinopsLUT = binopsLUT{
 	"+": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeInt},
-		types.TypeNativeStr: singleLUT{types.TypeNativeStr: types.TypeNativeStr},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinInt},
+		types.BuiltinStr: singleLUT{types.BuiltinStr: types.BuiltinStr},
 	},
 	"-": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeInt},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinInt},
 	},
 	"*": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeInt},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinInt},
 	},
 	"<": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeBool},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinBool},
 	},
 	"<=": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeBool},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinBool},
 	},
 	">": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeBool},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinBool},
 	},
 	">=": doubleLUT{
-		types.TypeNativeInt: singleLUT{types.TypeNativeInt: types.TypeNativeBool},
+		types.BuiltinInt: singleLUT{types.BuiltinInt: types.BuiltinBool},
 	},
 	"[": doubleLUT{
-		types.TypeNativeStr: singleLUT{types.TypeNativeInt: types.Optional{Child: types.TypeNativeStr}},
+		types.BuiltinStr: singleLUT{types.BuiltinInt: types.Optional{Child: types.BuiltinStr}},
 	},
 }
 
@@ -129,7 +129,7 @@ func checkPubStmt(s Scope, stmt *PubStmt) {
 
 func checkIfStmt(s Scope, stmt *IfStmt) {
 	typ := checkExpr(s, stmt.Cond)
-	if types.TypeNativeBool.Equals(typ) == false {
+	if types.BuiltinBool.Equals(typ) == false {
 		addTypeError(s, stmt.Cond.Start(), "condition must resolve to a boolean")
 	}
 
@@ -416,15 +416,15 @@ func checkIdentExpr(s Scope, expr *IdentExpr) types.Type {
 }
 
 func checkNumberExpr(s Scope, expr *NumberExpr) types.Type {
-	return types.TypeNativeInt
+	return types.BuiltinInt
 }
 
 func checkStringExpr(s Scope, expr *StringExpr) types.Type {
-	return types.TypeNativeStr
+	return types.BuiltinStr
 }
 
 func checkBooleanExpr(s Scope, expr *BooleanExpr) types.Type {
-	return types.TypeNativeBool
+	return types.BuiltinBool
 }
 
 // TypeCheckError combines a source code location with the resulting error message

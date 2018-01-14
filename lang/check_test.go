@@ -85,17 +85,17 @@ func TestCheckExpr(t *testing.T) {
 	prog, _ := Parse("", "let a := 2 + 1;")
 	s := checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, s.GetVariableType("a"), types.TypeNativeInt)
+	expectEquivalentType(t, s.GetVariableType("a"), types.BuiltinInt)
 
 	prog, _ = Parse("", "let a := 1;")
 	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, s.GetVariableType("a"), types.TypeNativeInt)
+	expectEquivalentType(t, s.GetVariableType("a"), types.BuiltinInt)
 
 	prog, _ = Parse("", "let a := \"abc\";")
 	s = checkProgram(makeGlobalScope(), prog)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, s.GetVariableType("a"), types.TypeNativeStr)
+	expectEquivalentType(t, s.GetVariableType("a"), types.BuiltinStr)
 
 	prog, _ = Parse("", "let a := fn () {};")
 	s = checkProgram(makeGlobalScope(), prog)
@@ -176,7 +176,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 		Ret: types.Ident{Name: "Int"},
 	})
 
-	bad("add(2, 5);", "add", types.TypeNativeInt, "(1:1) cannot call function on type 'Int'")
+	bad("add(2, 5);", "add", types.BuiltinInt, "(1:1) cannot call function on type 'Int'")
 	bad("add(2);", "add", types.Function{
 		Params: types.Tuple{Children: []types.Type{
 			types.Ident{Name: "Int"},
@@ -224,13 +224,13 @@ func TestCheckAssignExpr(t *testing.T) {
 		}
 	}
 
-	good("a := 456;", "a", types.TypeNativeInt)
-	good("b := \"456\";", "b", types.TypeNativeStr)
-	good("c := true;", "c", types.TypeNativeBool)
+	good("a := 456;", "a", types.BuiltinInt)
+	good("b := \"456\";", "b", types.BuiltinStr)
+	good("c := true;", "c", types.BuiltinBool)
 
-	bad("a := 456;", "a", types.TypeNativeStr, "(1:6) 'Str' cannot be assigned type 'Int'")
-	bad(`a := "a" + 45;`, "a", types.TypeNativeStr, "(1:10) operator '+' does not support Str and Int")
-	bad("a := 123;", "b", types.TypeNativeStr, "(1:1) 'a' cannot be assigned before it is declared")
+	bad("a := 456;", "a", types.BuiltinStr, "(1:6) 'Str' cannot be assigned type 'Int'")
+	bad(`a := "a" + 45;`, "a", types.BuiltinStr, "(1:10) operator '+' does not support Str and Int")
+	bad("a := 123;", "b", types.BuiltinStr, "(1:1) 'a' cannot be assigned before it is declared")
 }
 
 func TestCheckBinaryExpr(t *testing.T) {
@@ -260,11 +260,11 @@ func TestCheckBinaryExpr(t *testing.T) {
 		}
 	}
 
-	good(types.TypeNativeInt, "+", types.TypeNativeInt, types.TypeNativeInt)
-	good(types.TypeNativeInt, "-", types.TypeNativeInt, types.TypeNativeInt)
+	good(types.BuiltinInt, "+", types.BuiltinInt, types.BuiltinInt)
+	good(types.BuiltinInt, "-", types.BuiltinInt, types.BuiltinInt)
 
 	s := makeGlobalScope()
-	s.newVariable("b", types.TypeNativeInt)
+	s.newVariable("b", types.BuiltinInt)
 	bad("let c := a + b;", s,
 		"(1:10) variable 'a' was used before it was declared")
 
@@ -274,8 +274,8 @@ func TestCheckBinaryExpr(t *testing.T) {
 		"(1:14) variable 'b' was used before it was declared")
 
 	s = makeGlobalScope()
-	s.newVariable("a", types.TypeNativeInt)
-	s.newVariable("b", types.TypeNativeInt)
+	s.newVariable("a", types.BuiltinInt)
+	s.newVariable("b", types.BuiltinInt)
 	oper := token{Loc: Loc{Line: 10, Col: 4}}
 	leftExpr := &IdentExpr{Name: "a"}
 	rightExpr := &IdentExpr{Name: "b"}
@@ -302,7 +302,7 @@ func TestCheckListExpr(t *testing.T) {
 
 	good(&ListExpr{Elements: []Expr{
 		&StringExpr{Val: "foo"},
-	}}, types.List{Child: types.TypeNativeStr})
+	}}, types.List{Child: types.BuiltinStr})
 
 	start := makeTok(5, 4)
 	first := makeTok(7, 12)
@@ -324,7 +324,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr := &SubscriptExpr{ListLike: str, Index: index}
 	typ := checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.Optional{Child: types.TypeNativeStr})
+	expectEquivalentType(t, typ, types.Optional{Child: types.BuiltinStr})
 
 	s = makeGlobalScope()
 	list := &ListExpr{Elements: []Expr{
@@ -334,7 +334,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expr = &SubscriptExpr{ListLike: list, Index: index}
 	typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.Optional{Child: types.TypeNativeInt})
+	expectEquivalentType(t, typ, types.Optional{Child: types.BuiltinInt})
 
 	s = makeGlobalScope()
 	str = &StringExpr{Tok: nop, Val: "foo"}
@@ -372,11 +372,11 @@ func TestCheckSelfExpr(t *testing.T) {
 
 func TestCheckIdentExpr(t *testing.T) {
 	s := makeGlobalScope()
-	s.newVariable("x", types.TypeNativeInt)
+	s.newVariable("x", types.BuiltinInt)
 	expr := &IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(s, expr)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeNativeInt)
+	expectEquivalentType(t, typ, types.BuiltinInt)
 
 	s = makeGlobalScope()
 	expr = &IdentExpr{Tok: makeTok(10, 13), Name: "x"}
@@ -390,7 +390,7 @@ func TestCheckNumberExpr(t *testing.T) {
 	expr := &NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(s, expr)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeNativeInt)
+	expectEquivalentType(t, typ, types.BuiltinInt)
 }
 
 func TestCheckStringExpr(t *testing.T) {
@@ -398,7 +398,7 @@ func TestCheckStringExpr(t *testing.T) {
 	expr := &StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(s, expr)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeNativeStr)
+	expectEquivalentType(t, typ, types.BuiltinStr)
 }
 
 func TestCheckBooleanExpr(t *testing.T) {
@@ -406,7 +406,7 @@ func TestCheckBooleanExpr(t *testing.T) {
 	expr := &BooleanExpr{Tok: nop, Val: true}
 	typ := checkBooleanExpr(s, expr)
 	expectNoErrors(t, s)
-	expectEquivalentType(t, typ, types.TypeNativeBool)
+	expectEquivalentType(t, typ, types.BuiltinBool)
 }
 
 func TestConvertTypeSig(t *testing.T) {

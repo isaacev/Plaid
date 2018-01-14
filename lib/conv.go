@@ -8,8 +8,8 @@ import (
 var Conv = lang.BuildNativeModule("conv", map[string]types.Type{
 	"intToStr": types.Function{
 		Params: types.Tuple{[]types.Type{
-			types.TypeNativeInt,
+			types.BuiltinInt,
 		}},
-		Ret: types.TypeNativeStr,
+		Ret: types.BuiltinStr,
 	},
 })
