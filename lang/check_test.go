@@ -36,6 +36,17 @@ func TestCheckStmt(t *testing.T) {
 	expectNoErrors(t, s)
 }
 
+func TestCheckPubStmt(t *testing.T) {
+	prog, _ := Parse("", "pub let x := 100;")
+	s := checkProgram(makeGlobalScope(), prog)
+	expectNoErrors(t, s)
+
+	prog, _ = Parse("", "pub let x := 100;")
+	s = makeGlobalScope()
+	checkPubStmt(makeLocalScope(s, types.Function{}), prog.Stmts[0].(*PubStmt))
+	expectNthError(t, s, 0, "(1:1) pub statement must be a top-level statement")
+}
+
 func TestCheckIfStmt(t *testing.T) {
 	prog, _ := Parse("", "if true {};")
 	s := checkProgram(makeGlobalScope(), prog)
