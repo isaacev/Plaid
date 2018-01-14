@@ -26,7 +26,7 @@ type StringerTree interface {
 	StringerChildren() []StringerTree
 }
 
-// PrettyTree takes a StringTree and returns a string of the form:
+// TreeToString takes a StringTree and returns a string of the form:
 // ╭
 // ┤ (leaf 1).String()
 // │ ╭
@@ -37,15 +37,15 @@ type StringerTree interface {
 // │ ╭
 // ╰─┤ (leaf 1.2).String()
 //   ╰
-func PrettyTree(root StringerTree) (out string) {
+func TreeToString(root StringerTree) (out string) {
 	children := root.StringerChildren()
 	total := len(children)
 	out += brace(root.String(), total == 0)
 	for i, child := range children {
 		if i < total-1 {
-			out += "\n" + indentAndAttach(PrettyTree(child), teeE, pipeVert)
+			out += "\n" + indentAndAttach(TreeToString(child), teeE, pipeVert)
 		} else {
-			out += "\n" + indentAndAttach(PrettyTree(child), cornerSW, " ")
+			out += "\n" + indentAndAttach(TreeToString(child), cornerSW, " ")
 		}
 	}
 	return out

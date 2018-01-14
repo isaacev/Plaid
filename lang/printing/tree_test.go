@@ -22,7 +22,7 @@ func (d dummy) StringerChildren() (s []StringerTree) {
 
 func TestPrettyTree(t *testing.T) {
 	test := func(root StringerTree, exp string) {
-		got := PrettyTree(root)
+		got := TreeToString(root)
 		expectString(t, got, exp)
 	}
 
