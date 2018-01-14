@@ -5,8 +5,8 @@ import (
 )
 
 func TestCheckMain(t *testing.T) {
-	mod := checkModule(&VirtualModule{ast: &RootNode{}})
-	expectNoErrors(t, mod.Scope())
+	scope := checkModule(&VirtualModule{ast: &RootNode{}})
+	expectNoErrors(t, scope)
 
 	// mod1 := &vm.Module{
 	// 	Name: "mod1",

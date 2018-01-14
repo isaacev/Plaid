@@ -4,6 +4,18 @@ import (
 	"fmt"
 )
 
+func Check(mod Module) (Module, []error) {
+	switch cast := mod.(type) {
+	case *NativeModule:
+		return cast, nil
+	case *VirtualModule:
+		checkModule(cast)
+		return cast, nil
+	default:
+		panic("unknown module type")
+	}
+}
+
 type binopsLUT map[string]map[Type]map[Type]Type
 type doubleLUT map[Type]map[Type]Type
 type singleLUT map[Type]Type
@@ -36,22 +48,25 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
-// checkModule takes an existing abstract syntax tree and performs type checks and
-// other correctness checks. It returns a list of any errors that were
-// discovered inside the AST
-func checkModule(root *VirtualModule, builtins ...Module) Module {
-	root.scope = MakeGlobalScope()
+// checkModule takes as input a *VirtualModule to check for semantic errors. It
+// returns the root of a scope tree that describes the lifecycles of all symbols
+// within the program. The semantic analysis tries to find as many semantic
+// errors as possible in a single pass. Any errors that are detected are
+// available by calling `GetErrors()` on the returned scope object.
+func checkModule(root *VirtualModule, builtins ...Module) *GlobalScope {
+	global := makeGlobalScope()
 
 	for _, mod := range builtins {
-		root.scope.AddImport(mod.Scope())
+		global.addImport(mod.Scope())
 	}
 
 	for _, mod := range root.imports {
-		root.scope.AddImport(mod.Scope())
+		global.addImport(mod.Scope())
 	}
 
-	checkProgram(root.scope, root.ast)
-	return root
+	checkProgram(global, root.ast)
+	root.scope = global
+	return global
 }
 
 func checkProgram(s *GlobalScope, ast *RootNode) Scope {
