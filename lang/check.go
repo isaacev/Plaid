@@ -65,7 +65,11 @@ func checkModule(root *VirtualModule, builtins ...Module) *GlobalScope {
 	}
 
 	for _, mod := range root.imports {
-		global.addImport(mod.Scope())
+		if mod.Scope() == nil {
+			global.addImport(checkModule(mod.(*VirtualModule), builtins...))
+		} else {
+			global.addImport(mod.Scope())
+		}
 	}
 
 	checkProgram(global, root.ast)
