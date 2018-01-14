@@ -1,102 +1,56 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"plaid/lang"
-	"plaid/lib"
 )
 
 func main() {
-	showAST := flag.Bool("ast", false, "output abstract syntax tree")
-	showDeps := flag.Bool("deps", false, "output resolved dependency tree")
-	showCheck := flag.Bool("check", false, "output type checker results")
-	showIR := flag.Bool("ir", false, "output intermediate representation")
-	showBC := flag.Bool("bytecode", false, "output bytecode")
-	showOut := flag.Bool("out", false, "run program and print output")
-	flag.Parse()
-
-	for _, filename := range flag.Args() {
-		processFile(filename, *showAST, *showDeps, *showCheck, *showIR, *showBC, *showOut)
+	if len(os.Args[1:]) >= 1 {
+		if errs := run(os.Args[1]); len(errs) > 0 {
+			for _, err := range errs {
+				fmt.Fprintln(os.Stderr, err.Error())
+			}
+			os.Exit(1)
+		}
 	}
 }
 
-func processFile(filename string, showAST bool, showDeps bool, showCheck bool, showIR bool, showBC bool, showOut bool) {
-	buf, err := ioutil.ReadFile(filename)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+func read(filename string) (src string, errs []error) {
+	if contents, err := ioutil.ReadFile(filename); err == nil {
+		return string(contents), nil
+	} else {
+		return "", []error{err}
+	}
+}
+
+func run(filename string) (errs []error) {
+	var src string
+	var ast *lang.RootNode
+	var mod *lang.VirtualModule
+
+	if src, errs = read(filename); len(errs) > 0 {
+		return errs
+	} else {
+		fmt.Println("=== SOURCE CODE")
+		fmt.Println(src)
 	}
 
-	src := string(buf)
-	ast, err := lang.Parse(filename, src)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+	if ast, errs = lang.Parse(filename, src); len(errs) > 0 {
+		return errs
+	} else {
+		fmt.Println("=== SYNTAX TREE")
+		fmt.Println(ast)
 	}
 
-	if showAST {
-		fmt.Println(ast.String())
+	if mod, errs = lang.Link(filename, ast); len(errs) > 0 {
+		return errs
+	} else {
+		fmt.Println("=== MODULE")
+		fmt.Println(mod)
 	}
 
-	abs, _ := filepath.Abs(filename)
-	mod, err := lang.Link(abs, ast)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	if showDeps {
-		fmt.Println(mod.Imports())
-	}
-
-	if showCheck {
-		lang.Check(mod.(*lang.VirtualModule), lib.IO, lib.Conv)
-		if mod.Scope().HasErrors() {
-			for _, err := range mod.Scope().GetErrors() {
-				fmt.Println(err)
-			}
-		} else if showCheck {
-			fmt.Println(lang.PrettyTree(mod.Scope()))
-		}
-	}
-
-	/*
-		if showCheck || showIR || showBC || showOut {
-			typechecker.Check(mod,
-				linker.ConvertModule(libs.IO),
-				linker.ConvertModule(libs.Conv))
-			if mod.Scope.HasErrors() {
-				for _, err := range mod.Scope.GetErrors() {
-					fmt.Println(err)
-				}
-				os.Exit(1)
-			} else if showCheck {
-				fmt.Println(debug.PrettyTree(mod.Scope))
-			}
-
-			if showIR || showBC || showOut {
-				ir := codegen.Transform(ast, libs.IO, libs.Conv)
-
-				if showIR {
-					fmt.Println(ir.String())
-				}
-
-				if showBC || showOut {
-					mod := codegen.Generate(ir)
-
-					if showBC {
-						fmt.Println(debug.PrettyTree(mod.Root))
-					}
-
-					if showOut {
-						vm.Eval(mod)
-					}
-				}
-			}
-		}
-	*/
+	return nil
 }
