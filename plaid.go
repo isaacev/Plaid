@@ -47,6 +47,10 @@ func run(filename string) (errs []error) {
 
 	if mod, errs = lang.Link(filename, ast); len(errs) > 0 {
 		return errs
+	}
+
+	if _, errs = lang.Check(mod); len(errs) > 0 {
+		return errs
 	} else {
 		fmt.Println("=== MODULE")
 		fmt.Println(mod)
