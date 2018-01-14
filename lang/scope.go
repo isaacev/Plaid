@@ -190,8 +190,7 @@ func (s *GlobalScope) GetVariableReference(name string) *UniqueSymbol {
 
 	for _, module := range s.imports {
 		if module.HasExport(name) {
-			panic("GlobalScope#GetVariableReference not implemented")
-			// return module.GetExport(name).Reference
+			return module.GetVariableReference(name)
 		}
 	}
 
