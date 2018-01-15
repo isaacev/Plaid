@@ -7,56 +7,65 @@ import (
 
 type Object interface {
 	fmt.Stringer
+	Value() interface{}
 	isObject()
 }
 
 type ObjectNone struct{}
 
-func (o ObjectNone) String() string { return "<none>" }
-func (o ObjectNone) isObject()      {}
+func (o ObjectNone) Value() interface{} { return nil }
+func (o ObjectNone) String() string     { return "<none>" }
+func (o ObjectNone) isObject()          {}
 
 type ObjectInt struct {
-	Val int64
+	val int64
 }
 
-func (o ObjectInt) String() string { return fmt.Sprintf("%d", o.Val) }
-func (o ObjectInt) isObject()      {}
+func (o ObjectInt) Value() interface{} { return o.val }
+func (o ObjectInt) String() string     { return fmt.Sprintf("%d", o.val) }
+func (o ObjectInt) isObject()          {}
 
 type ObjectStr struct {
-	Val string
+	val string
 }
 
-func (o ObjectStr) String() string { return o.Val }
-func (o ObjectStr) isObject()      {}
+func (o ObjectStr) Value() interface{} { return o.val }
+func (o ObjectStr) String() string     { return fmt.Sprintf("\"%s\"", o.val) }
+func (o ObjectStr) isObject()          {}
 
 type ObjectBool struct {
-	Val bool
+	val bool
 }
 
-func (o ObjectBool) String() string { return fmt.Sprintf("%t", o.Val) }
-func (o ObjectBool) isObject()      {}
+func (o ObjectBool) Value() interface{} { return o.val }
+func (o ObjectBool) String() string     { return fmt.Sprintf("%t", o.val) }
+func (o ObjectBool) isObject()          {}
 
 type ObjectBuiltin struct {
-	Type types.Type
-	Val  func(args []Object) (Object, error)
+	typ types.Type
+	val func(args []Object) (Object, error)
 }
 
-func (o ObjectBuiltin) String() string { return "<builtin>" }
-func (o ObjectBuiltin) isObject()      {}
+func (o ObjectBuiltin) Type() types.Type   { return o.typ }
+func (o ObjectBuiltin) Value() interface{} { return o.val }
+func (o ObjectBuiltin) String() string     { return "<builtin>" }
+func (o ObjectBuiltin) isObject()          {}
 
 type ObjectFunction struct {
-	// Params   []*UniqueSymbol
-	// Bytecode *Bytecode
+	params   []*UniqueSymbol
+	bytecode bytecode
 }
 
-func (o ObjectFunction) String() string { return "<function>" }
-func (o ObjectFunction) isObject()      {}
+func (o ObjectFunction) Value() interface{} { return o.bytecode }
+func (o ObjectFunction) String() string     { return "<function>" }
+func (o ObjectFunction) isObject()          {}
 
 type ObjectClosure struct {
 	// Env      *Env
-	// Params   []*UniqueSymbol
-	// Bytecode *Bytecode
+	params   []*UniqueSymbol
+	bytecode *bytecode
 }
 
-func (o ObjectClosure) String() string { return "<closure>" }
-func (o ObjectClosure) isObject()      {}
+func (o ObjectClosure) Value() interface{} { return o.bytecode }
+func (o ObjectClosure) String() string     { return "<closure>" }
+func (o ObjectClosure) isObject()          {}

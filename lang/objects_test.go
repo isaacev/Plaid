@@ -9,19 +9,19 @@ func TestObjectNone(t *testing.T) {
 }
 
 func TestObjectInt(t *testing.T) {
-	obj := &ObjectInt{Val: 123}
+	obj := &ObjectInt{val: 123}
 	obj.isObject()
 	expectString(t, obj.String(), "123")
 }
 
 func TestObjectStr(t *testing.T) {
-	obj := &ObjectStr{Val: "abc"}
+	obj := &ObjectStr{val: "abc"}
 	obj.isObject()
-	expectString(t, obj.String(), "abc")
+	expectString(t, obj.String(), `"abc"`)
 }
 
 func TestObjectBool(t *testing.T) {
-	obj := &ObjectBool{Val: true}
+	obj := &ObjectBool{val: true}
 	obj.isObject()
 	expectString(t, obj.String(), "true")
 }
