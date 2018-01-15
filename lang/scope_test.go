@@ -159,6 +159,7 @@ func TestScopeStringerChildren(t *testing.T) {
 }
 
 func expectNoScopeErrors(t *testing.T, scope Scope) {
+	t.Helper()
 	if scope.HasErrors() {
 		for i, err := range scope.GetErrors() {
 			t.Errorf("%d '%s'", i, err)

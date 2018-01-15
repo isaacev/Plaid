@@ -69,16 +69,19 @@ func TestScan(t *testing.T) {
 }
 
 func expectNext(t *testing.T, expChar rune, expLoc Loc, buf *scanner) {
+	t.Helper()
 	expectChar(t, charPoint{expChar, expLoc}, buf.next())
 }
 
 func expectIndex(t *testing.T, exp int, got int) {
+	t.Helper()
 	if exp != got {
 		t.Errorf("Expected Scanner.index %d, got %d\n", exp, got)
 	}
 }
 
 func expectChar(t *testing.T, exp charPoint, got charPoint) {
+	t.Helper()
 	if exp.char != got.char {
 		t.Errorf("Expected Char.char %c, got %c\n", exp.char, got.char)
 	}
@@ -87,12 +90,14 @@ func expectChar(t *testing.T, exp charPoint, got charPoint) {
 }
 
 func expectEOF(t *testing.T, exp bool, buf *scanner) {
+	t.Helper()
 	if exp != buf.eof() {
 		t.Errorf("Expected Scanner#EOF() %t, got %t\n", exp, buf.eof())
 	}
 }
 
 func expectLoc(t *testing.T, exp Loc, got Loc) {
+	t.Helper()
 	if exp.String() != got.String() {
 		t.Errorf("Expected Char.loc %s, got %s\n", exp, got)
 	}

@@ -121,6 +121,7 @@ func TestConcatTypes(t *testing.T) {
 }
 
 func expectEquivalentType(t *testing.T, t1 Type, t2 Type) {
+	t.Helper()
 	if t1 == nil {
 		t.Fatalf("Expected type, got <nil>")
 	}
@@ -146,6 +147,7 @@ func expectEquivalentType(t *testing.T, t1 Type, t2 Type) {
 }
 
 func expectNotEquivalentType(t *testing.T, t1 Type, t2 Type) {
+	t.Helper()
 	if t1 == nil {
 		t.Fatalf("Expected type, got <nil>")
 	}
@@ -171,12 +173,14 @@ func expectNotEquivalentType(t *testing.T, t1 Type, t2 Type) {
 }
 
 func expectString(t *testing.T, got string, exp string) {
+	t.Helper()
 	if exp != got {
 		t.Errorf("Expected '%s', got '%s'", exp, got)
 	}
 }
 
 func expectBool(t *testing.T, got bool, exp bool) {
+	t.Helper()
 	if exp != got {
 		t.Errorf("Expected %t, got %t", exp, got)
 	}

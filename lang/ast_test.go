@@ -255,6 +255,7 @@ func TestIndentBlock(t *testing.T) {
 }
 
 func expectASTString(t *testing.T, node ASTNode, exp string) {
+	t.Helper()
 	got := node.String()
 
 	if exp != got {

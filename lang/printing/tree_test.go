@@ -71,6 +71,7 @@ func TestIndentAndAttach(t *testing.T) {
 }
 
 func expectStringSlice(t *testing.T, got []string, exp []string) {
+	t.Helper()
 	if len(got) != len(exp) {
 		t.Errorf("Expected %d strings, got %d strings", len(exp), len(got))
 	} else {
@@ -81,6 +82,7 @@ func expectStringSlice(t *testing.T, got []string, exp []string) {
 }
 
 func expectString(t *testing.T, got string, exp string) {
+	t.Helper()
 	if exp != got {
 		t.Errorf("Expected '%s', got '%s'", exp, got)
 	}

@@ -889,6 +889,7 @@ func TestParseBoolean(t *testing.T) {
 type typeNoteParser func(p *parser) (TypeNote, error)
 
 func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) {
+	t.Helper()
 	p := makeParser("", source)
 	loadGrammar(p)
 	sig, err := fn(p)
@@ -897,6 +898,7 @@ func expectTypeNote(t *testing.T, fn typeNoteParser, source string, ast string) 
 }
 
 func expectTypeNoteError(t *testing.T, fn typeNoteParser, source string, msg string) {
+	t.Helper()
 	p := makeParser("", source)
 	loadGrammar(p)
 	sig, err := fn(p)
@@ -904,6 +906,7 @@ func expectTypeNoteError(t *testing.T, fn typeNoteParser, source string, msg str
 }
 
 func expectNoParserErrors(t *testing.T, ast string, node ASTNode, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatalf("Expected no errors, got '%s'\n", err)
 	} else {
@@ -912,6 +915,7 @@ func expectNoParserErrors(t *testing.T, ast string, node ASTNode, err error) {
 }
 
 func expectParserError(t *testing.T, msg string, node ASTNode, err error) {
+	t.Helper()
 	if err == nil {
 		t.Errorf("Expected an error, got %s\n", node)
 	} else if err.Error() != msg {
@@ -920,12 +924,14 @@ func expectParserError(t *testing.T, msg string, node ASTNode, err error) {
 }
 
 func expectAST(t *testing.T, ast string, got ASTNode) {
+	t.Helper()
 	if ast != got.String() {
 		t.Errorf("Expected '%s', got '%s'\n", ast, got)
 	}
 }
 
 func expectStart(t *testing.T, node ASTNode, line int, col int) {
+	t.Helper()
 	got := node.Start()
 	exp := Loc{Line: line, Col: col}
 

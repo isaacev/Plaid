@@ -188,6 +188,7 @@ func TestEatStringToken(t *testing.T) {
 type charPred func(rune) bool
 
 func expectRunePredicateBool(t *testing.T, fn charPred, r rune, exp bool) {
+	t.Helper()
 	got := fn(r)
 
 	if exp != got {
@@ -198,12 +199,14 @@ func expectRunePredicateBool(t *testing.T, fn charPred, r rune, exp bool) {
 type lexFunc func(scn *scanner) token
 
 func expectLexer(t *testing.T, fn lexFunc, source string, exp token) {
+	t.Helper()
 	scn := scan(source)
 	got := fn(scn)
 	expectToken(t, exp, got)
 }
 
 func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
+	t.Helper()
 	scn := scan(source)
 	got := fn(scn)
 
@@ -217,6 +220,7 @@ func expectLexerError(t *testing.T, fn lexFunc, source string, msg string) {
 }
 
 func expectToken(t *testing.T, exp token, got token) {
+	t.Helper()
 	if exp.Type != got.Type {
 		t.Errorf("Expected Token.Type %s, got %s\n", exp.Type, got.Type)
 	}

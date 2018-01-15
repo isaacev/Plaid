@@ -508,6 +508,7 @@ func TestConvertTypeNote(t *testing.T) {
 }
 
 func expectConversion(t *testing.T, note TypeNote, exp string) {
+	t.Helper()
 	got := convertTypeNote(note)
 	if got.String() != exp {
 		t.Errorf("Expected '%s', got '%v'", exp, got)
@@ -519,6 +520,7 @@ func makeTok(line int, col int) token {
 }
 
 func expectVariable(t *testing.T, s Scope, name string, exp types.Type) {
+	t.Helper()
 	if s.HasVariable(name) {
 		got := s.GetVariableType(name)
 		expectEquivalentType(t, got, exp)
@@ -528,6 +530,7 @@ func expectVariable(t *testing.T, s Scope, name string, exp types.Type) {
 }
 
 func expectLocalVariableType(t *testing.T, s Scope, name string, exp types.Type) {
+	t.Helper()
 	if s.HasLocalVariable(name) {
 		got := s.GetLocalVariableType(name)
 		expectEquivalentType(t, got, exp)

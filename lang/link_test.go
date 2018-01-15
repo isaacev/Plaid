@@ -430,12 +430,14 @@ func testNode(path string, children ...*node) *node {
 }
 
 func expectNoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%s'", err)
 	}
 }
 
 func expectChildren(t *testing.T, g *graph, path string, children ...string) {
+	t.Helper()
 	n := g.nodes[path]
 	if n == nil {
 		t.Errorf("Expected '%s', found no matching node", path)
@@ -457,6 +459,7 @@ func expectChildren(t *testing.T, g *graph, path string, children ...string) {
 }
 
 func expectParents(t *testing.T, g *graph, path string, parents ...string) {
+	t.Helper()
 	n := g.nodes[path]
 	if n == nil {
 		t.Errorf("Expected '%s', found no matching node", path)
@@ -478,12 +481,14 @@ func expectParents(t *testing.T, g *graph, path string, parents ...string) {
 }
 
 func expectRoute(t *testing.T, got []*node, exp string) {
+	t.Helper()
 	if routeToString(got) != exp {
 		t.Errorf("Expected '%s', got %s", routeToString(got), exp)
 	}
 }
 
 func expectInt(t *testing.T, got int, exp int) {
+	t.Helper()
 	if exp != got {
 		t.Errorf("Expected %d, got %d", exp, got)
 	}
