@@ -43,7 +43,7 @@ func TestCheckPubStmt(t *testing.T) {
 
 	prog, _ = Parse("", "pub let x := 100;")
 	s = makeGlobalScope()
-	checkPubStmt(makeLocalScope(s, types.Function{}), prog.Stmts[0].(*PubStmt))
+	checkPubStmt(makeLocalScope(s, &FunctionExpr{}, types.Function{}), prog.Stmts[0].(*PubStmt))
 	expectNthError(t, s, 0, "(1:1) pub statement must be a top-level statement")
 }
 

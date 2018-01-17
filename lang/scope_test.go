@@ -43,14 +43,14 @@ func TestScopeGetExport(t *testing.T) {
 
 func TestScopeHasParent(t *testing.T) {
 	root := makeGlobalScope()
-	child := makeLocalScope(root, types.Function{})
+	child := makeLocalScope(root, &FunctionExpr{}, types.Function{})
 	expectBool(t, root.HasParent(), false)
 	expectBool(t, child.HasParent(), true)
 }
 
 func TestScopeErrors(t *testing.T) {
 	root := makeGlobalScope()
-	child := makeLocalScope(root, types.Function{})
+	child := makeLocalScope(root, &FunctionExpr{}, types.Function{})
 	child.newError(fmt.Errorf("foo bar baz"))
 	expectNthError(t, root, 0, "foo bar baz")
 	expectNthError(t, child, 0, "foo bar baz")
@@ -154,7 +154,7 @@ func TestScopeString(t *testing.T) {
 func TestScopeStringerChildren(t *testing.T) {
 	scope := makeGlobalScope()
 	scope.newVariable("foo", types.BuiltinInt)
-	makeLocalScope(scope, types.Function{})
+	makeLocalScope(scope, &FunctionExpr{}, types.Function{})
 	expectString(t, printing.TreeToString(scope), "╭─\n┤ foo : Int\n│ ╭─\n╰─┤ \n  ╰─")
 }
 

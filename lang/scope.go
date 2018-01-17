@@ -14,7 +14,8 @@ type Scope interface {
 	printing.StringerTree
 	HasParent() bool
 	GetParent() Scope
-	addChild(Scope) Scope
+	GetChild(ASTNode) Scope
+	addChild(ASTNode, Scope) Scope
 	HasSelfReference() bool
 	GetSelfReference() types.Function
 	HasErrors() bool
@@ -34,7 +35,7 @@ type Scope interface {
 type GlobalScope struct {
 	imports  []*GlobalScope
 	exports  map[string]types.Type
-	children []Scope
+	children map[ASTNode]Scope
 	errors   []error
 	types    map[string]types.Type
 	symbols  map[string]*UniqueSymbol
@@ -43,9 +44,10 @@ type GlobalScope struct {
 // makeGlobalScope is a helper function to quickly build a global scope
 func makeGlobalScope() *GlobalScope {
 	return &GlobalScope{
-		exports: make(map[string]types.Type),
-		types:   make(map[string]types.Type),
-		symbols: make(map[string]*UniqueSymbol),
+		exports:  make(map[string]types.Type),
+		children: make(map[ASTNode]Scope),
+		types:    make(map[string]types.Type),
+		symbols:  make(map[string]*UniqueSymbol),
 	}
 }
 
@@ -88,8 +90,10 @@ func (s *GlobalScope) HasParent() bool { return false }
 // GetParent returns the parent scope of the current scope
 func (s *GlobalScope) GetParent() Scope { return nil }
 
-func (s *GlobalScope) addChild(child Scope) Scope {
-	s.children = append(s.children, child)
+func (s *GlobalScope) GetChild(node ASTNode) Scope { return s.children[node] }
+
+func (s *GlobalScope) addChild(node ASTNode, child Scope) Scope {
+	s.children[node] = child
 	return child
 }
 
@@ -247,7 +251,7 @@ func (s *GlobalScope) StringerChildren() (children []printing.StringerTree) {
 // LocalScope exists inside of function literals
 type LocalScope struct {
 	parent     Scope
-	children   []Scope
+	children   map[ASTNode]Scope
 	self       types.Function
 	types      map[string]types.Type
 	references map[string]*UniqueSymbol
@@ -255,9 +259,10 @@ type LocalScope struct {
 
 // makeLocalScope is a helper function to quickly build a local scope that is
 // doubly linked to its parent scope
-func makeLocalScope(parent Scope, self types.Function) *LocalScope {
-	return parent.addChild(&LocalScope{
+func makeLocalScope(parent Scope, node ASTNode, self types.Function) *LocalScope {
+	return parent.addChild(node, &LocalScope{
 		parent:     parent,
+		children:   make(map[ASTNode]Scope),
 		self:       self,
 		types:      make(map[string]types.Type),
 		references: make(map[string]*UniqueSymbol),
@@ -270,8 +275,10 @@ func (s *LocalScope) HasParent() bool { return s.parent != nil }
 // GetParent returns the parent scope of the current scope
 func (s *LocalScope) GetParent() Scope { return s.parent }
 
-func (s *LocalScope) addChild(child Scope) Scope {
-	s.children = append(s.children, child)
+func (s *LocalScope) GetChild(node ASTNode) Scope { return s.children[node] }
+
+func (s *LocalScope) addChild(node ASTNode, child Scope) Scope {
+	s.children[node] = child
 	return child
 }
 

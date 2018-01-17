@@ -225,7 +225,7 @@ func checkFunctionExpr(s Scope, expr *FunctionExpr) types.Type {
 	tuple := types.Tuple{Children: params}
 	self := types.Function{Params: tuple, Ret: ret}
 
-	childScope := makeLocalScope(s, self)
+	childScope := makeLocalScope(s, expr, self)
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
