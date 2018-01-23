@@ -33,6 +33,8 @@ func compileStmts(s Scope, stmts []Stmt) (blob bytecode) {
 
 func compileStmt(s Scope, stmt Stmt) bytecode {
 	switch stmt := stmt.(type) {
+	case *PubStmt:
+		return compilePubStmt(s, stmt)
 	case *IfStmt:
 		return compileIfStmt(s, stmt)
 	case *ReturnStmt:
@@ -44,6 +46,10 @@ func compileStmt(s Scope, stmt Stmt) bytecode {
 	default:
 		panic(fmt.Sprintf("cannot compile %T", stmt))
 	}
+}
+
+func compilePubStmt(s Scope, stmt *PubStmt) bytecode {
+	return compileStmt(s, stmt.Stmt)
 }
 
 func compileIfStmt(s Scope, stmt *IfStmt) bytecode {
