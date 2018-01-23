@@ -53,7 +53,7 @@ func (o ObjectBuiltin) isObject()          {}
 
 type ObjectFunction struct {
 	params   []*UniqueSymbol
-	bytecode bytecode
+	bytecode Bytecode
 }
 
 func (o ObjectFunction) Value() interface{} { return o.bytecode }
@@ -63,7 +63,7 @@ func (o ObjectFunction) isObject()          {}
 type ObjectClosure struct {
 	// Env      *Env
 	params   []*UniqueSymbol
-	bytecode *bytecode
+	bytecode *Bytecode
 }
 
 func (o ObjectClosure) Value() interface{} { return o.bytecode }

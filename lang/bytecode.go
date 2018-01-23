@@ -2,21 +2,21 @@ package lang
 
 import "fmt"
 
-type bytecode struct {
+type Bytecode struct {
 	Instructions []Instr
 }
 
-func (b *bytecode) nextInstrPtr() Address {
+func (b *Bytecode) nextInstrPtr() Address {
 	return Address(len(b.Instructions))
 }
 
-func (b *bytecode) write(instr Instr) Address {
+func (b *Bytecode) write(instr Instr) Address {
 	ip := b.nextInstrPtr()
 	b.Instructions = append(b.Instructions, instr)
 	return ip
 }
 
-func (b *bytecode) append(blob bytecode) Address {
+func (b *Bytecode) append(blob Bytecode) Address {
 	offset := b.nextInstrPtr()
 	for _, instr := range blob.Instructions {
 		if jump, ok := instr.(InstrAddressed); ok {
@@ -28,11 +28,11 @@ func (b *bytecode) append(blob bytecode) Address {
 	return b.nextInstrPtr()
 }
 
-func (b *bytecode) overwrite(addr Address, instr Instr) {
+func (b *Bytecode) overwrite(addr Address, instr Instr) {
 	b.Instructions[addr] = instr
 }
 
-func (b *bytecode) String() (out string) {
+func (b *Bytecode) String() (out string) {
 	for i, instr := range b.Instructions {
 		if i > 0 {
 			out += "\n"

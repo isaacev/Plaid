@@ -2,17 +2,17 @@ package lang
 
 import "fmt"
 
-func Compile(mod Module) bytecode {
+func Compile(mod Module) Bytecode {
 	if virt, ok := mod.(*VirtualModule); ok {
 		main := compileProgram(virt.Scope(), virt.ast)
 		return main
 	}
 
-	return bytecode{}
+	return Bytecode{}
 }
 
-func compileProgram(s Scope, prog *RootNode) bytecode {
-	blob := bytecode{}
+func compileProgram(s Scope, prog *RootNode) Bytecode {
+	blob := Bytecode{}
 	for _, name := range s.GetLocalVariableNames() {
 		symbol := s.GetLocalVariableReference(name)
 		blob.write(InstrReserve{name, symbol})
@@ -23,14 +23,14 @@ func compileProgram(s Scope, prog *RootNode) bytecode {
 	return blob
 }
 
-func compileStmts(s Scope, stmts []Stmt) (blob bytecode) {
+func compileStmts(s Scope, stmts []Stmt) (blob Bytecode) {
 	for _, stmt := range stmts {
 		blob.append(compileStmt(s, stmt))
 	}
 	return blob
 }
 
-func compileStmt(s Scope, stmt Stmt) bytecode {
+func compileStmt(s Scope, stmt Stmt) Bytecode {
 	switch stmt := stmt.(type) {
 	case *PubStmt:
 		return compilePubStmt(s, stmt)
@@ -47,11 +47,11 @@ func compileStmt(s Scope, stmt Stmt) bytecode {
 	}
 }
 
-func compilePubStmt(s Scope, stmt *PubStmt) bytecode {
+func compilePubStmt(s Scope, stmt *PubStmt) Bytecode {
 	return compileStmt(s, stmt.Stmt)
 }
 
-func compileIfStmt(s Scope, stmt *IfStmt) bytecode {
+func compileIfStmt(s Scope, stmt *IfStmt) Bytecode {
 	blob := compileExpr(s, stmt.Cond)
 	jump := blob.write(InstrNOP{}) // Pending jump to end of clause
 	done := blob.append(compileStmts(s, stmt.Clause.Stmts))
@@ -59,7 +59,7 @@ func compileIfStmt(s Scope, stmt *IfStmt) bytecode {
 	return blob
 }
 
-func compileReturnStmt(s Scope, stmt *ReturnStmt) (blob bytecode) {
+func compileReturnStmt(s Scope, stmt *ReturnStmt) (blob Bytecode) {
 	if stmt.Expr != nil {
 		blob.append(compileExpr(s, stmt.Expr))
 	}
@@ -67,20 +67,20 @@ func compileReturnStmt(s Scope, stmt *ReturnStmt) (blob bytecode) {
 	return blob
 }
 
-func compileDeclarationStmt(s Scope, stmt *DeclarationStmt) bytecode {
+func compileDeclarationStmt(s Scope, stmt *DeclarationStmt) Bytecode {
 	blob := compileExpr(s, stmt.Expr)
 	symbol := s.GetVariableReference(stmt.Name.Name)
 	blob.write(InstrStore{stmt.Name.Name, symbol})
 	return blob
 }
 
-func compileExprStmt(s Scope, stmt *ExprStmt) bytecode {
+func compileExprStmt(s Scope, stmt *ExprStmt) Bytecode {
 	blob := compileExpr(s, stmt.Expr)
 	blob.write(InstrPop{})
 	return blob
 }
 
-func compileExpr(s Scope, expr Expr) bytecode {
+func compileExpr(s Scope, expr Expr) Bytecode {
 	switch expr := expr.(type) {
 	case *FunctionExpr:
 		return compileFunctionExpr(s, expr)
@@ -105,7 +105,7 @@ func compileExpr(s Scope, expr Expr) bytecode {
 	}
 }
 
-func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob bytecode) {
+func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob Bytecode) {
 	local := s.GetChild(expr)
 	var params []*UniqueSymbol
 	for _, param := range expr.Params {
@@ -114,7 +114,7 @@ func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob bytecode) {
 		params = append(params, symbol)
 	}
 
-	bodyBlob := bytecode{}
+	bodyBlob := Bytecode{}
 	for _, name := range local.GetLocalVariableNames() {
 		isParam := false
 		for _, param := range expr.Params {
@@ -142,7 +142,7 @@ func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob bytecode) {
 	return blob
 }
 
-func compileDispatchExpr(s Scope, expr *DispatchExpr) (blob bytecode) {
+func compileDispatchExpr(s Scope, expr *DispatchExpr) (blob Bytecode) {
 	for _, arg := range expr.Args {
 		blob.append(compileExpr(s, arg))
 	}
@@ -151,7 +151,7 @@ func compileDispatchExpr(s Scope, expr *DispatchExpr) (blob bytecode) {
 	return blob
 }
 
-func compileAssignExpr(s Scope, expr *AssignExpr) bytecode {
+func compileAssignExpr(s Scope, expr *AssignExpr) Bytecode {
 	blob := compileExpr(s, expr.Right)
 	symbol := s.GetVariableReference(expr.Left.Name)
 	blob.write(InstrCopy{})
@@ -159,7 +159,7 @@ func compileAssignExpr(s Scope, expr *AssignExpr) bytecode {
 	return blob
 }
 
-func compileBinaryExpr(s Scope, expr *BinaryExpr) bytecode {
+func compileBinaryExpr(s Scope, expr *BinaryExpr) Bytecode {
 	blob := compileExpr(s, expr.Left)
 	blob.append(compileExpr(s, expr.Right))
 
@@ -185,30 +185,30 @@ func compileBinaryExpr(s Scope, expr *BinaryExpr) bytecode {
 	return blob
 }
 
-func compileSelfExpr(s Scope, expr *SelfExpr) bytecode {
-	blob := bytecode{}
+func compileSelfExpr(s Scope, expr *SelfExpr) Bytecode {
+	blob := Bytecode{}
 	blob.write(InstrLoadSelf{})
 	return blob
 }
 
-func compileIdentExpr(s Scope, expr *IdentExpr) bytecode {
-	blob := bytecode{}
+func compileIdentExpr(s Scope, expr *IdentExpr) Bytecode {
+	blob := Bytecode{}
 	symbol := s.GetVariableReference(expr.Name)
 	blob.write(InstrLoad{expr.Name, symbol})
 	return blob
 }
 
-func compileNumberExpr(s Scope, expr *NumberExpr) (blob bytecode) {
+func compileNumberExpr(s Scope, expr *NumberExpr) (blob Bytecode) {
 	blob.write(InstrPush{ObjectInt{int64(expr.Val)}})
 	return blob
 }
 
-func compileStringExpr(s Scope, expr *StringExpr) (blob bytecode) {
+func compileStringExpr(s Scope, expr *StringExpr) (blob Bytecode) {
 	blob.write(InstrPush{ObjectStr{expr.Val}})
 	return blob
 }
 
-func compileBoolExpr(s Scope, expr *BooleanExpr) (blob bytecode) {
+func compileBoolExpr(s Scope, expr *BooleanExpr) (blob Bytecode) {
 	blob.write(InstrPush{ObjectBool{expr.Val}})
 	return blob
 }
