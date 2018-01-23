@@ -5,7 +5,6 @@ import "fmt"
 func Compile(mod Module) bytecode {
 	if virt, ok := mod.(*VirtualModule); ok {
 		main := compileProgram(virt.Scope(), virt.ast)
-		fmt.Println(main.String())
 		return main
 	}
 
@@ -138,9 +137,6 @@ func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob bytecode) {
 		params:   params,
 		bytecode: bodyBlob,
 	}
-
-	fmt.Println(bodyBlob.String())
-	fmt.Println("---")
 
 	blob.write(InstrPush{function})
 	return blob
