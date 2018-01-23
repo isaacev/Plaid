@@ -42,6 +42,22 @@ func (b *bytecode) String() (out string) {
 	return out
 }
 
+func sprintfArgs(name string, args ...interface{}) (out string) {
+	if len(args) == 0 {
+		return name
+	}
+
+	out = fmt.Sprintf("%-8s", name)
+	for i := 0; i < len(args); i++ {
+		if i < len(args)-1 {
+			out += fmt.Sprintf("%-8v", args[i])
+		} else {
+			out += fmt.Sprintf("%v", args[i])
+		}
+	}
+	return out
+}
+
 type Instr interface {
 	fmt.Stringer
 	isInstr()
@@ -72,7 +88,7 @@ type InstrJump struct {
 	addr Address
 }
 
-func (i InstrJump) String() string                       { return fmt.Sprintf("jmp %s", i.addr) }
+func (i InstrJump) String() string                       { return sprintfArgs("jmp", i.addr) }
 func (i InstrJump) offset(offset Address) InstrAddressed { return InstrJump{i.addr + offset} }
 func (i InstrJump) isInstr()                             {}
 
@@ -80,7 +96,7 @@ type InstrJumpTrue struct {
 	addr Address
 }
 
-func (i InstrJumpTrue) String() string                       { return fmt.Sprintf("jmpt %s", i.addr) }
+func (i InstrJumpTrue) String() string                       { return sprintfArgs("jmpt", i.addr) }
 func (i InstrJumpTrue) offset(offset Address) InstrAddressed { return InstrJumpTrue{i.addr + offset} }
 func (i InstrJumpTrue) isInstr()                             {}
 
@@ -88,7 +104,7 @@ type InstrJumpFalse struct {
 	addr Address
 }
 
-func (i InstrJumpFalse) String() string                       { return fmt.Sprintf("jmpf %s", i.addr) }
+func (i InstrJumpFalse) String() string                       { return sprintfArgs("jmpf", i.addr) }
 func (i InstrJumpFalse) offset(offset Address) InstrAddressed { return InstrJumpFalse{i.addr + offset} }
 func (i InstrJumpFalse) isInstr()                             {}
 
@@ -96,7 +112,7 @@ type InstrPush struct {
 	Val Object
 }
 
-func (i InstrPush) String() string { return fmt.Sprintf("push %s", i.Val.String()) }
+func (i InstrPush) String() string { return sprintfArgs("push", i.Val) }
 func (i InstrPush) isInstr()       {}
 
 type InstrPop struct{}
@@ -114,7 +130,7 @@ type InstrReserve struct {
 	Symbol *UniqueSymbol
 }
 
-func (i InstrReserve) String() string { return fmt.Sprintf("alloc %s", i.Name) }
+func (i InstrReserve) String() string { return sprintfArgs("alloc", i.Name) }
 func (i InstrReserve) isInstr()       {}
 
 type InstrStore struct {
@@ -122,7 +138,7 @@ type InstrStore struct {
 	Symbol *UniqueSymbol
 }
 
-func (i InstrStore) String() string { return fmt.Sprintf("store %s", i.Name) }
+func (i InstrStore) String() string { return sprintfArgs("store", i.Name) }
 func (i InstrStore) isInstr()       {}
 
 type InstrLoadSelf struct{}
@@ -135,14 +151,14 @@ type InstrLoad struct {
 	Symbol *UniqueSymbol
 }
 
-func (i InstrLoad) String() string { return fmt.Sprintf("load %s", i.Name) }
+func (i InstrLoad) String() string { return sprintfArgs("load", i.Name) }
 func (i InstrLoad) isInstr()       {}
 
 type InstrDispatch struct {
 	args int
 }
 
-func (i InstrDispatch) String() string { return fmt.Sprintf("call %d", i.args) }
+func (i InstrDispatch) String() string { return sprintfArgs("call", i.args) }
 func (i InstrDispatch) isInstr()       {}
 
 type InstrNone struct{}

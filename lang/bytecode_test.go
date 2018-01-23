@@ -17,25 +17,25 @@ func TestInstrNOP(t *testing.T) {
 func TestInstrJump(t *testing.T) {
 	instr := InstrJump{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmp 0x0064")
+	expectString(t, instr.String(), "jmp     0x0064")
 }
 
 func TestInstrJumpTrue(t *testing.T) {
 	instr := InstrJumpTrue{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmpt 0x0064")
+	expectString(t, instr.String(), "jmpt    0x0064")
 }
 
 func TestInstrJumpFalse(t *testing.T) {
 	instr := InstrJumpFalse{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmpf 0x0064")
+	expectString(t, instr.String(), "jmpf    0x0064")
 }
 
 func TestInstrPush(t *testing.T) {
 	instr := InstrPush{ObjectStr{"abc"}}
 	instr.isInstr()
-	expectString(t, instr.String(), `push "abc"`)
+	expectString(t, instr.String(), `push    "abc"`)
 }
 
 func TestInstrPop(t *testing.T) {
@@ -53,13 +53,13 @@ func TestInstrCopy(t *testing.T) {
 func TestInstrReserve(t *testing.T) {
 	instr := InstrReserve{Name: "foo"}
 	instr.isInstr()
-	expectString(t, instr.String(), "alloc foo")
+	expectString(t, instr.String(), "alloc   foo")
 }
 
 func TestInstrStore(t *testing.T) {
 	instr := InstrStore{Name: "foo"}
 	instr.isInstr()
-	expectString(t, instr.String(), "store foo")
+	expectString(t, instr.String(), "store   foo")
 }
 
 func TestInstrLoadSelf(t *testing.T) {
@@ -71,13 +71,13 @@ func TestInstrLoadSelf(t *testing.T) {
 func TestInstrLoad(t *testing.T) {
 	instr := InstrLoad{Name: "foo"}
 	instr.isInstr()
-	expectString(t, instr.String(), "load foo")
+	expectString(t, instr.String(), "load    foo")
 }
 
 func TestInstrDispatch(t *testing.T) {
 	instr := InstrDispatch{args: 5}
 	instr.isInstr()
-	expectString(t, instr.String(), "call 5")
+	expectString(t, instr.String(), "call    5")
 }
 
 func TestInstrNone(t *testing.T) {
