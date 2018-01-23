@@ -6,17 +6,17 @@ type bytecode struct {
 	Instructions []Instr
 }
 
-func (b *bytecode) nextInstrPtr() uint32 {
-	return uint32(len(b.Instructions))
+func (b *bytecode) nextInstrPtr() Address {
+	return Address(len(b.Instructions))
 }
 
-func (b *bytecode) write(instr Instr) uint32 {
+func (b *bytecode) write(instr Instr) Address {
 	ip := b.nextInstrPtr()
 	b.Instructions = append(b.Instructions, instr)
 	return ip
 }
 
-func (b *bytecode) append(blob bytecode) uint32 {
+func (b *bytecode) append(blob bytecode) Address {
 	offset := b.nextInstrPtr()
 	for _, instr := range blob.Instructions {
 		if jump, ok := instr.(InstrAddressed); ok {
@@ -28,7 +28,7 @@ func (b *bytecode) append(blob bytecode) uint32 {
 	return b.nextInstrPtr()
 }
 
-func (b *bytecode) overwrite(addr uint32, instr Instr) {
+func (b *bytecode) overwrite(addr Address, instr Instr) {
 	b.Instructions[addr] = instr
 }
 
@@ -37,7 +37,7 @@ func (b *bytecode) String() (out string) {
 		if i > 0 {
 			out += "\n"
 		}
-		out += fmt.Sprintf("%04d %s", i, instr)
+		out += fmt.Sprintf("%s %s", Address(i), instr)
 	}
 	return out
 }
@@ -47,9 +47,15 @@ type Instr interface {
 	isInstr()
 }
 
+type Address uint32
+
+func (a Address) String() string {
+	return fmt.Sprintf("0x%04x", uint32(a))
+}
+
 type InstrAddressed interface {
 	Instr
-	offset(uint32) InstrAddressed
+	offset(Address) InstrAddressed
 }
 
 type InstrHalt struct{}
@@ -63,28 +69,28 @@ func (i InstrNOP) String() string { return "nop" }
 func (i InstrNOP) isInstr()       {}
 
 type InstrJump struct {
-	addr uint32
+	addr Address
 }
 
-func (i InstrJump) String() string                      { return fmt.Sprintf("jmp %d", i.addr) }
-func (i InstrJump) offset(offset uint32) InstrAddressed { return InstrJump{i.addr + offset} }
-func (i InstrJump) isInstr()                            {}
+func (i InstrJump) String() string                       { return fmt.Sprintf("jmp %s", i.addr) }
+func (i InstrJump) offset(offset Address) InstrAddressed { return InstrJump{i.addr + offset} }
+func (i InstrJump) isInstr()                             {}
 
 type InstrJumpTrue struct {
-	addr uint32
+	addr Address
 }
 
-func (i InstrJumpTrue) String() string                      { return fmt.Sprintf("jmpt %d", i.addr) }
-func (i InstrJumpTrue) offset(offset uint32) InstrAddressed { return InstrJumpTrue{i.addr + offset} }
-func (i InstrJumpTrue) isInstr()                            {}
+func (i InstrJumpTrue) String() string                       { return fmt.Sprintf("jmpt %s", i.addr) }
+func (i InstrJumpTrue) offset(offset Address) InstrAddressed { return InstrJumpTrue{i.addr + offset} }
+func (i InstrJumpTrue) isInstr()                             {}
 
 type InstrJumpFalse struct {
-	addr uint32
+	addr Address
 }
 
-func (i InstrJumpFalse) String() string                      { return fmt.Sprintf("jmpf %d", i.addr) }
-func (i InstrJumpFalse) offset(offset uint32) InstrAddressed { return InstrJumpFalse{i.addr + offset} }
-func (i InstrJumpFalse) isInstr()                            {}
+func (i InstrJumpFalse) String() string                       { return fmt.Sprintf("jmpf %s", i.addr) }
+func (i InstrJumpFalse) offset(offset Address) InstrAddressed { return InstrJumpFalse{i.addr + offset} }
+func (i InstrJumpFalse) isInstr()                             {}
 
 type InstrPush struct {
 	Val Object

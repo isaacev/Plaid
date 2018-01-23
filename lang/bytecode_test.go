@@ -17,19 +17,19 @@ func TestInstrNOP(t *testing.T) {
 func TestInstrJump(t *testing.T) {
 	instr := InstrJump{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmp 100")
+	expectString(t, instr.String(), "jmp 0x0064")
 }
 
 func TestInstrJumpTrue(t *testing.T) {
 	instr := InstrJumpTrue{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmpt 100")
+	expectString(t, instr.String(), "jmpt 0x0064")
 }
 
 func TestInstrJumpFalse(t *testing.T) {
 	instr := InstrJumpFalse{addr: 100}
 	instr.isInstr()
-	expectString(t, instr.String(), "jmpf 100")
+	expectString(t, instr.String(), "jmpf 0x0064")
 }
 
 func TestInstrPush(t *testing.T) {
