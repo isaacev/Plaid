@@ -7,7 +7,9 @@ import (
 	"sort"
 )
 
-type UniqueSymbol struct{}
+type UniqueSymbol struct {
+	name string
+}
 
 // Scope describes common methods that any type of scope must implement
 type Scope interface {
@@ -204,7 +206,7 @@ func (s *GlobalScope) GetVariableReference(name string) *UniqueSymbol {
 // newVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
 func (s *GlobalScope) newVariable(name string, typ types.Type) *UniqueSymbol {
-	ref := &UniqueSymbol{}
+	ref := &UniqueSymbol{name}
 	s.types[name] = typ
 	s.symbols[name] = ref
 	return ref
@@ -405,7 +407,7 @@ func (s *LocalScope) StringerChildren() (children []printing.StringerTree) {
 // newVariable registers a new variable with the given name and type and
 // generates a unique reference identifier for that variable
 func (s *LocalScope) newVariable(name string, typ types.Type) *UniqueSymbol {
-	ref := &UniqueSymbol{}
+	ref := &UniqueSymbol{name}
 	s.types[name] = typ
 	s.references[name] = ref
 	return ref
