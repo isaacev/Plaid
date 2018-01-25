@@ -2,7 +2,7 @@ package lang
 
 import (
 	"fmt"
-	"go/types"
+	"plaid/lang/types"
 )
 
 type Object interface {
