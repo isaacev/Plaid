@@ -14,6 +14,7 @@ const (
 	tokQuestion         = "?"
 	tokSemi             = ";"
 	tokComma            = ","
+	tokDot              = "."
 	tokParenL           = "("
 	tokParenR           = ")"
 	tokBraceL           = "{"
@@ -122,6 +123,10 @@ func isComma(r rune) bool {
 	return (r == ',')
 }
 
+func isDot(r rune) bool {
+	return (r == '.')
+}
+
 func isParen(r rune) bool {
 	return (r == '(') || (r == ')')
 }
@@ -160,6 +165,8 @@ func eatToken(scn *scanner) token {
 		return eatSemicolonToken(scn)
 	case isComma(peek.char):
 		return eatCommaToken(scn)
+	case isDot(peek.char):
+		return eatDotToken(scn)
 	case isParen(peek.char):
 		return eatParenToken(scn)
 	case isBrace(peek.char):
@@ -249,6 +256,14 @@ func eatSemicolonToken(scn *scanner) token {
 	}
 
 	return token{tokSemi, ";", scn.next().loc}
+}
+
+func eatDotToken(scn *scanner) token {
+	if scn.peek().char != '.' {
+		return token{tokError, "expected dot", scn.next().loc}
+	}
+
+	return token{tokDot, ".", scn.next().loc}
 }
 
 func eatCommaToken(scn *scanner) token {
