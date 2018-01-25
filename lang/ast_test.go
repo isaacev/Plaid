@@ -201,6 +201,13 @@ func TestSubscriptExpr(t *testing.T) {
 	expectASTString(t, &SubscriptExpr{&IdentExpr{nop, "a"}, &NumberExpr{nop, 0}}, "a[0]")
 }
 
+func TestAccessExpr(t *testing.T) {
+	(AccessExpr{}).isNode()
+	(AccessExpr{}).isExpr()
+
+	expectASTString(t, &AccessExpr{&IdentExpr{nop, "a"}, &IdentExpr{nop, "b"}}, "(a).b")
+}
+
 func TestBinaryExpr(t *testing.T) {
 	(BinaryExpr{}).isNode()
 	(BinaryExpr{}).isExpr()

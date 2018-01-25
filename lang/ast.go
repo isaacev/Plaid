@@ -410,6 +410,18 @@ func (se SubscriptExpr) String() string { return fmt.Sprintf("%s[%s]", se.ListLi
 func (se SubscriptExpr) isNode()        {}
 func (se SubscriptExpr) isExpr()        {}
 
+// AccessExpr uses dot notation to retrieve a sub-object
+type AccessExpr struct {
+	Left  Expr
+	Right Expr
+}
+
+// Start returns a location that this node can be considered to start at
+func (e AccessExpr) Start() Loc     { return e.Left.Start() }
+func (e AccessExpr) String() string { return fmt.Sprintf("(%s).%s", e.Left, e.Right) }
+func (e AccessExpr) isNode()        {}
+func (e AccessExpr) isExpr()        {}
+
 // BinaryExpr describes any two expressions associated by an operator
 type BinaryExpr struct {
 	Oper  string
