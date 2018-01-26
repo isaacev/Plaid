@@ -132,6 +132,7 @@ func loadGrammar(p *parser) {
 	p.registerPrefix(tokString, parseString)
 	p.registerPrefix(tokBoolean, parseBoolean)
 
+	p.registerPostfix(tokDot, parseAccess, precDispatch)
 	p.registerPostfix(tokBracketL, parseSubscript, precDispatch)
 	p.registerPostfix(tokParenL, parseDispatch, precDispatch)
 	p.registerPostfix(tokAssign, parseAssign, precAssign)
@@ -734,6 +735,20 @@ func parseSubscript(p *parser, left Expr) (Expr, error) {
 	}
 
 	return &SubscriptExpr{left, index}, nil
+}
+
+func parseAccess(p *parser, left Expr) (Expr, error) {
+	_, err := p.expectNextToken(tokDot, "expect dot")
+	if err != nil {
+		return nil, err
+	}
+
+	right, err := parseExpr(p, precDispatch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AccessExpr{left, right}, nil
 }
 
 func parseDispatch(p *parser, left Expr) (Expr, error) {

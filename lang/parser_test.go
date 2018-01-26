@@ -688,6 +688,35 @@ func TestParseSubscript(t *testing.T) {
 	expectParserError(t, "(1:5) expect right bracket", expr, err)
 }
 
+func TestParseAccessExpr(t *testing.T) {
+	good := func(source string, exp string) {
+		p := makeParser("", source)
+		loadGrammar(p)
+		expr, err := parseExpr(p, precLowest)
+		expectNoParserErrors(t, exp, expr, err)
+	}
+
+	bad := func(source string, msg string) {
+		p := makeParser("", source)
+		loadGrammar(p)
+		left, _ := parseExpr(p, precDispatch)
+		expr, err := parseAccess(p, left)
+		expectParserError(t, msg, expr, err)
+	}
+
+	good("a.b", "(a).b")
+	good("a.b.c", "((a).b).c")
+	good("a + b.c", "(+ a (b).c)")
+	good("a.b + c", "(+ (a).b c)")
+	good("a.b(c)", "((a).b (c))")
+	good("a(b).c", "((a (b))).c")
+	good("a[b].c", "(a[b]).c")
+	good("a.b[c]", "(a).b[c]")
+
+	bad("a b", "(1:3) expect dot")
+	bad("a.", "(1:2) unexpected symbol")
+}
+
 func TestParseDispatchExpr(t *testing.T) {
 	p := makeParser("", "callee()")
 	loadGrammar(p)
