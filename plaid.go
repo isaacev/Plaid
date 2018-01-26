@@ -46,12 +46,15 @@ func run(filename string) (errs []error) {
 		fmt.Println(ast)
 	}
 
-	if mod, errs = lang.Link(filename, ast); len(errs) > 0 {
+	stdlib := make(map[string]*lang.Library)
+	stdlib["io"] = lib.IO()
+
+	if mod, errs = lang.Link(filename, ast, stdlib); len(errs) > 0 {
 		return errs
 	}
 
 	fmt.Println("\n=== MODULE")
-	if _, errs = lang.Check(mod, lib.IO, lib.Conv); len(errs) > 0 {
+	if _, errs = lang.Check(mod); len(errs) > 0 {
 		return errs
 	} else {
 		fmt.Println(mod)

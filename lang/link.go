@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func Link(filepath string, ast *RootNode) (mod *VirtualModule, errs []error) {
+func Link(filepath string, ast *RootNode, stdlib map[string]*Library) (mod *VirtualModule, errs []error) {
 	// Determine an order that all dependencies can be loaded such that no
 	// dependent is loaded before any of its dependencies.
 	order, errs := resolve(filepath, ast)

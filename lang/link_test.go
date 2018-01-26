@@ -47,7 +47,7 @@ func TestLink(t *testing.T) {
 
 	good := func(start string, modBase string, importBases []string) {
 		ast := read(start)
-		mod, errs := Link(start, ast)
+		mod, errs := Link(start, ast, nil)
 
 		if len(errs) > 0 {
 			t.Fatal(errs[0])
@@ -66,7 +66,7 @@ func TestLink(t *testing.T) {
 	bad := func(start string, exp string) {
 		ast := read(start)
 		var err error = nil
-		_, errs := Link(start, ast)
+		_, errs := Link(start, ast, nil)
 		if len(errs) > 0 {
 			err = errs[0]
 		}

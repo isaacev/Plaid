@@ -5,11 +5,17 @@ import (
 	"plaid/lang/types"
 )
 
-var IO = lang.BuildNativeModule("IO", map[string]types.Type{
-	"print": types.Function{
+func IO() *lang.Library {
+	lib := lang.MakeLibrary("io")
+
+	lib.Function("print", types.Function{
 		Params: types.Tuple{[]types.Type{
 			types.Any{},
 		}},
 		Ret: types.Void{},
-	},
-})
+	}, func(args []lang.Object) (lang.Object, error) {
+		return nil, nil
+	})
+
+	return lib
+}
