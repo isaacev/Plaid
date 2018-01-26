@@ -5,17 +5,10 @@ import (
 	"plaid/lang/types"
 )
 
-func Check(mod Module, builtins ...Module) (Module, []error) {
+func Check(mod Module) (Module, []error) {
 	switch cast := mod.(type) {
 	case *NativeModule:
 		return cast, nil
-	case *VirtualModule:
-		scope := checkModule(cast, builtins...)
-		if scope.HasErrors() {
-			return nil, scope.GetErrors()
-		} else {
-			return cast, nil
-		}
 	default:
 		panic("unknown module type")
 	}
@@ -58,16 +51,12 @@ var defaultBinopsLUT = binopsLUT{
 // within the program. The semantic analysis tries to find as many semantic
 // errors as possible in a single pass. Any errors that are detected are
 // available by calling `GetErrors()` on the returned scope object.
-func checkModule(root *VirtualModule, builtins ...Module) *GlobalScope {
+func checkModule(root *VirtualModule) *GlobalScope {
 	global := makeGlobalScope()
-
-	for _, mod := range builtins {
-		global.addImport(mod.Scope())
-	}
 
 	for _, mod := range root.imports {
 		if mod.Scope() == nil {
-			global.addImport(checkModule(mod.(*VirtualModule), builtins...))
+			global.addImport(checkModule(mod.(*VirtualModule)))
 		} else {
 			global.addImport(mod.Scope())
 		}
