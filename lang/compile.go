@@ -4,23 +4,37 @@ import "fmt"
 
 func Compile(mod Module) Bytecode {
 	if virt, ok := mod.(*VirtualModule); ok {
-		main := compileProgram(virt.Scope(), virt.ast)
+		main := compileProgram(mod, virt.Scope(), virt.ast)
 		return main
 	}
 
 	return Bytecode{}
 }
 
-func compileProgram(s Scope, prog *RootNode) Bytecode {
+func compileProgram(mod Module, s *GlobalScope, prog *RootNode) Bytecode {
 	blob := Bytecode{}
 	for _, name := range s.GetLocalVariableNames() {
 		symbol := s.GetLocalVariableReference(name)
 		blob.write(InstrReserve{name, symbol})
 	}
 
-	blob.append(compileStmts(s, prog.Stmts))
+	blob.append(compileTopLevelStmts(mod, s, prog.Stmts))
 	blob.write(InstrHalt{})
 	return blob
+}
+
+func compileTopLevelStmts(mod Module, s *GlobalScope, stmts []Stmt) (blob Bytecode) {
+	for _, stmt := range stmts {
+		blob.append(compileTopLevelStmt(mod, s, stmt))
+	}
+	return blob
+}
+
+func compileTopLevelStmt(mod Module, s *GlobalScope, stmt Stmt) Bytecode {
+	switch stmt := stmt.(type) {
+	default:
+		return compileStmt(s, stmt)
+	}
 }
 
 func compileStmts(s Scope, stmts []Stmt) (blob Bytecode) {
