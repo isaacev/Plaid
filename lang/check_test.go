@@ -145,6 +145,7 @@ func TestCheckFunctionExpr(t *testing.T) {
 
 func TestCheckDispatchExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
+		t.Helper()
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
@@ -156,6 +157,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 	}
 
 	bad := func(source string, name string, typ types.Type, errs ...string) {
+		t.Helper()
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
@@ -203,6 +205,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 
 func TestCheckAssignExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
+		t.Helper()
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
@@ -214,6 +217,7 @@ func TestCheckAssignExpr(t *testing.T) {
 	}
 
 	bad := func(source string, name string, typ types.Type, exp string) {
+		t.Helper()
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
@@ -235,6 +239,7 @@ func TestCheckAssignExpr(t *testing.T) {
 
 func TestCheckBinaryExpr(t *testing.T) {
 	good := func(left types.Type, oper string, right types.Type, exp types.Type) {
+		t.Helper()
 		source := "let c := a " + oper + " b;"
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
@@ -249,6 +254,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 	}
 
 	bad := func(source string, s *GlobalScope, errs ...string) {
+		t.Helper()
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
@@ -287,6 +293,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 
 func TestCheckListExpr(t *testing.T) {
 	good := func(expr *ListExpr, exp types.Type) {
+		t.Helper()
 		s := makeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNoErrors(t, s)
@@ -294,6 +301,7 @@ func TestCheckListExpr(t *testing.T) {
 	}
 
 	bad := func(expr *ListExpr, exp string) {
+		t.Helper()
 		s := makeGlobalScope()
 		got := checkListExpr(s, expr)
 		expectNthError(t, s, 0, exp)

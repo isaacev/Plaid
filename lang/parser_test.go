@@ -195,6 +195,7 @@ func TestParseStmtBlock(t *testing.T) {
 
 func TestParseUseStmt(t *testing.T) {
 	good := func(source string, ast string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseUseStmt(p)
@@ -203,6 +204,7 @@ func TestParseUseStmt(t *testing.T) {
 	}
 
 	bad := func(source string, msg string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parseUseStmt(p)
@@ -222,6 +224,7 @@ func TestParseUseStmt(t *testing.T) {
 
 func TestParseUseFilter(t *testing.T) {
 	bad := func(source string, msg string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		_, err := parseUseFilters(p)
@@ -236,6 +239,7 @@ func TestParseUseFilter(t *testing.T) {
 
 func TestParsePubStmt(t *testing.T) {
 	good := func(source string, ast string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parsePubStmt(p)
@@ -244,6 +248,7 @@ func TestParsePubStmt(t *testing.T) {
 	}
 
 	bad := func(source string, msg string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		stmt, err := parsePubStmt(p)
@@ -630,6 +635,7 @@ func TestParseInfix(t *testing.T) {
 
 func TestParseList(t *testing.T) {
 	good := func(source string, exp string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		expr, err := parseList(p)
@@ -638,6 +644,7 @@ func TestParseList(t *testing.T) {
 	}
 
 	bad := func(source string, exp string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		expr, err := parseList(p)
@@ -690,6 +697,7 @@ func TestParseSubscript(t *testing.T) {
 
 func TestParseAccessExpr(t *testing.T) {
 	good := func(source string, exp string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		expr, err := parseExpr(p, precLowest)
@@ -697,6 +705,7 @@ func TestParseAccessExpr(t *testing.T) {
 	}
 
 	bad := func(source string, msg string) {
+		t.Helper()
 		p := makeParser("", source)
 		loadGrammar(p)
 		left, _ := parseExpr(p, precDispatch)

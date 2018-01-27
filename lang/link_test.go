@@ -46,6 +46,7 @@ func TestLink(t *testing.T) {
 	}
 
 	good := func(start string, modBase string, importBases []string) {
+		t.Helper()
 		ast := read(start)
 		mod, errs := Link(start, ast, nil)
 
@@ -64,6 +65,7 @@ func TestLink(t *testing.T) {
 	}
 
 	bad := func(start string, exp string) {
+		t.Helper()
 		ast := read(start)
 		var err error = nil
 		_, errs := Link(start, ast, nil)
@@ -114,6 +116,7 @@ func TestResolve(t *testing.T) {
 	}
 
 	good := func(start string, exp []string) {
+		t.Helper()
 		ast := read(start)
 		if order, errs := resolve(start, ast); len(errs) > 0 {
 			t.Fatal(errs[0])
@@ -138,6 +141,7 @@ func TestResolve(t *testing.T) {
 	})
 
 	bad := func(start string, exp string) {
+		t.Helper()
 		ast := read(start)
 		var err error = nil
 		_, errs := resolve(start, ast)
@@ -186,12 +190,14 @@ func TestGraphResetFlags(t *testing.T) {
 
 func TestOrderDependencies(t *testing.T) {
 	good := func(g *graph, exp string) {
+		t.Helper()
 		order := orderDependencies(g)
 		got := routeToString(order)
 		expectString(t, got, exp)
 	}
 
 	bad := func(g *graph, exp string) {
+		t.Helper()
 		defer func() {
 			if got := recover(); got == nil {
 				t.Errorf("Expected failure when ordering cycle")
@@ -284,6 +290,7 @@ func TestContainsNode(t *testing.T) {
 
 func TestExtractCycle(t *testing.T) {
 	good := func(exp string, route ...*node) {
+		t.Helper()
 		expectRoute(t, extractCycle(route), exp)
 	}
 
