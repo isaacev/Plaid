@@ -141,6 +141,13 @@ type InstrStore struct {
 func (i InstrStore) String() string { return sprintfArgs("store", i.Name) }
 func (i InstrStore) isInstr()       {}
 
+type InstrLoadAttr struct {
+	Name string
+}
+
+func (i InstrLoadAttr) String() string { return sprintfArgs("attr", i.Name) }
+func (i InstrLoadAttr) isInstr()       {}
+
 type InstrLoadSelf struct{}
 
 func (i InstrLoadSelf) String() string { return "self" }
