@@ -31,6 +31,7 @@ func run(filename string) (errs []error) {
 	var src string
 	var ast *lang.RootNode
 	var mod *lang.VirtualModule
+	var btc lang.Bytecode
 
 	fmt.Println("\n=== SOURCE CODE")
 	if src, errs = read(filename); len(errs) > 0 {
@@ -59,6 +60,13 @@ func run(filename string) (errs []error) {
 	} else {
 		fmt.Println(mod)
 	}
+
+	fmt.Println("\n=== BYTECODE")
+	btc = lang.Compile(mod)
+	fmt.Println(btc.String())
+
+	fmt.Println("\n=== VM")
+	lang.Run(btc)
 
 	return nil
 }
