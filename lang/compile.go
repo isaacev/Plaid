@@ -124,6 +124,8 @@ func compileExpr(s Scope, expr Expr) Bytecode {
 		return compileAssignExpr(s, expr)
 	case *BinaryExpr:
 		return compileBinaryExpr(s, expr)
+	case *AccessExpr:
+		return compileAccessExpr(s, expr)
 	case *SelfExpr:
 		return compileSelfExpr(s, expr)
 	case *IdentExpr:
@@ -183,6 +185,12 @@ func compileDispatchExpr(s Scope, expr *DispatchExpr) (blob Bytecode) {
 	}
 	blob.append(compileExpr(s, expr.Callee))
 	blob.write(InstrDispatch{args: len(expr.Args)})
+	return blob
+}
+
+func compileAccessExpr(s Scope, expr *AccessExpr) Bytecode {
+	blob := compileExpr(s, expr.Left)
+	blob.write(InstrLoadAttr{expr.Right.(*IdentExpr).Name})
 	return blob
 }
 
