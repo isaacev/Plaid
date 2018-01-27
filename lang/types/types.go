@@ -12,6 +12,46 @@ type Type interface {
 	isType()
 }
 
+type Struct struct {
+	Fields []struct {
+		name string
+		typ  Type
+	}
+}
+
+func (t Struct) String() (out string) {
+	for i, field := range t.Fields {
+		out += fmt.Sprintf("%s:%s", field.name, field.typ)
+		if i < len(t.Fields)-1 {
+			out += " "
+		}
+	}
+
+	return "{" + out + "}"
+}
+
+func (t Struct) Equals(other Type) bool {
+	if t2, ok := other.(Struct); ok {
+		if len(t.Fields) != len(t2.Fields) {
+			return false
+		}
+
+		for i, field := range t.Fields {
+			field2 := t2.Fields[i]
+			if field.name != field2.name || field.typ.Equals(field2.typ) == false {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func (t Struct) IsError() bool { return false }
+func (t Struct) isType()       {}
+
 // Error signals that whatever expression was supposed to produce this type
 // had a semantic error that made proper evaluation impossible
 type Error struct{}

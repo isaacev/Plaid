@@ -12,6 +12,35 @@ var tOpt = Optional{tBool}
 var tList = List{tInt}
 var tTuple = Tuple{[]Type{tInt, tBool, tOpt, tList}}
 var tFunc = Function{tTuple, tList}
+var tStruct = Struct{[]struct {
+	name string
+	typ  Type
+}{{"t", tBool}, {"x", tInt}, {"y", tInt}}}
+
+func TestTypeStruct(t *testing.T) {
+	expectEquivalentType(t, tStruct, tStruct)
+	expectEquivalentType(t, tStruct, Struct{[]struct {
+		name string
+		typ  Type
+	}{{"t", tBool}, {"x", tInt}, {"y", tInt}}})
+	expectNotEquivalentType(t, tStruct, tError)
+	expectNotEquivalentType(t, tStruct, Struct{[]struct {
+		name string
+		typ  Type
+	}{{"t", tBool}}})
+	expectNotEquivalentType(t, tStruct, Struct{[]struct {
+		name string
+		typ  Type
+	}{{"t", tInt}, {"x", tInt}, {"y", tInt}}})
+	expectNotEquivalentType(t, tStruct, Struct{[]struct {
+		name string
+		typ  Type
+	}{{"z", tBool}, {"x", tInt}, {"y", tInt}}})
+
+	expectString(t, tStruct.String(), "{t:Bool x:Int y:Int}")
+	expectBool(t, tStruct.IsError(), false)
+	tStruct.isType()
+}
 
 func TestTypeError(t *testing.T) {
 	expectEquivalentType(t, tError, tError)
