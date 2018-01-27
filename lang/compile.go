@@ -229,6 +229,11 @@ func compileSelfExpr(s Scope, expr *SelfExpr) Bytecode {
 func compileIdentExpr(s Scope, expr *IdentExpr) Bytecode {
 	blob := Bytecode{}
 	symbol := s.GetVariableReference(expr.Name)
+
+	if symbol == nil {
+		panic("nil lookup")
+	}
+
 	blob.write(InstrLoad{expr.Name, symbol})
 	return blob
 }
