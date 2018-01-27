@@ -32,6 +32,8 @@ func compileTopLevelStmts(mod Module, s *GlobalScope, stmts []Stmt) (blob Byteco
 
 func compileTopLevelStmt(mod Module, s *GlobalScope, stmt Stmt) Bytecode {
 	switch stmt := stmt.(type) {
+	case *UseStmt:
+		return compileUseStmt(mod, s, stmt)
 	default:
 		return compileStmt(s, stmt)
 	}
@@ -59,6 +61,22 @@ func compileStmt(s Scope, stmt Stmt) Bytecode {
 	default:
 		panic(fmt.Sprintf("cannot compile %T", stmt))
 	}
+}
+
+func compileUseStmt(mod Module, s *GlobalScope, stmt *UseStmt) Bytecode {
+	name := stmt.Path.Val
+	for _, imp := range mod.Imports() {
+		if imp.Path() == name {
+			if native, ok := imp.(*NativeModule); ok {
+				lib := native.library
+				blob := Bytecode{}
+				blob.write(InstrPush{lib.toObject()})
+				blob.write(InstrStore{name, s.GetVariableReference(name)})
+				return blob
+			}
+		}
+	}
+	panic(fmt.Sprintf("cannot find library named '%s'", stmt.Path.Val))
 }
 
 func compilePubStmt(s Scope, stmt *PubStmt) Bytecode {
