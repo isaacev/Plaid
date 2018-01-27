@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"plaid/lang"
 	"plaid/lang/types"
 )
@@ -14,7 +15,13 @@ func IO() *lang.Library {
 		}},
 		Ret: types.Void{},
 	}, func(args []lang.Object) (lang.Object, error) {
-		return nil, nil
+		if len(args) != 1 {
+			err := fmt.Errorf("wanted 1 argument, got %d", len(args))
+			return lang.ObjectNone{}, err
+		}
+
+		fmt.Println(args[0].String())
+		return lang.ObjectNone{}, nil
 	})
 
 	return lib
