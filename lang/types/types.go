@@ -12,16 +12,21 @@ type Type interface {
 	isType()
 }
 
+type CompositeType interface {
+	Type
+	Member(name string) Type
+}
+
 type Struct struct {
 	Fields []struct {
-		name string
-		typ  Type
+		Name string
+		Type Type
 	}
 }
 
 func (t Struct) String() (out string) {
 	for i, field := range t.Fields {
-		out += fmt.Sprintf("%s:%s", field.name, field.typ)
+		out += fmt.Sprintf("%s:%s", field.Name, field.Type)
 		if i < len(t.Fields)-1 {
 			out += " "
 		}
@@ -38,7 +43,7 @@ func (t Struct) Equals(other Type) bool {
 
 		for i, field := range t.Fields {
 			field2 := t2.Fields[i]
-			if field.name != field2.name || field.typ.Equals(field2.typ) == false {
+			if field.Name != field2.Name || field.Type.Equals(field2.Type) == false {
 				return false
 			}
 		}
@@ -51,6 +56,16 @@ func (t Struct) Equals(other Type) bool {
 
 func (t Struct) IsError() bool { return false }
 func (t Struct) isType()       {}
+
+func (t Struct) Member(name string) Type {
+	for _, field := range t.Fields {
+		if field.Name == name {
+			return field.Type
+		}
+	}
+
+	return nil
+}
 
 // Error signals that whatever expression was supposed to produce this type
 // had a semantic error that made proper evaluation impossible
