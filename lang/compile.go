@@ -92,7 +92,9 @@ func compileIfStmt(s Scope, stmt *IfStmt) Bytecode {
 }
 
 func compileReturnStmt(s Scope, stmt *ReturnStmt) (blob Bytecode) {
-	if stmt.Expr != nil {
+	if stmt.Expr == nil {
+		blob.write(InstrPush{ObjectNone{}})
+	} else {
 		blob.append(compileExpr(s, stmt.Expr))
 	}
 	blob.write(InstrReturn{})
@@ -163,6 +165,7 @@ func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob Bytecode) {
 	}
 
 	bodyBlob.append(compileStmts(local, expr.Block.Stmts))
+	bodyBlob.write(InstrPush{ObjectNone{}})
 	bodyBlob.write(InstrReturn{})
 
 	function := ObjectFunction{
