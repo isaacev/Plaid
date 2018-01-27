@@ -178,8 +178,8 @@ func compileFunctionExpr(s Scope, expr *FunctionExpr) (blob Bytecode) {
 }
 
 func compileDispatchExpr(s Scope, expr *DispatchExpr) (blob Bytecode) {
-	for _, arg := range expr.Args {
-		blob.append(compileExpr(s, arg))
+	for i := len(expr.Args) - 1; i >= 0; i-- {
+		blob.append(compileExpr(s, expr.Args[i]))
 	}
 	blob.append(compileExpr(s, expr.Callee))
 	blob.write(InstrDispatch{args: len(expr.Args)})
