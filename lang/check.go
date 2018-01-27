@@ -59,7 +59,9 @@ func checkModule(root *VirtualModule) *GlobalScope {
 	global := makeGlobalScope()
 
 	for _, mod := range root.imports {
-		if mod.Scope() == nil {
+		if native, ok := mod.(*NativeModule); ok {
+			global.newVariable("io", native.library.toType())
+		} else if mod.Scope() == nil {
 			global.addImport(checkModule(mod.(*VirtualModule)))
 		} else {
 			global.addImport(mod.Scope())
@@ -181,6 +183,8 @@ func checkExprAllowVoid(s Scope, expr Expr) types.Type {
 		typ = checkListExpr(s, expr)
 	case *SubscriptExpr:
 		typ = checkSubscriptExpr(s, expr, defaultBinopsLUT)
+	case *AccessExpr:
+		typ = checkAccessExpr(s, expr)
 	case *SelfExpr:
 		typ = checkSelfExpr(s, expr)
 	case *IdentExpr:
@@ -386,6 +390,25 @@ func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type 
 	}
 
 	addTypeError(s, expr.Start(), "unknown infix operator '['")
+	return types.Error{}
+}
+
+func checkAccessExpr(s Scope, expr *AccessExpr) types.Type {
+	rootType := checkExpr(s, expr.Left)
+
+	if rootType.IsError() {
+		return types.Error{}
+	}
+
+	memberName := expr.Right.(*IdentExpr).Name
+	if composite, ok := rootType.(types.CompositeType); ok {
+		if memberType := composite.Member(memberName); memberType != nil {
+			return memberType
+		}
+	}
+
+	msg := fmt.Sprintf("type %s does not have member '%s'", rootType, memberName)
+	addTypeError(s, expr.Right.Start(), msg)
 	return types.Error{}
 }
 

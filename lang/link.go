@@ -9,7 +9,7 @@ import (
 func Link(filepath string, ast *RootNode, stdlib map[string]*Library) (mod *VirtualModule, errs []error) {
 	// Determine an order that all dependencies can be loaded such that no
 	// dependent is loaded before any of its dependencies.
-	order, errs := resolve(filepath, ast)
+	order, errs := resolve(filepath, ast, stdlib)
 	if len(errs) > 0 {
 		return nil, errs
 	}
@@ -17,18 +17,19 @@ func Link(filepath string, ast *RootNode, stdlib map[string]*Library) (mod *Virt
 	// Link each module in the dependency graph to its dependencies.
 	for _, n := range order {
 		for _, child := range n.children {
-			n.module.imports = append(n.module.imports, child.module)
+			n.module.(*VirtualModule).imports = append(n.module.Imports(), child.module)
 		}
 	}
 
-	return order[len(order)-1].module, nil
+	return order[len(order)-1].module.(*VirtualModule), nil
 }
 
 type node struct {
 	flag     int
+	native   bool
 	children []*node
 	parents  []*node
-	module   *VirtualModule
+	module   Module
 }
 
 type graph struct {
@@ -43,9 +44,9 @@ func (g *graph) resetFlags() {
 }
 
 // resolve determines if a module has any dependency cycles
-func resolve(path string, ast *RootNode) ([]*node, []error) {
+func resolve(path string, ast *RootNode, stdlib map[string]*Library) ([]*node, []error) {
 	n := makeNode(path, ast)
-	g, errs := buildGraph(n, getDependencyPaths, loadDependency)
+	g, errs := buildGraph(n, getDependencyPaths, loadDependency, stdlib)
 	if len(errs) > 0 {
 		return nil, errs
 	}
@@ -90,9 +91,9 @@ func routeToString(route []*node) (out string) {
 
 	for i, n := range route {
 		if i == len(route)-1 {
-			out += filepath.Base(n.module.path)
+			out += filepath.Base(n.module.Path())
 		} else {
-			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.path))
+			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.Path()))
 		}
 	}
 	return out
@@ -139,16 +140,17 @@ func extractCycle(route []*node) (cycle []*node) {
 	return nil
 }
 
-func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, []error)) (g *graph, errs []error) {
+func buildGraph(n *node, branch func(*node) ([]string, []string), load func(string, string, map[string]*Library) (*node, []error), stdlib map[string]*Library) (g *graph, errs []error) {
 	g = &graph{n, map[string]*node{}}
 	done := map[string]*node{}
 	todo := []*node{n}
-	g.nodes[n.module.path] = n
-	done[n.module.path] = n
+	g.nodes[n.module.Path()] = n
+	done[n.module.Path()] = n
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
-		for _, path := range branch(n) {
+		literal, relative := branch(n)
+		for i, path := range relative {
 			if dep := done[path]; dep != nil {
 				addParent(dep, n)
 				addChild(n, dep)
@@ -156,7 +158,7 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
-			} else if dep, errs = load(path); len(errs) == 0 {
+			} else if dep, errs = load(literal[i], path, stdlib); len(errs) == 0 {
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
@@ -171,16 +173,19 @@ func buildGraph(n *node, branch func(*node) []string, load func(string) (*node, 
 	return g, nil
 }
 
-func getDependencyPaths(n *node) (paths []string) {
-	for _, stmt := range n.module.ast.Stmts {
-		if stmt, ok := stmt.(*UseStmt); ok {
-			dir := filepath.Dir(n.module.path)
-			path := filepath.Join(dir, stmt.Path.Val)
-			paths = append(paths, path)
+func getDependencyPaths(n *node) (raw []string, paths []string) {
+	if n.native == false {
+		for _, stmt := range n.module.(*VirtualModule).ast.Stmts {
+			if stmt, ok := stmt.(*UseStmt); ok {
+				raw = append(raw, stmt.Path.Val)
+				dir := filepath.Dir(n.module.Path())
+				path := filepath.Join(dir, stmt.Path.Val)
+				paths = append(paths, path)
+			}
 		}
 	}
 
-	return paths
+	return raw, paths
 }
 
 func addParent(child *node, parent *node) {
@@ -196,10 +201,29 @@ func addTodo(todo *[]*node, n *node) {
 }
 
 func addDone(done map[string]*node, n *node) {
-	done[n.module.path] = n
+	done[n.module.Path()] = n
 }
 
-func loadDependency(path string) (n *node, errs []error) {
+func loadDependency(literal string, path string, stdlib map[string]*Library) (n *node, errs []error) {
+	if lib, ok := stdlib[literal]; ok {
+		return loadLibraryDependency(lib, literal)
+	}
+
+	return loadFileDependency(path)
+}
+
+func loadLibraryDependency(lib *Library, path string) (n *node, errs []error) {
+	return &node{
+		native: true,
+		module: &NativeModule{
+			path:    path,
+			scope:   lib.toScope(),
+			library: lib,
+		},
+	}, nil
+}
+
+func loadFileDependency(path string) (n *node, errs []error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, append(errs, err)

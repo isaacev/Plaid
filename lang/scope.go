@@ -41,6 +41,7 @@ type GlobalScope struct {
 	errors   []error
 	types    map[string]types.Type
 	symbols  map[string]*UniqueSymbol
+	objects  map[string]Object
 }
 
 // makeGlobalScope is a helper function to quickly build a global scope
@@ -50,6 +51,7 @@ func makeGlobalScope() *GlobalScope {
 		children: make(map[ASTNode]Scope),
 		types:    make(map[string]types.Type),
 		symbols:  make(map[string]*UniqueSymbol),
+		objects:  make(map[string]Object),
 	}
 }
 
@@ -84,6 +86,13 @@ func (s *GlobalScope) GetExport(name string) types.Type {
 // newExport exposes global definitions for use by other modules
 func (s *GlobalScope) newExport(name string, typ types.Type) {
 	s.exports[name] = typ
+}
+
+func (s *GlobalScope) newExportObject(name string, typ types.Type, obj Object) *UniqueSymbol {
+	sym := s.newVariable(name, typ)
+	s.newExport(name, typ)
+	s.objects[name] = obj
+	return sym
 }
 
 // HasParent returns true if the current scope has a parent scope

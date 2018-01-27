@@ -118,7 +118,7 @@ func TestResolve(t *testing.T) {
 	good := func(start string, exp []string) {
 		t.Helper()
 		ast := read(start)
-		if order, errs := resolve(start, ast); len(errs) > 0 {
+		if order, errs := resolve(start, ast, nil); len(errs) > 0 {
 			t.Fatal(errs[0])
 		} else if len(order) != len(exp) {
 			t.Errorf("expected %d loaded dependencies, got %d", len(exp), len(order))
@@ -144,7 +144,7 @@ func TestResolve(t *testing.T) {
 		t.Helper()
 		ast := read(start)
 		var err error = nil
-		_, errs := resolve(start, ast)
+		_, errs := resolve(start, ast, nil)
 		if len(errs) > 0 {
 			err = errs[0]
 		}
@@ -310,18 +310,18 @@ func TestExtractCycle(t *testing.T) {
 }
 
 func TestBuildGraph(t *testing.T) {
-	branch := func(n *node) []string {
-		switch n.module.path {
+	branch := func(n *node) ([]string, []string) {
+		switch n.module.Path() {
 		case "n0":
-			return []string{"n1", "n2"}
+			return []string{"n1", "n2"}, []string{"n1", "n2"}
 		case "n1":
-			return []string{"n2", "n3"}
+			return []string{"n2", "n3"}, []string{"n2", "n3"}
 		case "n3":
-			return []string{"n0"}
+			return []string{"n0"}, []string{"n0"}
 		case "n4":
-			return []string{"n5"}
+			return []string{"n5"}, []string{"n5"}
 		default:
-			return []string{}
+			return []string{}, []string{}
 		}
 	}
 
@@ -331,7 +331,7 @@ func TestBuildGraph(t *testing.T) {
 	n3 := testNode("n3")
 	n4 := testNode("n4")
 
-	load := func(path string) (*node, []error) {
+	load := func(_ string, path string, _ map[string]*Library) (*node, []error) {
 		switch path {
 		case "n0":
 			return n0, nil
@@ -348,7 +348,7 @@ func TestBuildGraph(t *testing.T) {
 		}
 	}
 
-	g, errs := buildGraph(n0, branch, load)
+	g, errs := buildGraph(n0, branch, load, nil)
 	for _, err := range errs {
 		expectNoError(t, err)
 	}
@@ -360,7 +360,7 @@ func TestBuildGraph(t *testing.T) {
 	expectParents(t, g, "n0", "n3")
 	expectParents(t, g, "n2", "n0", "n1")
 
-	_, errs = buildGraph(n4, branch, load)
+	_, errs = buildGraph(n4, branch, load, nil)
 	var err error = nil
 	if len(errs) > 0 {
 		err = errs[0]
@@ -376,7 +376,7 @@ func TestGetDependencyPaths(t *testing.T) {
 		&UseStmt{Path: &StringExpr{Val: "baz/quux"}},
 	}}}}
 
-	got := getDependencyPaths(n)
+	_, got := getDependencyPaths(n)
 	expectString(t, got[0], "a/b/foo")
 	expectString(t, got[1], "a/bar")
 	expectString(t, got[2], "a/b/baz/quux")
@@ -423,10 +423,8 @@ func TestMakeNode(t *testing.T) {
 	ast := &RootNode{}
 	n := makeNode(path, ast)
 
-	expectBool(t, n.module.path == path, true)
-	expectBool(t, n.module.ast == ast, true)
 	expectBool(t, n.module.Path() == path, true)
-	// expectBool(t, n.module.AST == ast, true)
+	expectBool(t, n.module.(*VirtualModule).ast == ast, true)
 }
 
 func testNode(path string, children ...*node) *node {
@@ -459,8 +457,8 @@ func expectChildren(t *testing.T, g *graph, path string, children ...string) {
 			t.Errorf("Expected at least %d children of %s, found %d", i+1, path, len(n.children))
 		}
 
-		if n.children[i].module.path != p {
-			t.Errorf("Expected child #%d of %s to be named '%s', was named '%s'", i, path, p, n.children[i].module.path)
+		if n.children[i].module.Path() != p {
+			t.Errorf("Expected child #%d of %s to be named '%s', was named '%s'", i, path, p, n.children[i].module.Path())
 		}
 	}
 }
@@ -481,8 +479,8 @@ func expectParents(t *testing.T, g *graph, path string, parents ...string) {
 			t.Errorf("Expected at least %d parents of %s, found %d", i+1, path, len(n.parents))
 		}
 
-		if n.parents[i].module.path != p {
-			t.Errorf("Expected parent #%d of %s to be named '%s', was named '%s'", i, path, p, n.parents[i].module.path)
+		if n.parents[i].module.Path() != p {
+			t.Errorf("Expected parent #%d of %s to be named '%s', was named '%s'", i, path, p, n.parents[i].module.Path())
 		}
 	}
 }

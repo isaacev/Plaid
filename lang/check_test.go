@@ -368,6 +368,19 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectBool(t, typ.IsError(), true)
 }
 
+func TestCheckAccessExpr(t *testing.T) {
+	/*
+		good := func(src string) {
+			t.Helper()
+			ast, _ := Parse("", src)
+			s := checkProgram(makeGlobalScope(), ast)
+			expectNoErrors(t, s)
+		}
+
+		good("let a := [1,2]; let b := a.length();")
+	*/
+}
+
 func TestCheckSelfExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn(): Void { self(); };")
 	s := checkProgram(makeGlobalScope(), prog)

@@ -14,8 +14,9 @@ type Module interface {
 }
 
 type NativeModule struct {
-	path  string
-	scope *GlobalScope
+	path    string
+	scope   *GlobalScope
+	library *Library
 }
 
 func (m *NativeModule) Path() string        { return m.path }
@@ -26,13 +27,25 @@ func (m *NativeModule) String() (out string) {
 	return m.Path()
 }
 
-func BuildNativeModule(name string, exports map[string]types.Type) *NativeModule {
-	return &NativeModule{
-		path: name,
-		scope: &GlobalScope{
-			exports: exports,
-		},
+func MakeNativeModule(name string, types map[string]types.Type, objects map[string]func(args []Object) (Object, error)) *NativeModule {
+	mod := &NativeModule{
+		path:  name,
+		scope: makeGlobalScope(),
 	}
+
+	for name, typ := range types {
+		if val, ok := objects[name]; ok {
+			sym := mod.scope.newExportObject(name, typ, ObjectBuiltin{
+				typ: typ,
+				val: val,
+			})
+			fmt.Println("%s -> %p\n", name, sym)
+		} else {
+			panic(fmt.Sprintf("malformed library"))
+		}
+	}
+
+	return mod
 }
 
 type VirtualModule struct {
