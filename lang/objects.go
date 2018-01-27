@@ -69,3 +69,12 @@ type ObjectClosure struct {
 func (o ObjectClosure) Value() interface{} { return o.bytecode }
 func (o ObjectClosure) String() string     { return "<closure>" }
 func (o ObjectClosure) isObject()          {}
+
+type ObjectStruct struct {
+	fields map[string]Object
+}
+
+func (o ObjectStruct) Value() interface{}        { return nil }
+func (o ObjectStruct) String() string            { return "<struct>" }
+func (o ObjectStruct) isObject()                 {}
+func (o ObjectStruct) Member(name string) Object { return o.fields[name] }
