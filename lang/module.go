@@ -10,6 +10,7 @@ type Module interface {
 	Path() string
 	Scope() *GlobalScope
 	Imports() []Module
+	link(Module)
 	fmt.Stringer
 }
 
@@ -22,6 +23,7 @@ type NativeModule struct {
 func (m *NativeModule) Path() string        { return m.path }
 func (m *NativeModule) Scope() *GlobalScope { return m.scope }
 func (m *NativeModule) Imports() []Module   { return nil }
+func (m *NativeModule) link(mod Module)     {}
 
 func (m *NativeModule) String() (out string) {
 	return m.Path()
@@ -58,6 +60,7 @@ type VirtualModule struct {
 func (m *VirtualModule) Path() string        { return m.path }
 func (m *VirtualModule) Scope() *GlobalScope { return m.scope }
 func (m *VirtualModule) Imports() []Module   { return m.imports }
+func (m *VirtualModule) link(mod Module)     { m.imports = append(m.imports, mod) }
 
 func (m *VirtualModule) String() (out string) {
 	out += fmt.Sprintf("path: %s\n", m.Path())

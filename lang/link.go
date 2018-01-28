@@ -6,22 +6,36 @@ import (
 	"path/filepath"
 )
 
-func Link(filepath string, ast *RootNode, stdlib map[string]*Library) (mod *VirtualModule, errs []error) {
-	// Determine an order that all dependencies can be loaded such that no
-	// dependent is loaded before any of its dependencies.
-	order, errs := resolve(filepath, ast, stdlib)
-	if len(errs) > 0 {
+func Link(path string, ast *RootNode, stdlib map[string]*Library) (Module, []error) {
+	var g *graph
+	var order []*node
+	var errs []error
+
+	// Build a dependency graph without performing any cycle detection.
+	if g, errs = connect(path, ast, stdlib); len(errs) > 0 {
 		return nil, errs
 	}
 
-	// Link each module in the dependency graph to its dependencies.
-	for _, n := range order {
-		for _, child := range n.children {
-			n.module.(*VirtualModule).imports = append(n.module.Imports(), child.module)
+	// From the graph determine a linear order that all dependencies can be
+	// analyzed such that all dependencies are analyzed before they are needed by
+	// any dependents.
+	if order, errs = flatten(g); len(errs) > 0 {
+		return nil, errs
+	}
+
+	// Link each dependent module to all of its dependencies.
+	for _, dependent := range order {
+		for _, dependency := range dependent.children {
+			dependent.module.link(dependency.module)
 		}
 	}
 
-	return order[len(order)-1].module.(*VirtualModule), nil
+	return order[len(order)-1].module, nil
+}
+
+type graph struct {
+	root  *node
+	nodes map[string]*node
 }
 
 type node struct {
@@ -32,133 +46,103 @@ type node struct {
 	module   Module
 }
 
-type graph struct {
-	root  *node
-	nodes map[string]*node
-}
-
-func (g *graph) resetFlags() {
-	for _, n := range g.nodes {
-		n.flag = 0
-	}
-}
-
-// resolve determines if a module has any dependency cycles
-func resolve(path string, ast *RootNode, stdlib map[string]*Library) ([]*node, []error) {
-	n := makeNode(path, ast)
-	g, errs := buildGraph(n, getDependencyPaths, loadDependency, stdlib)
-	if len(errs) > 0 {
-		return nil, errs
+func connect(path string, ast *RootNode, stdlib map[string]*Library) (*graph, []error) {
+	n := &node{
+		module: &VirtualModule{
+			path: path,
+			ast:  ast,
+		},
 	}
 
-	if cycle := findCycle(g.root, nil); cycle != nil {
-		return nil, []error{fmt.Errorf("Dependency cycle: %s", routeToString(cycle))}
-	}
-
-	order := orderDependencies(g)
-	return order, nil
-}
-
-func orderDependencies(g *graph) (order []*node) {
-	const FlagTemp = 1
-	const FlagPerm = 2
-
-	var visit func(*node)
-	visit = func(n *node) {
-		if n.flag == FlagPerm {
-			return
-		} else if n.flag == FlagTemp {
-			panic("not a DAG")
+	loadDependency := func(path string) (*node, []error) {
+		if lib, ok := stdlib[path]; ok {
+			// Load dependency from the standard library.
+			return &node{
+				module: &NativeModule{
+					path:    path,
+					scope:   lib.toScope(),
+					library: lib,
+				},
+			}, nil
 		} else {
-			n.flag = FlagTemp
-			for _, m := range n.children {
-				visit(m)
+			// Load dependency from the file system.
+			var buf []byte
+			var err error
+			if buf, err = ioutil.ReadFile(path); err != nil {
+				return nil, []error{err}
 			}
-			n.flag = FlagPerm
-			order = append(order, n)
+
+			var ast *RootNode
+			var errs []error
+			if ast, errs = Parse(path, string(buf)); len(errs) > 0 {
+				return nil, errs
+			}
+
+			return &node{
+				module: &VirtualModule{
+					path: path,
+					ast:  ast,
+				},
+			}, nil
 		}
 	}
 
-	g.resetFlags()
-	visit(g.root)
-	return order
+	return buildGraphFromNode(n, loadDependency)
 }
 
-func routeToString(route []*node) (out string) {
-	if len(route) == 0 {
-		return "empty route"
-	}
-
-	for i, n := range route {
-		if i == len(route)-1 {
-			out += filepath.Base(n.module.Path())
-		} else {
-			out += fmt.Sprintf("%s <- ", filepath.Base(n.module.Path()))
+func (n *node) branch() (paths []string) {
+	if mod, ok := n.module.(*VirtualModule); ok {
+		for _, stmt := range mod.ast.Stmts {
+			if stmt, ok := stmt.(*UseStmt); ok {
+				paths = append(paths, stmt.Path.Val)
+			}
 		}
 	}
-	return out
+
+	return paths
 }
 
-func findCycle(n *node, route []*node) (cycle []*node) {
-	for _, child := range n.children {
-		newRoute := append(route, n)
-
-		if containsNode(newRoute, child) {
-			return extractCycle(append(newRoute, child))
-		}
-
-		if cycle := findCycle(child, newRoute); cycle != nil {
-			return cycle
-		}
-	}
-
-	return nil
+func isFilePath(path string) bool {
+	return filepath.Ext(path) == ".plaid"
 }
 
-func containsNode(list []*node, goal *node) bool {
-	for _, n := range list {
-		if goal == n {
-			return true
-		}
-	}
+type loadDependencyFunc func(path string) (*node, []error)
 
-	return false
-}
+func buildGraphFromNode(n *node, load loadDependencyFunc) (*graph, []error) {
+	g := &graph{}                  // Graph to track relations.
+	errs := []error{}              // Collection of errors detected.
+	done := make(map[string]*node) // Cache of nodes already analyzed.
+	todo := []*node{}              // Nodes yet to be analyzed.
 
-// extractCycle takes a slice of nodes and--assuming the last node in the slice
-// is the start of a cycle--works backward through the slice trying to find a
-// repetition of the node route[len(route)-1].
-func extractCycle(route []*node) (cycle []*node) {
-	for i := len(route) - 1; i >= 0; i-- {
-		if len(cycle) > 0 && route[i] == cycle[0] {
-			return append(cycle, route[i])
-		}
-
-		cycle = append(cycle, route[i])
-	}
-
-	return nil
-}
-
-func buildGraph(n *node, branch func(*node) ([]string, []string), load func(string, string, map[string]*Library) (*node, []error), stdlib map[string]*Library) (g *graph, errs []error) {
-	g = &graph{n, map[string]*node{}}
-	done := map[string]*node{}
-	todo := []*node{n}
+	g.root = n
+	g.nodes = make(map[string]*node)
 	g.nodes[n.module.Path()] = n
-	done[n.module.Path()] = n
+	addDone(done, n)
+	addTodo(&todo, n)
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
-		literal, relative := branch(n)
-		for i, path := range relative {
+		for _, path := range n.branch() {
+			// If dependency path seems like a relative path to another script, then
+			// convert the path to an absolute path relative to the directory path of
+			// the current node.
+			if isFilePath(path) {
+				path = filepath.Join(filepath.Dir(n.module.Path()), path)
+			}
+
 			if dep := done[path]; dep != nil {
+				// The dependency has already been fully analyzed so all that's left is
+				// to link the dependency and the dependant.
 				addParent(dep, n)
 				addChild(n, dep)
 			} else if dep := g.nodes[path]; dep != nil {
+				// The dependency is in the `todo` queue awaiting analysis.
 				addParent(dep, n)
 				addChild(n, dep)
-				addTodo(&todo, dep)
-			} else if dep, errs = load(literal[i], path, stdlib); len(errs) == 0 {
+			} else if dep, errs = load(path); len(errs) == 0 {
+				// The dependency is novel and thus not already in the `todo` queue so
+				// load and parse the script then add it to the `todo` queue for future
+				// dependency analysis.
 				addParent(dep, n)
 				addChild(n, dep)
 				addTodo(&todo, dep)
@@ -167,25 +151,12 @@ func buildGraph(n *node, branch func(*node) ([]string, []string), load func(stri
 				return nil, errs
 			}
 		}
+
+		// Mark the current node as having been fully analyzed.
 		addDone(done, n)
 	}
 
 	return g, nil
-}
-
-func getDependencyPaths(n *node) (raw []string, paths []string) {
-	if n.native == false {
-		for _, stmt := range n.module.(*VirtualModule).ast.Stmts {
-			if stmt, ok := stmt.(*UseStmt); ok {
-				raw = append(raw, stmt.Path.Val)
-				dir := filepath.Dir(n.module.Path())
-				path := filepath.Join(dir, stmt.Path.Val)
-				paths = append(paths, path)
-			}
-		}
-	}
-
-	return raw, paths
 }
 
 func addParent(child *node, parent *node) {
@@ -204,46 +175,77 @@ func addDone(done map[string]*node, n *node) {
 	done[n.module.Path()] = n
 }
 
-func loadDependency(literal string, path string, stdlib map[string]*Library) (n *node, errs []error) {
-	if lib, ok := stdlib[literal]; ok {
-		return loadLibraryDependency(lib, literal)
+func flatten(g *graph) ([]*node, []error) {
+	if cycle := findCycle(g.root, nil); cycle != nil {
+		err := fmt.Errorf("Dependency cycle: %s", cycle)
+		return nil, []error{err}
 	}
 
-	return loadFileDependency(path)
+	return findOrder(g), nil
 }
 
-func loadLibraryDependency(lib *Library, path string) (n *node, errs []error) {
-	return &node{
-		native: true,
-		module: &NativeModule{
-			path:    path,
-			scope:   lib.toScope(),
-			library: lib,
-		},
-	}, nil
+func findCycle(n *node, route []*node) (cycle []*node) {
+	for _, child := range n.children {
+		route = append(route, n)
+		if containsNode(route, child) {
+			return extractCycle(append(route, child))
+		} else if cycle := findCycle(child, route); cycle != nil {
+			return cycle
+		}
+	}
+
+	return nil
 }
 
-func loadFileDependency(path string) (n *node, errs []error) {
-	buf, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, append(errs, err)
+func containsNode(list []*node, goal *node) bool {
+	for _, n := range list {
+		if goal == n {
+			return true
+		}
 	}
 
-	ast, errs := Parse(path, string(buf))
-	if len(errs) > 0 {
-		return nil, errs
-	}
-
-	return makeNode(path, ast), nil
+	return false
 }
 
-func makeNode(path string, ast *RootNode) *node {
-	return &node{
-		module: &VirtualModule{
-			path:    path,
-			ast:     ast,
-			scope:   nil,
-			imports: nil,
-		},
+// Take a slice of nodes and--assuming the last node in the slice is the start
+// of a cycle--work backward through the slice trying to find a duplicate
+// reference to the node at the end of the given slice. In that case, a cycle
+// exists from the last node to its duplicate reference.
+func extractCycle(route []*node) (cycle []*node) {
+	for i := len(route) - 1; i >= 0; i-- {
+		if len(cycle) > 0 && route[i] == cycle[0] {
+			return append(cycle, route[i])
+		}
+		cycle = append(cycle, route[i])
 	}
+	return nil
+}
+
+func findOrder(g *graph) []*node {
+	var order []*node
+	var visit func(*node)
+	const FlagTemp = 1
+	const FlagPerm = 2
+
+	visit = func(n *node) {
+		if n.flag == FlagPerm {
+			return
+		} else if n.flag == FlagTemp {
+			panic("not an acyclic dependency graph")
+		} else {
+			n.flag = FlagTemp
+			for _, m := range n.children {
+				visit(m)
+			}
+			n.flag = FlagPerm
+			order = append(order, n)
+		}
+	}
+
+	// Reset all flags in the graph before trying to build order.
+	for _, n := range g.nodes {
+		n.flag = 0
+	}
+	visit(g.root)
+	return order
 }
