@@ -85,17 +85,6 @@ func expectNil(t *testing.T, got interface{}) {
 	}
 }
 
-func expectNoErrors(t *testing.T, s Scope) {
-	t.Helper()
-	if s.HasErrors() {
-		for i, err := range s.GetErrors() {
-			t.Errorf("%d '%s'", i, err)
-		}
-
-		t.Fatalf("Expected no errors, found %d", len(s.GetErrors()))
-	}
-}
-
 func expectAnError(t *testing.T, err error, msg string) {
 	t.Helper()
 	if err == nil {
@@ -103,13 +92,4 @@ func expectAnError(t *testing.T, err error, msg string) {
 	} else if msg != err.Error() {
 		t.Errorf("Expected '%s', got '%s'", msg, err)
 	}
-}
-
-func expectNthError(t *testing.T, scope Scope, n int, msg string) {
-	t.Helper()
-	if len(scope.GetErrors()) <= n {
-		t.Fatalf("Expected at least %d errors", n+1)
-	}
-
-	expectAnError(t, scope.GetErrors()[n], msg)
 }

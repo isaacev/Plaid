@@ -126,16 +126,14 @@ func (i InstrCopy) String() string { return "copy" }
 func (i InstrCopy) isInstr()       {}
 
 type InstrReserve struct {
-	Name   string
-	Symbol *UniqueSymbol
+	Name string
 }
 
 func (i InstrReserve) String() string { return sprintfArgs("alloc", i.Name) }
 func (i InstrReserve) isInstr()       {}
 
 type InstrStore struct {
-	Name   string
-	Symbol *UniqueSymbol
+	Name string
 }
 
 func (i InstrStore) String() string { return sprintfArgs("store", i.Name) }
@@ -154,8 +152,7 @@ func (i InstrLoadSelf) String() string { return "self" }
 func (i InstrLoadSelf) isInstr()       {}
 
 type InstrLoad struct {
-	Name   string
-	Symbol *UniqueSymbol
+	Name string
 }
 
 func (i InstrLoad) String() string { return sprintfArgs("load", i.Name) }

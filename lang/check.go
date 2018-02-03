@@ -5,14 +5,27 @@ import (
 	"plaid/lang/types"
 )
 
-func Check(mod Module) (Module, []error) {
-	switch cast := mod.(type) {
-	case *NativeModule:
-		return cast, nil
-	case *VirtualModule:
-		scope := checkModule(cast)
-		cast.scope = scope
-		return mod, scope.GetErrors()
+func Check(mod Module) (errs []error) {
+	switch mod := mod.(type) {
+	case *ModuleNative:
+		return nil
+	case *ModuleVirtual:
+		for _, dep := range mod.dependencies {
+			if dep.IsNative() == false {
+				errs = append(errs, Check(dep.(*ModuleVirtual))...)
+			}
+		}
+
+		// Initialize the root scope for the module and give the scope a reference
+		// to the module being checked so that imports can be checked.
+		mod.scope = makeXScope(nil)
+		mod.scope.Module = mod
+
+		// Build the full scope tree, performing type checks.
+		checkProgram(mod.scope, mod.structure)
+
+		// Return any type errors.
+		return append(errs, mod.scope.AllErrors()...)
 	default:
 		panic("unknown module type")
 	}
@@ -50,30 +63,7 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
-// checkModule takes as input a *VirtualModule to check for semantic errors. It
-// returns the root of a scope tree that describes the lifecycles of all symbols
-// within the program. The semantic analysis tries to find as many semantic
-// errors as possible in a single pass. Any errors that are detected are
-// available by calling `GetErrors()` on the returned scope object.
-func checkModule(root *VirtualModule) *GlobalScope {
-	global := makeGlobalScope()
-
-	for _, mod := range root.imports {
-		if native, ok := mod.(*NativeModule); ok {
-			global.newVariable("io", native.library.toType())
-		} else if mod.Scope() == nil {
-			global.addImport(checkModule(mod.(*VirtualModule)))
-		} else {
-			global.addImport(mod.Scope())
-		}
-	}
-
-	checkProgram(global, root.ast)
-	root.scope = global
-	return global
-}
-
-func checkProgram(s *GlobalScope, ast *RootNode) Scope {
+func checkProgram(s *Scope, ast *RootNode) *Scope {
 	for _, stmt := range ast.Stmts {
 		checkStmt(s, stmt)
 	}
@@ -81,7 +71,7 @@ func checkProgram(s *GlobalScope, ast *RootNode) Scope {
 	return s
 }
 
-func checkStmt(s Scope, stmt Stmt) {
+func checkStmt(s *Scope, stmt Stmt) {
 	switch stmt := stmt.(type) {
 	case *PubStmt:
 		checkPubStmt(s, stmt)
@@ -101,28 +91,26 @@ func checkStmt(s Scope, stmt Stmt) {
 	}
 }
 
-func checkStmtBlock(s Scope, block *StmtBlock) {
+func checkStmtBlock(s *Scope, block *StmtBlock) {
 	for _, stmt := range block.Stmts {
 		checkStmt(s, stmt)
 	}
 }
 
-func checkPubStmt(s Scope, stmt *PubStmt) {
+func checkPubStmt(s *Scope, stmt *PubStmt) {
 	checkStmt(s, stmt.Stmt)
 
-	var g *GlobalScope
-	var ok bool
-	if g, ok = s.(*GlobalScope); ok == false {
+	if s.Parent != nil {
 		addTypeError(s, stmt.Start(), "pub statement must be a top-level statement")
 		return
 	}
 
 	name := stmt.Stmt.Name.Name
-	typ := g.GetVariableType(name)
-	g.newExport(name, typ)
+	typ := s.Lookup(name)
+	s.Module.AddExport(name, typ)
 }
 
-func checkIfStmt(s Scope, stmt *IfStmt) {
+func checkIfStmt(s *Scope, stmt *IfStmt) {
 	typ := checkExpr(s, stmt.Cond)
 	if types.BuiltinBool.Equals(typ) == false {
 		addTypeError(s, stmt.Cond.Start(), "condition must resolve to a boolean")
@@ -131,44 +119,44 @@ func checkIfStmt(s Scope, stmt *IfStmt) {
 	checkStmtBlock(s, stmt.Clause)
 }
 
-func checkDeclarationStmt(s Scope, stmt *DeclarationStmt) {
+func checkDeclarationStmt(s *Scope, stmt *DeclarationStmt) {
 	name := stmt.Name.Name
 	typ := checkExpr(s, stmt.Expr)
-	s.newVariable(name, typ)
+	s.AddLocal(name, typ)
 }
 
-func checkReturnStmt(s Scope, stmt *ReturnStmt) {
+func checkReturnStmt(s *Scope, stmt *ReturnStmt) {
 	var ret types.Type = types.Void{}
 	if stmt.Expr != nil {
 		ret = checkExpr(s, stmt.Expr)
 	}
 
-	if s.HasSelfReference() == false {
+	if s.Parent == nil {
 		addTypeError(s, stmt.Start(), "return statements must be inside a function")
 		return
 	}
 
-	if s.GetSelfReference().Ret.Equals(ret) || ret.IsError() {
+	if s.Self.Ret.Equals(ret) || ret.IsError() {
 		return
 	}
 
-	if s.GetSelfReference().Ret.Equals(types.Void{}) {
+	if s.Self.Ret.Equals(types.Void{}) {
 		msg := fmt.Sprintf("expected to return nothing, got '%s'", ret)
 		addTypeError(s, stmt.Expr.Start(), msg)
 		return
 	}
 
 	if (types.Void{}).Equals(ret) {
-		msg := fmt.Sprintf("expected a return type of '%s', got nothing", s.GetSelfReference().Ret)
+		msg := fmt.Sprintf("expected a return type of '%s', got nothing", s.Self.Ret)
 		addTypeError(s, stmt.Start(), msg)
 		return
 	}
 
-	msg := fmt.Sprintf("expected to return '%s', got '%s'", s.GetSelfReference().Ret, ret)
+	msg := fmt.Sprintf("expected to return '%s', got '%s'", s.Self.Ret, ret)
 	addTypeError(s, stmt.Expr.Start(), msg)
 }
 
-func checkExprAllowVoid(s Scope, expr Expr) types.Type {
+func checkExprAllowVoid(s *Scope, expr Expr) types.Type {
 	var typ types.Type = types.Error{}
 	switch expr := expr.(type) {
 	case *FunctionExpr:
@@ -202,7 +190,7 @@ func checkExprAllowVoid(s Scope, expr Expr) types.Type {
 	return typ
 }
 
-func checkExpr(s Scope, expr Expr) types.Type {
+func checkExpr(s *Scope, expr Expr) types.Type {
 	typ := checkExprAllowVoid(s, expr)
 
 	if (types.Void{}).Equals(typ) {
@@ -213,7 +201,7 @@ func checkExpr(s Scope, expr Expr) types.Type {
 	return typ
 }
 
-func checkFunctionExpr(s Scope, expr *FunctionExpr) types.Type {
+func checkFunctionExpr(s *Scope, expr *FunctionExpr) types.Type {
 	ret := convertTypeNote(expr.Ret)
 	params := []types.Type{}
 	for _, param := range expr.Params {
@@ -222,19 +210,21 @@ func checkFunctionExpr(s Scope, expr *FunctionExpr) types.Type {
 	tuple := types.Tuple{Children: params}
 	self := types.Function{Params: tuple, Ret: ret}
 
-	childScope := makeLocalScope(s, expr, self)
+	childScope := makeXScope(s)
+	s.Children[expr] = childScope
+	childScope.Self = self
 
 	for _, param := range expr.Params {
 		paramName := param.Name.Name
 		paramType := convertTypeNote(param.Note)
-		childScope.newVariable(paramName, paramType)
+		childScope.AddLocal(paramName, paramType)
 	}
 
 	checkStmtBlock(childScope, expr.Block)
 	return self
 }
 
-func checkDispatchExpr(s Scope, expr *DispatchExpr) types.Type {
+func checkDispatchExpr(s *Scope, expr *DispatchExpr) types.Type {
 	// Resolve arguments to types
 	argTypes := []types.Type{}
 	for _, argExpr := range expr.Args {
@@ -281,9 +271,9 @@ func checkDispatchExpr(s Scope, expr *DispatchExpr) types.Type {
 	return retType
 }
 
-func checkAssignExpr(s Scope, expr *AssignExpr) types.Type {
+func checkAssignExpr(s *Scope, expr *AssignExpr) types.Type {
 	name := expr.Left.Name
-	leftType := s.GetVariableType(name)
+	leftType := s.Lookup(name)
 	rightType := checkExpr(s, expr.Right)
 
 	if leftType == nil {
@@ -305,7 +295,7 @@ func checkAssignExpr(s Scope, expr *AssignExpr) types.Type {
 	return leftType
 }
 
-func checkBinaryExpr(s Scope, expr *BinaryExpr, lut binopsLUT) types.Type {
+func checkBinaryExpr(s *Scope, expr *BinaryExpr, lut binopsLUT) types.Type {
 	leftType := checkExpr(s, expr.Left)
 	rightType := checkExpr(s, expr.Right)
 
@@ -330,7 +320,7 @@ func checkBinaryExpr(s Scope, expr *BinaryExpr, lut binopsLUT) types.Type {
 	return types.Error{}
 }
 
-func checkListExpr(s Scope, expr *ListExpr) types.Type {
+func checkListExpr(s *Scope, expr *ListExpr) types.Type {
 	var elemTypes []types.Type
 	for _, elem := range expr.Elements {
 		elemTypes = append(elemTypes, checkExpr(s, elem))
@@ -365,7 +355,7 @@ func checkListExpr(s Scope, expr *ListExpr) types.Type {
 	return types.List{Child: listType}
 }
 
-func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type {
+func checkSubscriptExpr(s *Scope, expr *SubscriptExpr, lut binopsLUT) types.Type {
 	listType := checkExpr(s, expr.ListLike)
 	indexType := checkExpr(s, expr.Index)
 
@@ -393,7 +383,7 @@ func checkSubscriptExpr(s Scope, expr *SubscriptExpr, lut binopsLUT) types.Type 
 	return types.Error{}
 }
 
-func checkAccessExpr(s Scope, expr *AccessExpr) types.Type {
+func checkAccessExpr(s *Scope, expr *AccessExpr) types.Type {
 	rootType := checkExpr(s, expr.Left)
 
 	if rootType.IsError() {
@@ -412,18 +402,18 @@ func checkAccessExpr(s Scope, expr *AccessExpr) types.Type {
 	return types.Error{}
 }
 
-func checkSelfExpr(s Scope, expr *SelfExpr) types.Type {
-	if s.HasSelfReference() == false {
+func checkSelfExpr(s *Scope, expr *SelfExpr) types.Type {
+	if s.Parent == nil {
 		addTypeError(s, expr.Start(), "self references must be inside a function")
 		return types.Error{}
 	}
 
-	return s.GetSelfReference()
+	return s.Self
 }
 
-func checkIdentExpr(s Scope, expr *IdentExpr) types.Type {
-	if s.HasVariable(expr.Name) {
-		return s.GetVariableType(expr.Name)
+func checkIdentExpr(s *Scope, expr *IdentExpr) types.Type {
+	if typ := s.Lookup(expr.Name); typ != nil {
+		return typ
 	}
 
 	msg := fmt.Sprintf("variable '%s' was used before it was declared", expr.Name)
@@ -431,15 +421,15 @@ func checkIdentExpr(s Scope, expr *IdentExpr) types.Type {
 	return types.Error{}
 }
 
-func checkNumberExpr(s Scope, expr *NumberExpr) types.Type {
+func checkNumberExpr(s *Scope, expr *NumberExpr) types.Type {
 	return types.BuiltinInt
 }
 
-func checkStringExpr(s Scope, expr *StringExpr) types.Type {
+func checkStringExpr(s *Scope, expr *StringExpr) types.Type {
 	return types.BuiltinStr
 }
 
-func checkBooleanExpr(s Scope, expr *BooleanExpr) types.Type {
+func checkBooleanExpr(s *Scope, expr *BooleanExpr) types.Type {
 	return types.BuiltinBool
 }
 
@@ -449,9 +439,9 @@ type TypeCheckError struct {
 	Message string
 }
 
-func addTypeError(s Scope, loc Loc, msg string) {
+func addTypeError(s *Scope, loc Loc, msg string) {
 	err := TypeCheckError{loc, msg}
-	s.newError(err)
+	s.Errors = append(s.Errors, err)
 }
 
 func (err TypeCheckError) Error() string {

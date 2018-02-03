@@ -2,71 +2,121 @@ package lang
 
 import (
 	"fmt"
-	"plaid/lang/printing"
 	"plaid/lang/types"
+	"strings"
 )
 
 type Module interface {
-	Path() string
-	Scope() *GlobalScope
-	Imports() []Module
-	link(Module)
 	fmt.Stringer
+	Identifier() string
+	Exports() types.Struct
+	Dependencies() []Module
+	IsNative() bool
+	link(string, Module)
 }
 
-type NativeModule struct {
-	path    string
-	scope   *GlobalScope
+type ModuleNative struct {
+	name    string
 	library *Library
 }
 
-func (m *NativeModule) Path() string        { return m.path }
-func (m *NativeModule) Scope() *GlobalScope { return m.scope }
-func (m *NativeModule) Imports() []Module   { return nil }
-func (m *NativeModule) link(mod Module)     {}
+func (m *ModuleNative) String() string {
+	var lines []string
+	lines = append(lines, "---")
+	lines = append(lines, "type: native")
+	lines = append(lines, fmt.Sprintf("identifier: %s", m.name))
 
-func (m *NativeModule) String() (out string) {
-	return m.Path()
-}
-
-func MakeNativeModule(name string, types map[string]types.Type, objects map[string]func(args []Object) (Object, error)) *NativeModule {
-	mod := &NativeModule{
-		path:  name,
-		scope: makeGlobalScope(),
-	}
-
-	for name, typ := range types {
-		if val, ok := objects[name]; ok {
-			sym := mod.scope.newExportObject(name, typ, ObjectBuiltin{
-				typ: typ,
-				val: val,
-			})
-			fmt.Println("%s -> %p\n", name, sym)
-		} else {
-			panic(fmt.Sprintf("malformed library"))
+	exports := m.library.toType()
+	if len(exports.Fields) > 0 {
+		lines = append(lines, "exports:")
+		for _, field := range exports.Fields {
+			lines = append(lines, fmt.Sprintf("  - name: \"%s\"", field.Name))
+			lines = append(lines, fmt.Sprintf("    type: %s", field.Type))
 		}
 	}
 
-	return mod
+	return strings.Join(lines, "\n")
 }
 
-type VirtualModule struct {
-	path    string
-	ast     *RootNode
-	scope   *GlobalScope
-	imports []Module
+func (m *ModuleNative) Identifier() string {
+	return m.name
 }
 
-func (m *VirtualModule) Path() string        { return m.path }
-func (m *VirtualModule) Scope() *GlobalScope { return m.scope }
-func (m *VirtualModule) Imports() []Module   { return m.imports }
-func (m *VirtualModule) link(mod Module)     { m.imports = append(m.imports, mod) }
+func (m *ModuleNative) Exports() types.Struct {
+	return m.library.toType()
+}
 
-func (m *VirtualModule) String() (out string) {
-	out += fmt.Sprintf("path: %s\n", m.Path())
-	for _, imp := range m.Imports() {
-		out += fmt.Sprintf("uses: %s\n", imp.Path())
+func (m *ModuleNative) Dependencies() []Module {
+	return nil
+}
+
+func (m *ModuleNative) IsNative() bool {
+	return true
+}
+
+func (m *ModuleNative) link(string, Module) {}
+
+type ModuleVirtual struct {
+	path         string
+	exports      types.Struct
+	structure    *RootNode
+	scope        *Scope
+	dependencies map[string]Module
+}
+
+func (m *ModuleVirtual) String() string {
+	var lines []string
+	lines = append(lines, "---")
+	lines = append(lines, "type: virtual")
+	lines = append(lines, fmt.Sprintf("identifier: %s", m.path))
+
+	if len(m.exports.Fields) > 0 {
+		lines = append(lines, "exports:")
+		for _, field := range m.exports.Fields {
+			lines = append(lines, fmt.Sprintf("  - name: \"%s\"", field.Name))
+			lines = append(lines, fmt.Sprintf("    type: %s", field.Type))
+		}
 	}
-	out += printing.TreeToString(m.scope)
-	return out
+
+	if len(m.dependencies) > 0 {
+		lines = append(lines, "dependencies:")
+		for alias, dep := range m.dependencies {
+			lines = append(lines, fmt.Sprintf("  - path: \"%s\"", dep.Identifier()))
+			lines = append(lines, fmt.Sprintf("    alias: %s", alias))
+		}
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (m *ModuleVirtual) Identifier() string {
+	return m.path
+}
+
+func (m *ModuleVirtual) Exports() types.Struct {
+	return m.exports
+}
+
+func (m *ModuleVirtual) AddExport(name string, typ types.Type) {
+	field := struct {
+		Name string
+		Type types.Type
+	}{name, typ}
+	m.exports = types.Struct{append(m.exports.Fields, field)}
+}
+
+func (m *ModuleVirtual) Dependencies() []Module {
+	var deps []Module
+	for _, dep := range m.dependencies {
+		deps = append(deps, dep)
+	}
+	return deps
+}
+
+func (m *ModuleVirtual) IsNative() bool {
+	return false
+}
+
+func (m *ModuleVirtual) link(name string, dep Module) {
+	m.dependencies[name] = dep
 }

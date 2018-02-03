@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 )
 
-func Link(path string, ast *RootNode, stdlib map[string]*Library) (Module, []error) {
+func Link(path string, ast *RootNode, stdlib map[string]Module) (Module, []error) {
 	var g *graph
 	var order []*node
 	var errs []error
@@ -26,7 +27,11 @@ func Link(path string, ast *RootNode, stdlib map[string]*Library) (Module, []err
 	// Link each dependent module to all of its dependencies.
 	for _, dependent := range order {
 		for _, dependency := range dependent.children {
-			dependent.module.link(dependency.module)
+			alias, err := identifierToAlias(dependency.module.Identifier())
+			if err != nil {
+				return nil, append(errs, err)
+			}
+			dependent.module.link(alias, dependency.module)
 		}
 	}
 
@@ -46,23 +51,20 @@ type node struct {
 	module   Module
 }
 
-func connect(path string, ast *RootNode, stdlib map[string]*Library) (*graph, []error) {
+func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []error) {
 	n := &node{
-		module: &VirtualModule{
-			path: path,
-			ast:  ast,
+		module: &ModuleVirtual{
+			path:         path,
+			structure:    ast,
+			dependencies: make(map[string]Module),
 		},
 	}
 
 	loadDependency := func(path string) (*node, []error) {
-		if lib, ok := stdlib[path]; ok {
+		if mod, ok := stdlib[path]; ok {
 			// Load dependency from the standard library.
 			return &node{
-				module: &NativeModule{
-					path:    path,
-					scope:   lib.toScope(),
-					library: lib,
-				},
+				module: mod,
 			}, nil
 		} else {
 			// Load dependency from the file system.
@@ -79,9 +81,9 @@ func connect(path string, ast *RootNode, stdlib map[string]*Library) (*graph, []
 			}
 
 			return &node{
-				module: &VirtualModule{
-					path: path,
-					ast:  ast,
+				module: &ModuleVirtual{
+					path:      path,
+					structure: ast,
 				},
 			}, nil
 		}
@@ -91,8 +93,8 @@ func connect(path string, ast *RootNode, stdlib map[string]*Library) (*graph, []
 }
 
 func (n *node) branch() (paths []string) {
-	if mod, ok := n.module.(*VirtualModule); ok {
-		for _, stmt := range mod.ast.Stmts {
+	if mod, ok := n.module.(*ModuleVirtual); ok {
+		for _, stmt := range mod.structure.Stmts {
 			if stmt, ok := stmt.(*UseStmt); ok {
 				paths = append(paths, stmt.Path.Val)
 			}
@@ -116,7 +118,7 @@ func buildGraphFromNode(n *node, load loadDependencyFunc) (*graph, []error) {
 
 	g.root = n
 	g.nodes = make(map[string]*node)
-	g.nodes[n.module.Path()] = n
+	g.nodes[n.module.Identifier()] = n
 	addDone(done, n)
 	addTodo(&todo, n)
 
@@ -127,7 +129,7 @@ func buildGraphFromNode(n *node, load loadDependencyFunc) (*graph, []error) {
 			// convert the path to an absolute path relative to the directory path of
 			// the current node.
 			if isFilePath(path) {
-				path = filepath.Join(filepath.Dir(n.module.Path()), path)
+				path = filepath.Join(filepath.Dir(n.module.Identifier()), path)
 			}
 
 			if dep := done[path]; dep != nil {
@@ -172,7 +174,7 @@ func addTodo(todo *[]*node, n *node) {
 }
 
 func addDone(done map[string]*node, n *node) {
-	done[n.module.Path()] = n
+	done[n.module.Identifier()] = n
 }
 
 func flatten(g *graph) ([]*node, []error) {
@@ -248,4 +250,20 @@ func findOrder(g *graph) []*node {
 	}
 	visit(g.root)
 	return order
+}
+
+func identifierToAlias(identifier string) (string, error) {
+	ext := regexp.MustCompile(`([a-zA-Z]+).plaid$`)
+	match := ext.FindStringSubmatch(identifier)
+	if len(match) >= 2 {
+		return match[1], nil
+	}
+
+	lib := regexp.MustCompile(`^[a-zA-Z]+$`)
+	match = lib.FindStringSubmatch(identifier)
+	if len(match) >= 1 {
+		return match[0], nil
+	}
+
+	return "", fmt.Errorf("could not determine alias for '%s'", identifier)
 }

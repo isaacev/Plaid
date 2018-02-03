@@ -1,5 +1,6 @@
 package lang
 
+/*
 import "fmt"
 
 func Compile(mod Module) Bytecode {
@@ -260,3 +261,4 @@ func compileBoolExpr(s Scope, expr *BooleanExpr) (blob Bytecode) {
 	blob.write(InstrPush{ObjectBool{expr.Val}})
 	return blob
 }
+*/

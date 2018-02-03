@@ -10,7 +10,7 @@ func Run(btc Bytecode) {
 type environment struct {
 	parent *environment
 	stack  []Object
-	state  map[*UniqueSymbol]Object
+	state  map[string]Object
 }
 
 func (e *environment) pushToStack(obj Object) {
@@ -23,30 +23,30 @@ func (e *environment) popFromStack() Object {
 	return obj
 }
 
-func (e *environment) alloc(sym *UniqueSymbol) {
-	e.state[sym] = ObjectNone{}
+func (e *environment) alloc(name string) {
+	e.state[name] = ObjectNone{}
 }
 
-func (e *environment) store(sym *UniqueSymbol, obj Object) {
-	if _, ok := e.state[sym]; ok {
-		e.state[sym] = obj
+func (e *environment) store(name string, obj Object) {
+	if _, ok := e.state[name]; ok {
+		e.state[name] = obj
 	} else {
-		e.parent.store(sym, obj)
+		e.parent.store(name, obj)
 	}
 }
 
-func (e *environment) load(sym *UniqueSymbol) Object {
-	if obj, ok := e.state[sym]; ok {
+func (e *environment) load(name string) Object {
+	if obj, ok := e.state[name]; ok {
 		return obj
 	} else {
-		return e.parent.load(sym)
+		return e.parent.load(name)
 	}
 }
 
 func makeEnvironment(parent *environment) *environment {
 	return &environment{
 		parent: parent,
-		state:  make(map[*UniqueSymbol]Object),
+		state:  make(map[string]Object),
 	}
 }
 
@@ -80,15 +80,15 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 	case InstrPop:
 		env.popFromStack()
 	case InstrReserve:
-		env.alloc(instr.Symbol)
+		env.alloc(instr.Name)
 	case InstrStore:
 		a := env.popFromStack()
-		env.store(instr.Symbol, a)
+		env.store(instr.Name, a)
 	case InstrLoadAttr:
 		a := env.popFromStack()
 		env.pushToStack(a.(ObjectStruct).Member(instr.Name))
 	case InstrLoad:
-		a := env.load(instr.Symbol)
+		a := env.load(instr.Name)
 		env.pushToStack(a)
 	case InstrDispatch:
 		obj := env.popFromStack()

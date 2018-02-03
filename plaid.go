@@ -31,7 +31,6 @@ func run(filename string) (errs []error) {
 	var src string
 	var ast *lang.RootNode
 	var mod lang.Module
-	var btc lang.Bytecode
 
 	fmt.Println("\n=== SOURCE CODE")
 	if src, errs = read(filename); len(errs) > 0 {
@@ -47,26 +46,26 @@ func run(filename string) (errs []error) {
 		fmt.Println(ast)
 	}
 
-	stdlib := make(map[string]*lang.Library)
-	stdlib["io"] = lib.IO()
+	stdlib := make(map[string]lang.Module)
+	stdlib["io"] = lib.IO().Module("io")
 
 	if mod, errs = lang.Link(filename, ast, stdlib); len(errs) > 0 {
 		return errs
 	}
 
 	fmt.Println("\n=== MODULE")
-	if _, errs = lang.Check(mod.(*lang.VirtualModule)); len(errs) > 0 {
+	if errs = lang.Check(mod.(*lang.ModuleVirtual)); len(errs) > 0 {
 		return errs
 	} else {
 		fmt.Println(mod)
 	}
 
-	fmt.Println("\n=== BYTECODE")
-	btc = lang.Compile(mod.(*lang.VirtualModule))
-	fmt.Println(btc.String())
-
-	fmt.Println("\n=== VM")
-	lang.Run(btc)
+	// fmt.Println("\n=== BYTECODE")
+	// btc = lang.Compile(mod.(*lang.XModuleVirtual))
+	// fmt.Println(btc.String())
+	//
+	// fmt.Println("\n=== VM")
+	// lang.Run(btc)
 
 	return nil
 }

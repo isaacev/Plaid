@@ -52,7 +52,7 @@ func (o ObjectBuiltin) String() string     { return "<builtin>" }
 func (o ObjectBuiltin) isObject()          {}
 
 type ObjectFunction struct {
-	params   []*UniqueSymbol
+	params   []string
 	bytecode Bytecode
 }
 
@@ -62,7 +62,7 @@ func (o ObjectFunction) isObject()          {}
 
 type ObjectClosure struct {
 	// Env      *Env
-	params   []*UniqueSymbol
+	params   []string
 	bytecode *Bytecode
 }
 
