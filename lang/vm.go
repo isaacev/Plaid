@@ -120,13 +120,13 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 			panic(fmt.Sprintf("cannot call %T", obj))
 		}
 	case InstrAdd:
-		b := env.popFromStack().(ObjectInt)
-		a := env.popFromStack().(ObjectInt)
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
 		sum := a.val + b.val
 		env.pushToStack(&ObjectInt{sum})
 	case InstrSub:
-		b := env.popFromStack().(ObjectInt)
-		a := env.popFromStack().(ObjectInt)
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
 		sum := a.val - b.val
 		env.pushToStack(&ObjectInt{sum})
 	case InstrPrint:
