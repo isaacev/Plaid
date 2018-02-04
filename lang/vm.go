@@ -75,6 +75,18 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 		return ip
 	case InstrNOP:
 		// do nothing
+	case InstrJump:
+		return uint32(instr.addr)
+	case InstrJumpTrue:
+		a := env.popFromStack().(*ObjectBool)
+		if a.val {
+			return uint32(instr.addr)
+		}
+	case InstrJumpFalse:
+		a := env.popFromStack().(*ObjectBool)
+		if a.val == false {
+			return uint32(instr.addr)
+		}
 	case InstrPush:
 		env.pushToStack(instr.Val)
 	case InstrPop:
