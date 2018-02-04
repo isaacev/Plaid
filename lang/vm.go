@@ -129,9 +129,6 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 		a := env.popFromStack().(*ObjectInt)
 		sum := a.val - b.val
 		env.pushToStack(&ObjectInt{sum})
-	case InstrPrint:
-		a := env.popFromStack()
-		fmt.Println(a.String())
 	default:
 		panic(fmt.Sprintf("cannot interpret %T instructions", instr))
 	}

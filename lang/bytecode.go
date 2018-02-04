@@ -209,8 +209,3 @@ type InstrGTEquals struct{}
 
 func (i InstrGTEquals) String() string { return "cmpgte" }
 func (i InstrGTEquals) isInstr()       {}
-
-type InstrPrint struct{}
-
-func (i InstrPrint) String() string { return "print" }
-func (i InstrPrint) isInstr()       {}
