@@ -79,6 +79,10 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 		env.pushToStack(instr.Val)
 	case InstrPop:
 		env.popFromStack()
+	case InstrCopy:
+		a := env.popFromStack()
+		env.pushToStack(a)
+		env.pushToStack(a)
 	case InstrReserve:
 		env.alloc(instr.Name)
 	case InstrStore:
