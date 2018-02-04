@@ -141,6 +141,26 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 		a := env.popFromStack().(*ObjectInt)
 		sum := a.val - b.val
 		env.pushToStack(&ObjectInt{sum})
+	case InstrLT:
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
+		test := a.val < b.val
+		env.pushToStack(&ObjectBool{test})
+	case InstrLTEquals:
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
+		test := a.val <= b.val
+		env.pushToStack(&ObjectBool{test})
+	case InstrGT:
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
+		test := a.val > b.val
+		env.pushToStack(&ObjectBool{test})
+	case InstrGTEquals:
+		b := env.popFromStack().(*ObjectInt)
+		a := env.popFromStack().(*ObjectInt)
+		test := a.val >= b.val
+		env.pushToStack(&ObjectBool{test})
 	default:
 		panic(fmt.Sprintf("cannot interpret %T instructions", instr))
 	}
