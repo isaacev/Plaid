@@ -3,10 +3,10 @@ package lang
 import "plaid/lang/types"
 
 type Library struct {
-	objects map[string]ObjectBuiltin
+	objects map[string]*ObjectBuiltin
 }
 
-func (l *Library) addObject(name string, obj ObjectBuiltin) {
+func (l *Library) addObject(name string, obj *ObjectBuiltin) {
 	l.objects[name] = obj
 }
 
@@ -33,18 +33,18 @@ func (l *Library) Module(name string) *ModuleNative {
 	}
 }
 
-func (l *Library) toObject() ObjectStruct {
+func (l *Library) toObject() *ObjectStruct {
 	fields := make(map[string]Object)
 
 	for name, obj := range l.objects {
 		fields[name] = obj
 	}
 
-	return ObjectStruct{fields}
+	return &ObjectStruct{fields}
 }
 
 func (l *Library) Function(name string, typ types.Function, fn func(args []Object) (Object, error)) {
-	l.addObject(name, ObjectBuiltin{
+	l.addObject(name, &ObjectBuiltin{
 		typ: typ,
 		val: fn,
 	})
@@ -52,6 +52,6 @@ func (l *Library) Function(name string, typ types.Function, fn func(args []Objec
 
 func MakeLibrary(name string) *Library {
 	return &Library{
-		objects: make(map[string]ObjectBuiltin),
+		objects: make(map[string]*ObjectBuiltin),
 	}
 }
