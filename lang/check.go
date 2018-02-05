@@ -73,6 +73,8 @@ func checkProgram(s *Scope, ast *RootNode) *Scope {
 
 func checkStmt(s *Scope, stmt Stmt) {
 	switch stmt := stmt.(type) {
+	case *UseStmt:
+		checkUseStmt(s, stmt)
 	case *PubStmt:
 		checkPubStmt(s, stmt)
 		break
@@ -95,6 +97,10 @@ func checkStmtBlock(s *Scope, block *StmtBlock) {
 	for _, stmt := range block.Stmts {
 		checkStmt(s, stmt)
 	}
+}
+
+func checkUseStmt(s *Scope, stmt *UseStmt) {
+	// Do nothing.
 }
 
 func checkPubStmt(s *Scope, stmt *PubStmt) {
