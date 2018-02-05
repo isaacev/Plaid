@@ -61,9 +61,9 @@ func (o ObjectFunction) String() string     { return "<function>" }
 func (o ObjectFunction) isObject()          {}
 
 type ObjectClosure struct {
-	// Env      *Env
+	context  *environment
 	params   []string
-	bytecode *Bytecode
+	bytecode Bytecode
 }
 
 func (o ObjectClosure) Value() interface{} { return o.bytecode }
