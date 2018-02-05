@@ -151,6 +151,11 @@ type InstrLoadSelf struct{}
 func (i InstrLoadSelf) String() string { return "self" }
 func (i InstrLoadSelf) isInstr()       {}
 
+type InstrLoadMod struct{}
+
+func (i InstrLoadMod) String() string { return "mod" }
+func (i InstrLoadMod) isInstr()       {}
+
 type InstrLoad struct {
 	Name string
 }
