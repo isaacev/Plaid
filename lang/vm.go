@@ -2,15 +2,34 @@ package lang
 
 import "fmt"
 
-func Run(btc Bytecode) {
+func Run(mod *ModuleVirtual) {
 	env := makeEnvironment(nil)
-	runBlob(env, btc)
+	mod.environment = env
+	runBlob(mod, env, *mod.bytecode)
+}
+
+func loadModuleEnvironment(mod Module) {
+	// If the given module has already been evaluated, do nothing.
+	if mod, ok := mod.(*ModuleVirtual); ok && mod.environment == nil {
+		runVirtualModule(mod)
+	}
+}
+
+func runVirtualModule(mod *ModuleVirtual) {
+	if mod.bytecode == nil {
+		Compile(mod)
+	}
+
+	env := makeEnvironment(nil)
+	mod.environment = env
+	runBlob(mod, env, *mod.bytecode)
 }
 
 type environment struct {
 	parent *environment
 	stack  []Object
 	state  map[string]Object
+	self   *ObjectClosure
 }
 
 func (e *environment) pushToStack(obj Object) {
@@ -39,6 +58,9 @@ func (e *environment) load(name string) Object {
 	if obj, ok := e.state[name]; ok {
 		return obj
 	} else {
+		if e.parent == nil {
+			panic(fmt.Sprintf("cannot find variable '%s'", name))
+		}
 		return e.parent.load(name)
 	}
 }
@@ -50,26 +72,22 @@ func makeEnvironment(parent *environment) *environment {
 	}
 }
 
-func runBlob(env *environment, blob Bytecode) Object {
-	fmt.Println("---")
+func runBlob(mod *ModuleVirtual, env *environment, blob Bytecode) Object {
 	var ip uint32 = 0
 	instr := blob.Instructions[ip]
 	for {
-		fmt.Printf("%s %s\n", Address(ip), instr)
 		if _, ok := instr.(InstrHalt); ok {
-			fmt.Println("---")
 			return nil
 		} else if _, ok := instr.(InstrReturn); ok {
-			fmt.Println("---")
 			return env.popFromStack()
 		}
 
-		ip = runInstr(ip, env, instr)
+		ip = runInstr(mod, ip, env, instr)
 		instr = blob.Instructions[ip]
 	}
 }
 
-func runInstr(ip uint32, env *environment, instr Instr) uint32 {
+func runInstr(mod *ModuleVirtual, ip uint32, env *environment, instr Instr) uint32 {
 	switch instr := instr.(type) {
 	case InstrHalt:
 		return ip
@@ -100,25 +118,49 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 	case InstrStore:
 		a := env.popFromStack()
 		env.store(instr.Name, a)
+	case InstrLoadMod:
+		path := env.popFromStack().(*ObjectStr).val
+		var alias string
+		var obj Object
+		for _, dep := range mod.dependencies {
+			if dep.relative == path {
+				if dep.module.IsNative() == false {
+					runVirtualModule(dep.module.(*ModuleVirtual))
+				}
+				alias = dep.alias
+				obj = dep.module.export()
+				break
+			}
+		}
+
+		if obj == nil {
+			panic("could not load dependency")
+		}
+
+		env.alloc(alias)
+		env.store(alias, obj)
 	case InstrLoadAttr:
 		a := env.popFromStack()
-		env.pushToStack(a.(ObjectStruct).Member(instr.Name))
+		env.pushToStack(a.(*ObjectStruct).Member(instr.Name))
+	case InstrLoadSelf:
+		env.pushToStack(env.self)
 	case InstrLoad:
 		a := env.load(instr.Name)
 		env.pushToStack(a)
 	case InstrDispatch:
 		obj := env.popFromStack()
 		switch fn := obj.(type) {
-		case ObjectFunction:
-			child := makeEnvironment(env)
+		case *ObjectClosure:
+			child := makeEnvironment(fn.context)
+			child.self = fn
 			for _, sym := range fn.params {
 				child.alloc(sym)
 				obj := env.popFromStack()
 				child.store(sym, obj)
 			}
-			ret := runBlob(child, fn.bytecode)
+			ret := runBlob(mod, child, fn.bytecode)
 			env.pushToStack(ret)
-		case ObjectBuiltin:
+		case *ObjectBuiltin:
 			var args []Object
 			for i := 0; i < instr.args; i++ {
 				args = append(args, env.popFromStack())
@@ -131,6 +173,14 @@ func runInstr(ip uint32, env *environment, instr Instr) uint32 {
 		default:
 			panic(fmt.Sprintf("cannot call %T", obj))
 		}
+	case InstrCreateClosure:
+		fn := env.popFromStack().(*ObjectFunction)
+		clo := &ObjectClosure{
+			context:  env,
+			params:   fn.params,
+			bytecode: fn.bytecode,
+		}
+		env.pushToStack(clo)
 	case InstrAdd:
 		b := env.popFromStack().(*ObjectInt)
 		a := env.popFromStack().(*ObjectInt)
