@@ -170,6 +170,11 @@ type InstrDispatch struct {
 func (i InstrDispatch) String() string { return sprintfArgs("call", i.args) }
 func (i InstrDispatch) isInstr()       {}
 
+type InstrCreateClosure struct{}
+
+func (i InstrCreateClosure) String() string { return sprintfArgs("close") }
+func (i InstrCreateClosure) isInstr()       {}
+
 type InstrNone struct{}
 
 func (i InstrNone) String() string { return "none" }
