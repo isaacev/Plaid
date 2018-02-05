@@ -12,7 +12,8 @@ type Module interface {
 	Exports() types.Struct
 	Dependencies() []Module
 	IsNative() bool
-	link(string, Module)
+	link(string, string, Module)
+	export(...string) Object
 }
 
 type ModuleNative struct {
@@ -54,14 +55,24 @@ func (m *ModuleNative) IsNative() bool {
 	return true
 }
 
-func (m *ModuleNative) link(string, Module) {}
+func (m *ModuleNative) link(string, string, Module) {}
+
+func (m *ModuleNative) export(filter ...string) Object {
+	return m.library.toObject()
+}
 
 type ModuleVirtual struct {
 	path         string
 	exports      types.Struct
 	structure    *RootNode
 	scope        *Scope
-	dependencies map[string]Module
+	dependencies []struct {
+		alias    string
+		relative string
+		module   Module
+	}
+	bytecode    *Bytecode
+	environment *environment
 }
 
 func (m *ModuleVirtual) String() string {
@@ -81,7 +92,7 @@ func (m *ModuleVirtual) String() string {
 	if len(m.dependencies) > 0 {
 		lines = append(lines, "dependencies:")
 		for alias, dep := range m.dependencies {
-			lines = append(lines, fmt.Sprintf("  - path: \"%s\"", dep.Identifier()))
+			lines = append(lines, fmt.Sprintf("  - path: \"%s\"", dep.module.Identifier()))
 			lines = append(lines, fmt.Sprintf("    alias: %s", alias))
 		}
 	}
@@ -108,7 +119,7 @@ func (m *ModuleVirtual) AddExport(name string, typ types.Type) {
 func (m *ModuleVirtual) Dependencies() []Module {
 	var deps []Module
 	for _, dep := range m.dependencies {
-		deps = append(deps, dep)
+		deps = append(deps, dep.module)
 	}
 	return deps
 }
@@ -117,6 +128,29 @@ func (m *ModuleVirtual) IsNative() bool {
 	return false
 }
 
-func (m *ModuleVirtual) link(name string, dep Module) {
-	m.dependencies[name] = dep
+func (m *ModuleVirtual) link(alias string, relative string, dep Module) {
+	// m.dependencies[name] = dep
+
+	m.dependencies = append(m.dependencies, struct {
+		alias    string
+		relative string
+		module   Module
+	}{
+		alias:    alias,
+		relative: relative,
+		module:   dep,
+	})
+}
+
+func (m *ModuleVirtual) export(filter ...string) Object {
+	if m.environment == nil {
+		panic("cannot export module before it has been evaluated")
+	}
+
+	// Export everything as a single ObjectStruct.
+	fields := make(map[string]Object)
+	for _, field := range m.exports.Fields {
+		fields[field.Name] = m.environment.load(field.Name)
+	}
+	return &ObjectStruct{fields}
 }

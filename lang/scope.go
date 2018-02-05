@@ -46,8 +46,10 @@ func (s *Scope) Lookup(name string) types.Type {
 	if s.Parent != nil {
 		return s.Parent.Lookup(name)
 	} else if s.Module != nil {
-		if dep, ok := s.Module.dependencies[name]; ok {
-			return dep.Exports()
+		for _, dep := range s.Module.dependencies {
+			if dep.alias == name {
+				return dep.module.Exports()
+			}
 		}
 	}
 

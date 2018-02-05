@@ -26,12 +26,12 @@ func Link(path string, ast *RootNode, stdlib map[string]Module) (Module, []error
 
 	// Link each dependent module to all of its dependencies.
 	for _, dependent := range order {
-		for _, dependency := range dependent.children {
+		for relative, dependency := range dependent.children {
 			alias, err := identifierToAlias(dependency.module.Identifier())
 			if err != nil {
 				return nil, append(errs, err)
 			}
-			dependent.module.link(alias, dependency.module)
+			dependent.module.link(alias, relative, dependency.module)
 		}
 	}
 
@@ -46,17 +46,17 @@ type graph struct {
 type node struct {
 	flag     int
 	native   bool
-	children []*node
+	children map[string]*node
 	parents  []*node
 	module   Module
 }
 
 func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []error) {
 	n := &node{
+		children: make(map[string]*node),
 		module: &ModuleVirtual{
-			path:         path,
-			structure:    ast,
-			dependencies: make(map[string]Module),
+			path:      path,
+			structure: ast,
 		},
 	}
 
@@ -64,7 +64,8 @@ func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []er
 		if mod, ok := stdlib[path]; ok {
 			// Load dependency from the standard library.
 			return &node{
-				module: mod,
+				children: make(map[string]*node),
+				module:   mod,
 			}, nil
 		} else {
 			// Load dependency from the file system.
@@ -81,6 +82,7 @@ func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []er
 			}
 
 			return &node{
+				children: make(map[string]*node),
 				module: &ModuleVirtual{
 					path:      path,
 					structure: ast,
@@ -124,10 +126,11 @@ func buildGraphFromNode(n *node, load loadDependencyFunc) (*graph, []error) {
 
 	for len(todo) > 0 {
 		n, todo = todo[0], todo[1:]
-		for _, path := range n.branch() {
+		for _, relative := range n.branch() {
 			// If dependency path seems like a relative path to another script, then
 			// convert the path to an absolute path relative to the directory path of
 			// the current node.
+			path := relative
 			if isFilePath(path) {
 				path = filepath.Join(filepath.Dir(n.module.Identifier()), path)
 			}
@@ -136,17 +139,17 @@ func buildGraphFromNode(n *node, load loadDependencyFunc) (*graph, []error) {
 				// The dependency has already been fully analyzed so all that's left is
 				// to link the dependency and the dependant.
 				addParent(dep, n)
-				addChild(n, dep)
+				addChild(n, relative, dep)
 			} else if dep := g.nodes[path]; dep != nil {
 				// The dependency is in the `todo` queue awaiting analysis.
 				addParent(dep, n)
-				addChild(n, dep)
+				addChild(n, relative, dep)
 			} else if dep, errs = load(path); len(errs) == 0 {
 				// The dependency is novel and thus not already in the `todo` queue so
 				// load and parse the script then add it to the `todo` queue for future
 				// dependency analysis.
 				addParent(dep, n)
-				addChild(n, dep)
+				addChild(n, relative, dep)
 				addTodo(&todo, dep)
 				g.nodes[path] = dep
 			} else {
@@ -165,8 +168,8 @@ func addParent(child *node, parent *node) {
 	child.parents = append(child.parents, parent)
 }
 
-func addChild(parent *node, child *node) {
-	parent.children = append(parent.children, child)
+func addChild(parent *node, relative string, child *node) {
+	parent.children[relative] = child
 }
 
 func addTodo(todo *[]*node, n *node) {

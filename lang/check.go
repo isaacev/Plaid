@@ -11,8 +11,8 @@ func Check(mod Module) (errs []error) {
 		return nil
 	case *ModuleVirtual:
 		for _, dep := range mod.dependencies {
-			if dep.IsNative() == false {
-				errs = append(errs, Check(dep.(*ModuleVirtual))...)
+			if dep.module.IsNative() == false {
+				errs = append(errs, Check(dep.module.(*ModuleVirtual))...)
 			}
 		}
 
