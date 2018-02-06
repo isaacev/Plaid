@@ -20,7 +20,7 @@ func IO() *lang.Library {
 			return lang.ObjectNone{}, err
 		}
 
-		fmt.Println(args[0].String())
+		fmt.Println(args[0].Value())
 		return lang.ObjectNone{}, nil
 	})
 
