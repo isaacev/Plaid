@@ -2,6 +2,7 @@ package lang
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -888,15 +889,48 @@ func parseString(p *parser) (Expr, error) {
 		return nil, err
 	}
 
-	return evalString(tok)
+	return evalString(p, tok)
 }
 
-func evalString(tok token) (*StringExpr, error) {
+func evalString(p *parser, tok token) (*StringExpr, error) {
 	dblQuote := "\""
 	remSuffix := strings.TrimSuffix(tok.Lexeme, dblQuote)
 	remBoth := strings.TrimPrefix(remSuffix, dblQuote)
 
-	return &StringExpr{tok, remBoth}, nil
+	encoded := remBoth
+	decoded := ""
+	escaped := false
+	for _, char := range encoded {
+		if escaped {
+			escaped = false
+			switch char {
+			case 't':
+				decoded += string(0x09) // Horizontal tab.
+			case 'n':
+				decoded += string(0x0A) // Line feed.
+			case '"':
+				decoded += string(0x22) // Double quote.
+			case '\'':
+				decoded += string(0x27) // Single quote.
+			case '\\':
+				decoded += string(0x5C) // Backslash.
+			default:
+				msg := fmt.Sprintf("unknown escape sequence '\\%s'", string(char))
+				return nil, p.errorFromLocation(tok.Loc, msg)
+			}
+		} else if char == '\\' {
+			escaped = true
+		} else {
+			decoded += string(char)
+		}
+	}
+
+	if escaped {
+		msg := "unused backslash"
+		return nil, p.errorFromLocation(tok.Loc, msg)
+	}
+
+	return &StringExpr{tok, decoded}, nil
 }
 
 func parseBoolean(p *parser) (Expr, error) {
