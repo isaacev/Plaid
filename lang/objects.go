@@ -61,7 +61,7 @@ func (o ObjectFunction) String() string     { return "<function>" }
 func (o ObjectFunction) isObject()          {}
 
 type ObjectClosure struct {
-	context  *environment
+	context  *Environment
 	params   []string
 	bytecode Bytecode
 }

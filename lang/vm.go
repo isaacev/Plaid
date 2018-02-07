@@ -25,28 +25,28 @@ func runVirtualModule(mod *ModuleVirtual) {
 	runBlob(mod, env, *mod.bytecode)
 }
 
-type environment struct {
-	parent *environment
+type Environment struct {
+	parent *Environment
 	stack  []Object
 	state  map[string]Object
 	self   *ObjectClosure
 }
 
-func (e *environment) pushToStack(obj Object) {
+func (e *Environment) pushToStack(obj Object) {
 	e.stack = append(e.stack, obj)
 }
 
-func (e *environment) popFromStack() Object {
+func (e *Environment) popFromStack() Object {
 	obj := e.stack[len(e.stack)-1]
 	e.stack = e.stack[:len(e.stack)-1]
 	return obj
 }
 
-func (e *environment) alloc(name string) {
+func (e *Environment) alloc(name string) {
 	e.state[name] = ObjectNone{}
 }
 
-func (e *environment) store(name string, obj Object) {
+func (e *Environment) store(name string, obj Object) {
 	if _, ok := e.state[name]; ok {
 		e.state[name] = obj
 	} else {
@@ -54,7 +54,7 @@ func (e *environment) store(name string, obj Object) {
 	}
 }
 
-func (e *environment) load(name string) Object {
+func (e *Environment) load(name string) Object {
 	if obj, ok := e.state[name]; ok {
 		return obj
 	} else {
@@ -65,14 +65,14 @@ func (e *environment) load(name string) Object {
 	}
 }
 
-func makeEnvironment(parent *environment) *environment {
-	return &environment{
+func makeEnvironment(parent *Environment) *Environment {
+	return &Environment{
 		parent: parent,
 		state:  make(map[string]Object),
 	}
 }
 
-func runBlob(mod *ModuleVirtual, env *environment, blob Bytecode) Object {
+func runBlob(mod *ModuleVirtual, env *Environment, blob Bytecode) Object {
 	var ip uint32 = 0
 	instr := blob.Instructions[ip]
 	for {
@@ -87,7 +87,7 @@ func runBlob(mod *ModuleVirtual, env *environment, blob Bytecode) Object {
 	}
 }
 
-func runInstr(mod *ModuleVirtual, ip uint32, env *environment, instr Instr) uint32 {
+func runInstr(mod *ModuleVirtual, ip uint32, env *Environment, instr Instr) uint32 {
 	switch instr := instr.(type) {
 	case InstrHalt:
 		return ip

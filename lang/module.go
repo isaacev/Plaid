@@ -72,7 +72,7 @@ type ModuleVirtual struct {
 		module   Module
 	}
 	bytecode    *Bytecode
-	environment *environment
+	environment *Environment
 }
 
 func (m *ModuleVirtual) String() string {
