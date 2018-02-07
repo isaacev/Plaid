@@ -103,7 +103,7 @@ func TestPeekPrecedence(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	prog, errs := Parse("", "let a := 123; let b := 456;")
+	prog, errs := ParseString("let a := 123; let b := 456;")
 
 	var err error = nil
 	if len(errs) > 0 {

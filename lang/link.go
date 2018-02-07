@@ -77,7 +77,7 @@ func connect(path string, ast *AST, stdlib map[string]Module) (*graph, []error) 
 
 			var ast *AST
 			var errs []error
-			if ast, errs = Parse(path, string(buf)); len(errs) > 0 {
+			if ast, errs = parse(path, string(buf)); len(errs) > 0 {
 				return nil, errs
 			}
 

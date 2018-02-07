@@ -7,7 +7,7 @@ import (
 
 func TestCheckProgram(t *testing.T) {
 	good := func(src string) {
-		ast, _ := Parse("", src)
+		ast, _ := ParseString(src)
 		s := makeScope(nil)
 		checkProgram(s, ast)
 		expectNoXScopeErrors(t, s)
@@ -18,7 +18,7 @@ func TestCheckProgram(t *testing.T) {
 
 func TestCheckStmt(t *testing.T) {
 	good := func(src string) {
-		ast, _ := Parse("", src)
+		ast, _ := ParseString(src)
 		s := makeScope(nil)
 		checkStmt(s, ast.Stmts[0])
 		expectNoXScopeErrors(t, s)
@@ -29,7 +29,7 @@ func TestCheckStmt(t *testing.T) {
 
 func TestCheckPubStmt(t *testing.T) {
 	good := func(src string) {
-		ast, _ := Parse("", src)
+		ast, _ := ParseString(src)
 		s := makeScope(nil)
 		s.Module = &ModuleVirtual{}
 		checkProgram(s, ast)
@@ -37,7 +37,7 @@ func TestCheckPubStmt(t *testing.T) {
 	}
 
 	bad := func(src string, msg string) {
-		ast, _ := Parse("", src)
+		ast, _ := ParseString(src)
 		s1 := makeScope(nil)
 		s1.Module = &ModuleVirtual{}
 		s2 := makeScope(s1)
@@ -79,59 +79,59 @@ func TestCheckReturnStmt(t *testing.T) {
 }
 
 func TestCheckExpr(t *testing.T) {
-	prog, _ := Parse("", "let a := 2 + 1;")
+	prog, _ := ParseString("let a := 2 + 1;")
 	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinInt)
 
-	prog, _ = Parse("", "let a := 1;")
+	prog, _ = ParseString("let a := 1;")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinInt)
 
-	prog, _ = Parse("", "let a := \"abc\";")
+	prog, _ = ParseString("let a := \"abc\";")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinStr)
 
-	prog, _ = Parse("", "let a := fn () {};")
+	prog, _ = ParseString("let a := fn () {};")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "let a := true;")
+	prog, _ = ParseString("let a := true;")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "let a := false;")
+	prog, _ = ParseString("let a := false;")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "let a := [1, 2, 3];")
+	prog, _ = ParseString("let a := [1, 2, 3];")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "let a := \"abc\"[0];")
+	prog, _ = ParseString("let a := \"abc\"[0];")
 	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "let a := add(2, 2);")
+	prog, _ = ParseString("let a := add(2, 2);")
 	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:10) variable 'add' was used before it was declared")
 	expectBool(t, s.Lookup("a").IsError(), true)
 
-	prog, _ = Parse("", "let f := fn():Void{}; let a := f();")
+	prog, _ = ParseString("let f := fn():Void{}; let a := f();")
 	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:32) cannot use void types in an expression")
 	expectBool(t, s.Lookup("a").IsError(), true)
 
-	prog, _ = Parse("", "let a := -5;")
+	prog, _ = ParseString("let a := -5;")
 	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:10) unknown expression type")
 	expectBool(t, s.Lookup("a").IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
-	prog, _ := Parse("", "let f := fn (a: Int): Int { };")
+	prog, _ := ParseString("let f := fn (a: Int): Int { };")
 	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("f"), types.Function{
@@ -143,7 +143,7 @@ func TestCheckFunctionExpr(t *testing.T) {
 func TestCheckDispatchExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
 		t.Helper()
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := makeScope(nil)
@@ -155,7 +155,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 
 	bad := func(source string, name string, typ types.Type, errs ...string) {
 		t.Helper()
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := makeScope(nil)
@@ -203,7 +203,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 func TestCheckAssignExpr(t *testing.T) {
 	good := func(source string, name string, typ types.Type) {
 		t.Helper()
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := makeScope(nil)
@@ -215,7 +215,7 @@ func TestCheckAssignExpr(t *testing.T) {
 
 	bad := func(source string, name string, typ types.Type, exp string) {
 		t.Helper()
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := makeScope(nil)
@@ -238,7 +238,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 	good := func(left types.Type, oper string, right types.Type, exp types.Type) {
 		t.Helper()
 		source := "let c := a " + oper + " b;"
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			s := makeScope(nil)
@@ -252,7 +252,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 
 	bad := func(source string, s *Scope, errs ...string) {
 		t.Helper()
-		if prog, err := Parse("", source); err != nil {
+		if prog, err := ParseString(source); err != nil {
 			t.Fatal(err)
 		} else {
 			checkProgram(s, prog)
@@ -369,8 +369,8 @@ func TestCheckAccessExpr(t *testing.T) {
 	/*
 		good := func(src string) {
 			t.Helper()
-			ast, _ := Parse("", src)
-			s := checkProgram(makeXScope(nil), ast)
+			ast, _ := ParseString(src)
+			s := checkProgram(makeScope(nil), ast)
 			expectNoXScopeErrors(t, s)
 		}
 
@@ -379,11 +379,11 @@ func TestCheckAccessExpr(t *testing.T) {
 }
 
 func TestCheckSelfExpr(t *testing.T) {
-	prog, _ := Parse("", "let f := fn(): Void { self(); };")
+	prog, _ := ParseString("let f := fn(): Void { self(); };")
 	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
-	prog, _ = Parse("", "self();")
+	prog, _ = ParseString("self();")
 	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:1) self references must be inside a function")
 }
@@ -527,7 +527,7 @@ func TestConvertTypeNote(t *testing.T) {
 
 func goodProgram(t *testing.T, src string) {
 	t.Helper()
-	ast, _ := Parse("", src)
+	ast, _ := ParseString(src)
 	s := makeScope(nil)
 	checkProgram(s, ast)
 	expectNoXScopeErrors(t, s)
@@ -535,7 +535,7 @@ func goodProgram(t *testing.T, src string) {
 
 func badProgram(t *testing.T, src string, msg string) {
 	t.Helper()
-	ast, _ := Parse("", src)
+	ast, _ := ParseString(src)
 	s := makeScope(nil)
 	checkProgram(s, ast)
 	expectNthXScopeError(t, s, 0, msg)

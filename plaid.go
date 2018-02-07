@@ -41,7 +41,7 @@ func run(filename string) (errs []error) {
 	}
 
 	fmt.Println("\n=== SYNTAX TREE")
-	if ast, errs = lang.Parse(filename, src); len(errs) > 0 {
+	if ast, errs = lang.ParseString(src); len(errs) > 0 {
 		return errs
 	} else {
 		fmt.Println(ast)

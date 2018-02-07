@@ -1,12 +1,24 @@
 package lang
 
 import (
+	"bytes"
+	"io"
 	"strconv"
 	"strings"
 )
 
-// Parse initializers a parser and defines the grammar precedence levels
-func Parse(filepath string, source string) (*AST, []error) {
+func ParseString(in string) (*AST, []error) {
+	return parse("", in)
+}
+
+func ParseReader(name string, in io.Reader) (*AST, []error) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(in)
+	src := buf.String()
+	return parse(name, src)
+}
+
+func parse(filepath string, source string) (*AST, []error) {
 	p := makeParser(filepath, source)
 	loadGrammar(p)
 	ast, err := parseProgram(p)
