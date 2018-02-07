@@ -71,7 +71,7 @@ func TestCheckReturnStmt(t *testing.T) {
 		"let a := fn ():Void { return 123; };",
 		"(1:30) expected to return nothing, got 'Int'")
 
-	prog := &RootNode{Stmts: []Stmt{
+	prog := &AST{Stmts: []Stmt{
 		&ReturnStmt{Tok: makeTok(1, 1)},
 	}}
 	s := checkProgram(makeScope(nil), prog)

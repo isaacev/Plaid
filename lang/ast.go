@@ -13,13 +13,13 @@ type ASTNode interface {
 	isNode()
 }
 
-// RootNode describes all top-level statements within a script
-type RootNode struct {
+// AST describes all top-level statements within a script
+type AST struct {
 	Stmts []Stmt
 }
 
 // Start returns a location that this node can be considered to start at
-func (r RootNode) Start() Loc {
+func (r AST) Start() Loc {
 	if len(r.Stmts) > 0 {
 		return r.Stmts[0].Start()
 	}
@@ -27,7 +27,7 @@ func (r RootNode) Start() Loc {
 	return Loc{Line: 1, Col: 1}
 }
 
-func (r RootNode) String() string {
+func (r AST) String() string {
 	out := ""
 	for i, stmt := range r.Stmts {
 		if i > 0 {
@@ -39,7 +39,7 @@ func (r RootNode) String() string {
 	return out
 }
 
-func (r RootNode) isNode() {}
+func (r AST) isNode() {}
 
 // Stmt describes all constructs that return no value
 type Stmt interface {

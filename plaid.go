@@ -29,7 +29,7 @@ func read(filename string) (src string, errs []error) {
 
 func run(filename string) (errs []error) {
 	var src string
-	var ast *lang.RootNode
+	var ast *lang.AST
 	var mod lang.Module
 	var btc lang.Bytecode
 

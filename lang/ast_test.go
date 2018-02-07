@@ -7,15 +7,15 @@ import (
 var nop = token{}
 
 func TestProgram(t *testing.T) {
-	(RootNode{}).isNode()
+	(AST{}).isNode()
 
-	prog := RootNode{[]Stmt{
+	prog := AST{[]Stmt{
 		DeclarationStmt{nop, &IdentExpr{nop, "a"}, &NumberExpr{nop, 123}},
 		DeclarationStmt{nop, &IdentExpr{nop, "b"}, &NumberExpr{nop, 456}},
 	}}
 	expectASTString(t, prog, "(let a 123)\n(let b 456)")
 
-	prog = RootNode{[]Stmt{}}
+	prog = AST{[]Stmt{}}
 	expectASTString(t, prog, "")
 }
 

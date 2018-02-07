@@ -63,7 +63,7 @@ var defaultBinopsLUT = binopsLUT{
 	},
 }
 
-func checkProgram(s *Scope, ast *RootNode) *Scope {
+func checkProgram(s *Scope, ast *AST) *Scope {
 	for _, stmt := range ast.Stmts {
 		checkStmt(s, stmt)
 	}

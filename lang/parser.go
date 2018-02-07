@@ -6,7 +6,7 @@ import (
 )
 
 // Parse initializers a parser and defines the grammar precedence levels
-func Parse(filepath string, source string) (*RootNode, []error) {
+func Parse(filepath string, source string) (*AST, []error) {
 	p := makeParser(filepath, source)
 	loadGrammar(p)
 	ast, err := parseProgram(p)
@@ -146,7 +146,7 @@ func loadGrammar(p *parser) {
 	p.registerPostfix(tokSlash, parseInfix, precProduct)
 }
 
-func parseProgram(p *parser) (*RootNode, error) {
+func parseProgram(p *parser) (*AST, error) {
 	stmts := []Stmt{}
 
 	for p.peekTokenIsNot(tokError, tokEOF) {
@@ -162,13 +162,13 @@ func parseProgram(p *parser) (*RootNode, error) {
 		}
 
 		if err != nil {
-			return &RootNode{}, err
+			return &AST{}, err
 		}
 
 		stmts = append(stmts, stmt)
 	}
 
-	return &RootNode{stmts}, nil
+	return &AST{stmts}, nil
 }
 
 func parseStmt(p *parser) (Stmt, error) {

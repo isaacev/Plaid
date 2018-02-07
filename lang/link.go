@@ -7,7 +7,7 @@ import (
 	"regexp"
 )
 
-func Link(path string, ast *RootNode, stdlib map[string]Module) (Module, []error) {
+func Link(path string, ast *AST, stdlib map[string]Module) (Module, []error) {
 	var g *graph
 	var order []*node
 	var errs []error
@@ -51,7 +51,7 @@ type node struct {
 	module   Module
 }
 
-func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []error) {
+func connect(path string, ast *AST, stdlib map[string]Module) (*graph, []error) {
 	n := &node{
 		children: make(map[string]*node),
 		module: &ModuleVirtual{
@@ -75,7 +75,7 @@ func connect(path string, ast *RootNode, stdlib map[string]Module) (*graph, []er
 				return nil, []error{err}
 			}
 
-			var ast *RootNode
+			var ast *AST
 			var errs []error
 			if ast, errs = Parse(path, string(buf)); len(errs) > 0 {
 				return nil, errs

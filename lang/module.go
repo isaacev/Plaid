@@ -64,7 +64,7 @@ func (m *ModuleNative) export(filter ...string) Object {
 type ModuleVirtual struct {
 	path         string
 	exports      types.Struct
-	structure    *RootNode
+	structure    *AST
 	scope        *Scope
 	dependencies []struct {
 		alias    string
