@@ -78,6 +78,7 @@ func TestEatToken(t *testing.T) {
 	expectLexer(t, eatToken, "  \nfoo", token{tokIdent, "foo", Loc{2, 1}})
 	expectLexer(t, eatToken, "+", token{tokPlus, "+", Loc{1, 1}})
 	expectLexer(t, eatToken, "-", token{tokDash, "-", Loc{1, 1}})
+	expectLexer(t, eatToken, "-- foo \n", token{tokComment, "-- foo ", Loc{1, 1}})
 	expectLexer(t, eatToken, "*", token{tokStar, "*", Loc{1, 1}})
 	expectLexer(t, eatToken, "/", token{tokSlash, "/", Loc{1, 1}})
 	expectLexer(t, eatToken, "?", token{tokQuestion, "?", Loc{1, 1}})

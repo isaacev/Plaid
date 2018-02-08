@@ -9,6 +9,7 @@ const (
 	tokEOF              = "EOF"
 	tokPlus             = "+"
 	tokDash             = "-"
+	tokComment          = "--"
 	tokStar             = "*"
 	tokSlash            = "/"
 	tokQuestion         = "?"
@@ -74,7 +75,11 @@ func (l *lexer) next() token {
 		return tok
 	}
 
-	return eatToken(l.scanner)
+	tok := eatToken(l.scanner)
+	for tok.Type == tokComment {
+		tok = eatToken(l.scanner)
+	}
+	return tok
 }
 
 // makeLexer creates a new Lexer struct given a Scanner
@@ -201,7 +206,20 @@ func eatOperatorToken(scn *scanner) token {
 	case '+':
 		return token{tokPlus, "+", scn.next().loc}
 	case '-':
-		return token{tokDash, "-", scn.next().loc}
+		dash := scn.next()
+		tok := token{tokDash, "-", dash.loc}
+
+		if scn.peek().char == '-' {
+			// Since this is the start of a comment, consume everything until the end
+			// of the file or a newline.
+			lexeme := "-"
+			for scn.peek().char != '\n' && !isEOF(scn.peek().char) {
+				lexeme += string(scn.next().char)
+			}
+			tok = token{tokComment, lexeme, dash.loc}
+		}
+
+		return tok
 	case '*':
 		return token{tokStar, "*", scn.next().loc}
 	case '/':
