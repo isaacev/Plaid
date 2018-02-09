@@ -1,3 +1,5 @@
+use "io";
+
 let newCounter := fn (n: Int): () => Int {
   n := n - 1;
   return fn (): Int {
@@ -9,14 +11,14 @@ let newCounter := fn (n: Int): () => Int {
 let a := newCounter(1);
 let b := newCounter(10);
 
-print(intToStr(a()));
-print(intToStr(a()));
-print(intToStr(a()));
+io.print(a());
+io.print(a());
+io.print(a());
 
-print(intToStr(b()));
-print(intToStr(b()));
-print(intToStr(b()));
+io.print(b());
+io.print(b());
+io.print(b());
 
-print(intToStr(a()));
-print(intToStr(a()));
-print(intToStr(a()));
+io.print(a());
+io.print(a());
+io.print(a());
