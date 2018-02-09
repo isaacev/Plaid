@@ -91,9 +91,9 @@ func (m *ModuleVirtual) String() string {
 
 	if len(m.dependencies) > 0 {
 		lines = append(lines, "dependencies:")
-		for alias, dep := range m.dependencies {
+		for _, dep := range m.dependencies {
 			lines = append(lines, fmt.Sprintf("  - path: \"%s\"", dep.module.Identifier()))
-			lines = append(lines, fmt.Sprintf("    alias: %s", alias))
+			lines = append(lines, fmt.Sprintf("    alias: %s", dep.alias))
 		}
 	}
 
