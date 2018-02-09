@@ -8,7 +8,7 @@ import (
 func TestCheckProgram(t *testing.T) {
 	good := func(src string) {
 		ast, _ := Parse("", src)
-		s := makeXScope(nil)
+		s := makeScope(nil)
 		checkProgram(s, ast)
 		expectNoXScopeErrors(t, s)
 	}
@@ -19,7 +19,7 @@ func TestCheckProgram(t *testing.T) {
 func TestCheckStmt(t *testing.T) {
 	good := func(src string) {
 		ast, _ := Parse("", src)
-		s := makeXScope(nil)
+		s := makeScope(nil)
 		checkStmt(s, ast.Stmts[0])
 		expectNoXScopeErrors(t, s)
 	}
@@ -30,7 +30,7 @@ func TestCheckStmt(t *testing.T) {
 func TestCheckPubStmt(t *testing.T) {
 	good := func(src string) {
 		ast, _ := Parse("", src)
-		s := makeXScope(nil)
+		s := makeScope(nil)
 		s.Module = &ModuleVirtual{}
 		checkProgram(s, ast)
 		expectNoXScopeErrors(t, s)
@@ -38,9 +38,9 @@ func TestCheckPubStmt(t *testing.T) {
 
 	bad := func(src string, msg string) {
 		ast, _ := Parse("", src)
-		s1 := makeXScope(nil)
+		s1 := makeScope(nil)
 		s1.Module = &ModuleVirtual{}
-		s2 := makeXScope(s1)
+		s2 := makeScope(s1)
 		checkProgram(s2, ast)
 		expectNthXScopeError(t, s2, 0, msg)
 	}
@@ -74,65 +74,65 @@ func TestCheckReturnStmt(t *testing.T) {
 	prog := &RootNode{Stmts: []Stmt{
 		&ReturnStmt{Tok: makeTok(1, 1)},
 	}}
-	s := checkProgram(makeXScope(nil), prog)
+	s := checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:1) return statements must be inside a function")
 }
 
 func TestCheckExpr(t *testing.T) {
 	prog, _ := Parse("", "let a := 2 + 1;")
-	s := checkProgram(makeXScope(nil), prog)
+	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinInt)
 
 	prog, _ = Parse("", "let a := 1;")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinInt)
 
 	prog, _ = Parse("", "let a := \"abc\";")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("a"), types.BuiltinStr)
 
 	prog, _ = Parse("", "let a := fn () {};")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "let a := true;")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "let a := false;")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "let a := [1, 2, 3];")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "let a := \"abc\"[0];")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "let a := add(2, 2);")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:10) variable 'add' was used before it was declared")
 	expectBool(t, s.Lookup("a").IsError(), true)
 
 	prog, _ = Parse("", "let f := fn():Void{}; let a := f();")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:32) cannot use void types in an expression")
 	expectBool(t, s.Lookup("a").IsError(), true)
 
 	prog, _ = Parse("", "let a := -5;")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:10) unknown expression type")
 	expectBool(t, s.Lookup("a").IsError(), true)
 }
 
 func TestCheckFunctionExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn (a: Int): Int { };")
-	s := checkProgram(makeXScope(nil), prog)
+	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, s.Lookup("f"), types.Function{
 		Params: types.Tuple{Children: []types.Type{types.Ident{Name: "Int"}}},
@@ -146,7 +146,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := makeXScope(nil)
+			s := makeScope(nil)
 			s.AddLocal(name, typ)
 			checkProgram(s, prog)
 			expectNoXScopeErrors(t, s)
@@ -158,7 +158,7 @@ func TestCheckDispatchExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := makeXScope(nil)
+			s := makeScope(nil)
 			s.AddLocal(name, typ)
 			checkProgram(s, prog)
 			for i, err := range errs {
@@ -206,7 +206,7 @@ func TestCheckAssignExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := makeXScope(nil)
+			s := makeScope(nil)
 			s.AddLocal(name, typ)
 			checkProgram(s, prog)
 			expectNoXScopeErrors(t, s)
@@ -218,7 +218,7 @@ func TestCheckAssignExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := makeXScope(nil)
+			s := makeScope(nil)
 			s.AddLocal(name, typ)
 			checkProgram(s, prog)
 			expectNthXScopeError(t, s, 0, exp)
@@ -241,7 +241,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 		if prog, err := Parse("", source); err != nil {
 			t.Fatal(err)
 		} else {
-			s := makeXScope(nil)
+			s := makeScope(nil)
 			s.AddLocal("a", left)
 			s.AddLocal("b", right)
 			checkProgram(s, prog)
@@ -266,17 +266,17 @@ func TestCheckBinaryExpr(t *testing.T) {
 	good(types.BuiltinInt, "+", types.BuiltinInt, types.BuiltinInt)
 	good(types.BuiltinInt, "-", types.BuiltinInt, types.BuiltinInt)
 
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	s.AddLocal("b", types.BuiltinInt)
 	bad("let c := a + b;", s,
 		"(1:10) variable 'a' was used before it was declared")
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	bad("let c := a + b;", s,
 		"(1:10) variable 'a' was used before it was declared",
 		"(1:14) variable 'b' was used before it was declared")
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	s.AddLocal("a", types.BuiltinInt)
 	s.AddLocal("b", types.BuiltinInt)
 	oper := token{Loc: Loc{Line: 10, Col: 4}}
@@ -291,7 +291,7 @@ func TestCheckBinaryExpr(t *testing.T) {
 func TestCheckListExpr(t *testing.T) {
 	good := func(expr *ListExpr, exp types.Type) {
 		t.Helper()
-		s := makeXScope(nil)
+		s := makeScope(nil)
 		got := checkListExpr(s, expr)
 		expectNoXScopeErrors(t, s)
 		expectEquivalentType(t, got, exp)
@@ -299,7 +299,7 @@ func TestCheckListExpr(t *testing.T) {
 
 	bad := func(expr *ListExpr, exp string) {
 		t.Helper()
-		s := makeXScope(nil)
+		s := makeScope(nil)
 		got := checkListExpr(s, expr)
 		expectNthXScopeError(t, s, 0, exp)
 		expectEquivalentType(t, got, types.Error{})
@@ -323,7 +323,7 @@ func TestCheckListExpr(t *testing.T) {
 }
 
 func TestCheckSubscriptExpr(t *testing.T) {
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	str := &StringExpr{Tok: nop, Val: "foo"}
 	index := &NumberExpr{Tok: nop, Val: 0}
 	expr := &SubscriptExpr{ListLike: str, Index: index}
@@ -331,7 +331,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, typ, types.Optional{Child: types.BuiltinStr})
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	list := &ListExpr{Elements: []Expr{
 		&NumberExpr{Val: 123},
 		&NumberExpr{Val: 456},
@@ -341,7 +341,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, typ, types.Optional{Child: types.BuiltinInt})
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	str = &StringExpr{Tok: nop, Val: "foo"}
 	badRef := &IdentExpr{Tok: makeTok(5, 2), Name: "x"}
 	expr = &SubscriptExpr{ListLike: str, Index: badRef}
@@ -349,7 +349,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNthXScopeError(t, s, 0, "(5:2) variable 'x' was used before it was declared")
 	expectBool(t, typ.IsError(), true)
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	str = &StringExpr{Tok: nop, Val: "foo"}
 	badIndex := &StringExpr{Tok: makeTok(2, 9), Val: "0"}
 	expr = &SubscriptExpr{ListLike: str, Index: badIndex}
@@ -357,7 +357,7 @@ func TestCheckSubscriptExpr(t *testing.T) {
 	expectNthXScopeError(t, s, 0, "(2:9) subscript operator does not support Str[Str]")
 	expectBool(t, typ.IsError(), true)
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	str = &StringExpr{Tok: makeTok(4, 2), Val: "foo"}
 	expr = &SubscriptExpr{ListLike: str, Index: index}
 	typ = checkSubscriptExpr(s, expr, make(binopsLUT))
@@ -380,23 +380,23 @@ func TestCheckAccessExpr(t *testing.T) {
 
 func TestCheckSelfExpr(t *testing.T) {
 	prog, _ := Parse("", "let f := fn(): Void { self(); };")
-	s := checkProgram(makeXScope(nil), prog)
+	s := checkProgram(makeScope(nil), prog)
 	expectNoXScopeErrors(t, s)
 
 	prog, _ = Parse("", "self();")
-	s = checkProgram(makeXScope(nil), prog)
+	s = checkProgram(makeScope(nil), prog)
 	expectNthXScopeError(t, s, 0, "(1:1) self references must be inside a function")
 }
 
 func TestCheckIdentExpr(t *testing.T) {
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	s.AddLocal("x", types.BuiltinInt)
 	expr := &IdentExpr{Tok: nop, Name: "x"}
 	typ := checkIdentExpr(s, expr)
 	expectNoXScopeErrors(t, s)
 	expectEquivalentType(t, typ, types.BuiltinInt)
 
-	s = makeXScope(nil)
+	s = makeScope(nil)
 	expr = &IdentExpr{Tok: makeTok(10, 13), Name: "x"}
 	typ = checkIdentExpr(s, expr)
 	expectNthXScopeError(t, s, 0, "(10:13) variable 'x' was used before it was declared")
@@ -404,7 +404,7 @@ func TestCheckIdentExpr(t *testing.T) {
 }
 
 func TestCheckNumberExpr(t *testing.T) {
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	expr := &NumberExpr{Tok: nop, Val: 123}
 	typ := checkNumberExpr(s, expr)
 	expectNoXScopeErrors(t, s)
@@ -412,7 +412,7 @@ func TestCheckNumberExpr(t *testing.T) {
 }
 
 func TestCheckStringExpr(t *testing.T) {
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	expr := &StringExpr{Tok: nop, Val: "abc"}
 	typ := checkStringExpr(s, expr)
 	expectNoXScopeErrors(t, s)
@@ -420,7 +420,7 @@ func TestCheckStringExpr(t *testing.T) {
 }
 
 func TestCheckBooleanExpr(t *testing.T) {
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	expr := &BooleanExpr{Tok: nop, Val: true}
 	typ := checkBooleanExpr(s, expr)
 	expectNoXScopeErrors(t, s)
@@ -528,7 +528,7 @@ func TestConvertTypeNote(t *testing.T) {
 func goodProgram(t *testing.T, src string) {
 	t.Helper()
 	ast, _ := Parse("", src)
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	checkProgram(s, ast)
 	expectNoXScopeErrors(t, s)
 }
@@ -536,7 +536,7 @@ func goodProgram(t *testing.T, src string) {
 func badProgram(t *testing.T, src string, msg string) {
 	t.Helper()
 	ast, _ := Parse("", src)
-	s := makeXScope(nil)
+	s := makeScope(nil)
 	checkProgram(s, ast)
 	expectNthXScopeError(t, s, 0, msg)
 }

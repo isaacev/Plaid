@@ -13,7 +13,7 @@ type Scope struct {
 	Errors   []error
 }
 
-func makeXScope(parent *Scope) *Scope {
+func makeScope(parent *Scope) *Scope {
 	scope := &Scope{
 		Parent:   parent,
 		Children: make(map[ASTNode]*Scope),

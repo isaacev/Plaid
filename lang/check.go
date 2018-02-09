@@ -18,7 +18,7 @@ func Check(mod Module) (errs []error) {
 
 		// Initialize the root scope for the module and give the scope a reference
 		// to the module being checked so that imports can be checked.
-		mod.scope = makeXScope(nil)
+		mod.scope = makeScope(nil)
 		mod.scope.Module = mod
 
 		// Build the full scope tree, performing type checks.
@@ -216,7 +216,7 @@ func checkFunctionExpr(s *Scope, expr *FunctionExpr) types.Type {
 	tuple := types.Tuple{Children: params}
 	self := types.Function{Params: tuple, Ret: ret}
 
-	childScope := makeXScope(s)
+	childScope := makeScope(s)
 	s.Children[expr] = childScope
 	childScope.Self = self
 
