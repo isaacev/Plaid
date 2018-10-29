@@ -1,3 +1,5 @@
+use "io";
+
 let fib := fn (N: Int, cb: (Int) => Void): Void {
   let f := fn (a: Int, b: Int): Void {
     cb(a);
@@ -12,7 +14,7 @@ let fib := fn (N: Int, cb: (Int) => Void): Void {
 
 let printFib := fn(N: Int): Int {
   fib(N, fn(n: Int): Void {
-    print(n);
+    io.print(n);
   });
 };
 
@@ -25,4 +27,4 @@ let sumFib := fn(N: Int): Int {
 };
 
 printFib(10);
-print(sumFib(10));
+io.print(sumFib(10));
